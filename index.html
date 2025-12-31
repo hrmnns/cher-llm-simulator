@@ -676,7 +676,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.3.35";
+  const APP_VERSION = "v1.3.36";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2166,23 +2166,92 @@ async function loadScenarios(url){
 
 
   function viewSummary(scenario){
-    const wrap = document.createElement("div");
-    wrap.appendChild(h3("Lernziele"));
-    const ul = document.createElement("ul");
-    ul.style.margin = "0";
-    ul.style.paddingLeft = "18px";
-    ul.className = "small";
-    for(const g of (scenario.learningGoals || [])){
-      const li = document.createElement("li");
-      li.textContent = g;
-      ul.appendChild(li);
-    }
-    wrap.appendChild(ul);
+  const wrap = document.createElement("div");
 
-    wrap.appendChild(h3("Merksatz"));
-    wrap.appendChild(pNotice("Ein LLM ist kein Wissensspeicher – es erzeugt Text, indem es iterativ das nächste Token auf Basis des Kontexts wahrscheinlicher macht."));
-    return wrap;
-  }
+  // --- Input / Output ---
+  wrap.appendChild(h3("Ergebnis"));
+  const io = document.createElement("div");
+  io.className = "notice";
+  io.innerHTML =
+    '<div class="kv"><div class="k">Prompt</div><div class="v mono">' + escapeHtml(scenario.prompt || "—") + '</div></div>'
+    + '<div class="kv"><div class="k">Ausgabe</div><div class="v mono">' + escapeHtml(scenario.output || "—") + '</div></div>';
+  wrap.appendChild(io);
+
+  // --- Pipeline Recap ---
+  wrap.appendChild(h3("Verarbeitungsweg (Kurzüberblick)"));
+  const recap = document.createElement("div");
+  recap.className = "notice";
+  recap.innerHTML =
+    '<ul class="small">'
+    + '<li><strong>Tokenisierung:</strong> Text → Tokens</li>'
+    + '<li><strong>Embedding:</strong> Tokens → Vektoren</li>'
+    + '<li><strong>Attention:</strong> Kontextgewichtung zwischen Tokens</li>'
+    + '<li><strong>MLP:</strong> Nichtlineare Transformation</li>'
+    + '<li><strong>Logits:</strong> Scores für mögliche nächste Tokens</li>'
+    + '<li><strong>Decoding:</strong> Auswahl eines Tokens (Greedy / Sampling)</li>'
+    + '<li><strong>Output:</strong> Tokenfolge → Text</li>'
+    + '</ul>';
+  wrap.appendChild(recap);
+
+  // --- Key Takeaways ---
+  wrap.appendChild(h3("Zentrale Erkenntnisse"));
+  const take = document.createElement("div");
+  take.className = "notice";
+  take.innerHTML =
+    '<ul class="small">'
+    + '<li>Ein LLM optimiert Wahrscheinlichkeiten – es „versteht“ nicht wie ein Mensch.</li>'
+    + '<li>Attention mischt Kontext, sie ist kein logisches Denken.</li>'
+    + '<li>Die Decoding-Strategie beeinflusst Varianz, Stil und Wiederholungen stark.</li>'
+    + '</ul>';
+  wrap.appendChild(take);
+
+  // --- Run Snapshot ---
+  wrap.appendChild(h3("Run-Snapshot"));
+  const snap = document.createElement("div");
+  snap.className = "notice";
+
+  const snapshot = {
+    scenario: scenario.id || scenario.title || "unknown",
+    decoding: {
+      mode: state.params.decodeMode,
+      temperature: state.params.decodeTemp,
+      topK: state.params.decodeTopK,
+      topP: state.params.decodeTopP,
+      seed: state.params.decodeSeed
+    },
+    timestamp: new Date().toISOString()
+  };
+
+  const pre = document.createElement("pre");
+  pre.className = "mono small";
+  pre.textContent = JSON.stringify(snapshot, null, 2);
+
+  const btn = document.createElement("button");
+  btn.className = "secondary";
+  btn.type = "button";
+  btn.textContent = "Snapshot kopieren";
+  btn.onclick = function(){
+    try{
+      if(navigator && navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(pre.textContent);
+      }else{
+        const ta = document.createElement("textarea");
+        ta.value = pre.textContent;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+    }catch(e){}
+  };
+
+  snap.appendChild(pre);
+  snap.appendChild(btn);
+  wrap.appendChild(snap);
+
+  return wrap;
+}
+
 
   function viewPlaceholder(title, text){
     const wrap = document.createElement("div");
