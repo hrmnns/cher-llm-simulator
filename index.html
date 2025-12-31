@@ -618,6 +618,15 @@
 </div>
 
 <script>
+
+// =========================================================
+// cher-llm-simulator — v1.3.34 (structure-only refactor)
+// Goal: improve maintainability WITHOUT changing behavior.
+// =========================================================
+
+// -----------------------------
+// 1) Constants & DOM references
+// -----------------------------
 // Early boot diagnostics (v1.3.6)
 (function(){
   const set = (kind, text, title) => {
@@ -661,7 +670,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.3.19";
+  const APP_VERSION = "v1.3.34";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -679,7 +688,11 @@
   // -----------------------------
   // State
   // -----------------------------
-  const state = {
+  
+// -----------------------------
+// 2) State (single source of truth)
+// -----------------------------
+const state = {
     mode: "guided",                // guided | sandbox
     scenariosDoc: null,            // full JSON document
     status: { kind: '', text: 'Szenarien: —', details: '' },
@@ -757,7 +770,11 @@
   // -----------------------------
   init();
 
-  async function init(){
+  
+// -----------------------------
+// 10) Boot
+// -----------------------------
+async function init(){
     if(el.verBadge) el.verBadge.textContent = APP_VERSION;
     try{ window.__cherBoot && window.__cherBoot.set("ok","JS: ready","JavaScript läuft."); }catch(e){}
     bindUI();
@@ -790,7 +807,11 @@
   // -----------------------------
   // Scenario loading
   // -----------------------------
-  async function loadScenarios(url){
+  
+// -----------------------------
+// 5) Scenario loading
+// -----------------------------
+async function loadScenarios(url){
     try{
       const res = await fetch(url, { cache: "no-store" });
       if(!res.ok) throw new Error("HTTP " + res.status);
@@ -2318,7 +2339,11 @@
     return s;
   }
 
-  function buildAttentionMatrix(scenario, tokens){
+  
+// -----------------------------
+// 7) Attention (toy)
+// -----------------------------
+function buildAttentionMatrix(scenario, tokens){
     // 1) If replay attention exists, prefer it.
     const r = scenario?.replay?.layers;
     if(Array.isArray(r) && r.length){
@@ -2651,7 +2676,12 @@ function populateScenarioSelect(){
   }
 
   function $(sel){ return document.querySelector(sel); }
-  function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+  
+// -----------------------------
+// 4) Math helpers (pure)
+// -----------------------------
+function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+  // NOTE: When inserting scenario text into innerHTML, always escape.
   function escapeHtml(str){
     return String(str)
       .replaceAll("&","&amp;")
