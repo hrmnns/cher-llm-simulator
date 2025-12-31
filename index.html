@@ -460,7 +460,13 @@
     .toast.show{display:block;}
     .toast .small{color: var(--muted);}
 
-  </style>
+  
+    .compare-grid{display:grid; gap:12px; grid-template-columns: 1fr 1fr;}
+    @media (max-width: 720px){ .compare-grid{grid-template-columns: 1fr;} }
+    .compare-card{border:1px solid rgba(34,48,68,.85); background: rgba(15,22,35,.45); border-radius: 16px; padding: 10px;}
+    .compare-title{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px;}
+    .compare-title strong{font-size:14px;}
+    </style>
 </head>
 <body>
 <div class="app">
@@ -655,7 +661,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.3.18";
+  const APP_VERSION = "v1.3.19";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1720,9 +1726,10 @@
   }
 
   
+  
   function viewMLP(scenario){
     const wrap = document.createElement("div");
-    wrap.appendChild(pNotice("MLP/FFN ergänzt die Attention: Attention mischt Information über Tokens (Kontext), MLP transformiert pro Token nichtlinear. Für ein Token i siehst du: Embedding (ohne Kontext), Kontext nach Attention, optional Delta (Kontext − Embedding) und den FFN-Output."));
+    wrap.appendChild(pNotice("MLP/FFN ergänzt die Attention: Attention mischt Information über Tokens (Kontext), MLP transformiert pro Token nichtlinear. In diesem Schritt kannst du direkt vergleichen: (A) FFN ohne Kontext (nur Embedding) vs. (B) FFN mit Kontext (nach Attention)."));
 
     // Context reminder: compact heatmap
     wrap.appendChild(h3("Attention-Heatmap (Kontextgrundlage)"));
@@ -1749,26 +1756,37 @@
       + '<div class="small muted">Zeige toy-FFN Input/Output für Token i.</div>';
     wrap.appendChild(controls);
 
-    // Controls: delta toggle (persist in state)
+    // Toggles (persist in state)
     if(typeof state.params.showDelta !== "boolean") state.params.showDelta = true;
-    const deltaToggle = document.createElement("div");
-    deltaToggle.className = "notice";
-    deltaToggle.innerHTML =
-      '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
-      + '<input id="mlpShowDelta" type="checkbox" />'
-      + '<span><strong>Delta anzeigen</strong> (Kontext − Embedding)</span>'
+    if(typeof state.params.mlpCompare !== "boolean") state.params.mlpCompare = true;
+
+    const toggles = document.createElement("div");
+    toggles.className = "notice";
+    toggles.innerHTML =
+      '<div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center;">'
+      + '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
+      + '  <input id="mlpCompare" type="checkbox" />'
+      + '  <span><strong>Vergleich anzeigen</strong> (ohne vs. mit Attention)</span>'
       + '</label>'
-      + '<div class="small muted" style="margin-top:6px;">Aha-Punkt: Ohne Attention bleibt nur das Embedding. Mit Attention entsteht ein Kontextvektor. Das Delta macht sichtbar, was der Kontext ergänzt.</div>';
-    wrap.appendChild(deltaToggle);
+      + '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
+      + '  <input id="mlpShowDelta" type="checkbox" />'
+      + '  <span><strong>Delta anzeigen</strong> (Kontext − Embedding)</span>'
+      + '</label>'
+      + '</div>'
+      + '<div class="small muted" style="margin-top:8px;">Tipp: Der Vergleich ist der Aha-Punkt. Ohne Attention bleibt die Repräsentation lokal (Embedding). Mit Attention entsteht ein Kontextvektor, der die FFN-Eingabe sichtbar verschiebt.</div>';
+    wrap.appendChild(toggles);
 
     const r = controls.querySelector("#mlpTokRange");
     const v = controls.querySelector("#mlpTokVal");
-    const chk = deltaToggle.querySelector("#mlpShowDelta");
+    const chkCompare = toggles.querySelector("#mlpCompare");
+    const chkDelta = toggles.querySelector("#mlpShowDelta");
 
     const defaultIdx = Math.max(0, toks.length - 1);
     r.value = String(defaultIdx);
     v.textContent = defaultIdx + ": " + stripLeadingSpace(toks[defaultIdx].text);
-    chk.checked = !!state.params.showDelta;
+
+    chkCompare.checked = !!state.params.mlpCompare;
+    chkDelta.checked = !!state.params.showDelta;
 
     // Build representations
     const E = getEmbeddingsForScenario(scenario, toks); // [T][d]
@@ -1776,12 +1794,11 @@
     const dModel = state.params.dModel;
     const ffn = buildToyFFN((scenario && scenario.id) ? scenario.id : "x", dModel);
 
-    const vectorsBox = document.createElement("div");
+    const outBox = document.createElement("div");
     wrap.appendChild(h3("MLP Vorher/Nachher (toy-FFN)"));
-    wrap.appendChild(vectorsBox);
+    wrap.appendChild(outBox);
 
-    function computeFor(i){
-      const emb = E[i];
+    function ctxWithAttention(i){
       const ctx = new Array(dModel);
       for(let k=0;k<dModel;k++) ctx[k] = 0;
 
@@ -1791,36 +1808,90 @@
           ctx[k] += a * E[j][k];
         }
       }
-
-      const h1 = matVec(ffn.W1, ctx, ffn.b1);
-      for(let t=0;t<h1.length;t++) h1[t] = relu(h1[t]);
-      const out = matVec(ffn.W2, h1, ffn.b2);
-
-      return { emb: emb, ctx: ctx, out: out };
+      return ctx;
     }
 
-    function renderFor(i){
-      v.textContent = i + ": " + stripLeadingSpace(toks[i].text);
-      const res = computeFor(i);
-      vectorsBox.innerHTML = "";
-      vectorsBox.appendChild(renderVectorBars(res.emb, "Embedding (ohne Kontext)"));
-      vectorsBox.appendChild(renderVectorBars(res.ctx, "Kontext nach Attention (Input in FFN)"));
+    function ffnForward(vec){
+      const h1 = matVec(ffn.W1, vec, ffn.b1);
+      for(let t=0;t<h1.length;t++) h1[t] = relu(h1[t]);
+      return matVec(ffn.W2, h1, ffn.b2);
+    }
+
+    function renderSingle(i){
+      const emb = E[i];
+      const ctx = ctxWithAttention(i);
+      const out = ffnForward(ctx);
+
+      outBox.innerHTML = "";
+      outBox.appendChild(renderVectorBars(emb, "Embedding (ohne Kontext)"));
+      outBox.appendChild(renderVectorBars(ctx, "Kontext nach Attention (Input in FFN)"));
       if(!!state.params.showDelta){
-        vectorsBox.appendChild(renderDeltaBars(res.ctx, res.emb, "Delta: Kontext − Embedding"));
+        outBox.appendChild(renderDeltaBars(ctx, emb, "Delta: Kontext − Embedding"));
       }
-      vectorsBox.appendChild(renderVectorBars(res.out, "FFN-Output (nach MLP/FFN)"));
+      outBox.appendChild(renderVectorBars(out, "FFN-Output (nach MLP/FFN)"));
+    }
+
+    function renderCompare(i){
+      const emb = E[i];
+      const ctx = ctxWithAttention(i);
+
+      const outNo = ffnForward(emb); // "ohne Attention" = FFN direkt auf Embedding
+      const outYes = ffnForward(ctx);
+
+      outBox.innerHTML = "";
+
+      const grid = document.createElement("div");
+      grid.className = "compare-grid";
+
+      const left = document.createElement("div");
+      left.className = "compare-card";
+      left.innerHTML = '<div class="compare-title"><strong>A) Ohne Attention</strong><span class="small muted">FFN(Embedding)</span></div>';
+      left.appendChild(renderVectorBars(emb, "Input: Embedding"));
+      left.appendChild(renderVectorBars(outNo, "Output: FFN(Embedding)"));
+
+      const right = document.createElement("div");
+      right.className = "compare-card";
+      right.innerHTML = '<div class="compare-title"><strong>B) Mit Attention</strong><span class="small muted">FFN(Kontext)</span></div>';
+      right.appendChild(renderVectorBars(ctx, "Input: Kontext nach Attention"));
+      if(!!state.params.showDelta){
+        right.appendChild(renderDeltaBars(ctx, emb, "Delta: Kontext − Embedding"));
+      }
+      right.appendChild(renderVectorBars(outYes, "Output: FFN(Kontext)"));
+
+      grid.appendChild(left);
+      grid.appendChild(right);
+
+      outBox.appendChild(grid);
+
+      const note = document.createElement("div");
+      note.className = "notice";
+      note.innerHTML =
+        '<div class="small muted">Interpretation</div>'
+        + '<div class="small">Wenn sich <span class="mono">Input</span> (Embedding vs. Kontext) sichtbar unterscheidet, wird auch das FFN-Output anders. So trennt man sauber: <strong>Kontextbildung</strong> (Attention) vs. <strong>nichtlineare Transformation</strong> (MLP).</div>';
+      outBox.appendChild(note);
+    }
+
+    function render(i){
+      v.textContent = i + ": " + stripLeadingSpace(toks[i].text);
+      if(!!state.params.mlpCompare) renderCompare(i);
+      else renderSingle(i);
     }
 
     r.addEventListener("input", function(e){
-      renderFor(Number(e.target.value));
+      render(Number(e.target.value));
     });
 
-    chk.addEventListener("change", function(){
-      state.params.showDelta = !!chk.checked;
-      renderFor(Number(r.value));
+    chkCompare.addEventListener("change", function(){
+      state.params.mlpCompare = !!chkCompare.checked;
+      render(Number(r.value));
     });
 
-    renderFor(defaultIdx);
+    chkDelta.addEventListener("change", function(){
+      state.params.showDelta = !!chkDelta.checked;
+      render(Number(r.value));
+    });
+
+    render(defaultIdx);
     return wrap;
   }
 
