@@ -1,0 +1,332 @@
+{
+  "meta": {
+    "version": "1.0",
+    "project": "cher-llm-simulator",
+    "description": "Guided scenarios for explaining LLM core mechanics",
+    "defaultScenarioId": "baseline-hund"
+  },
+  "scenarios": [
+    {
+      "id": "baseline-hund",
+      "title": "Baseline: Was ist ein Hund?",
+      "learningGoals": [
+        "Grundlegender LLM-Verarbeitungsweg",
+        "Tokenisierung als Vorbereitung",
+        "Iterative Token-Generierung"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Antworte in einem Satz.",
+        "user": "Was ist ein Hund?"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Was",
+            "id": 101
+          },
+          {
+            "text": " ist",
+            "id": 102
+          },
+          {
+            "text": " ein",
+            "id": 103
+          },
+          {
+            "text": " Hund",
+            "id": 104
+          },
+          {
+            "text": "?",
+            "id": 105
+          }
+        ]
+      },
+      "generation": {
+        "outputText": "Ein Hund ist ein Säugetier."
+      },
+      "highlights": {
+        "explain": [
+          {
+            "at": "input",
+            "text": "Der Prompt besteht ausschließlich aus Text – auch Instruktionen werden nicht anders behandelt."
+          },
+          {
+            "at": "decoding",
+            "text": "Die Ausgabe entsteht Token für Token und nicht in einem einzigen Schritt."
+          }
+        ]
+      }
+    },
+    {
+      "id": "kompositum-hundeleine",
+      "title": "Komposita & Subwords: Hundeleine",
+      "learningGoals": [
+        "Subword-Tokenisierung",
+        "Warum Komposita zerlegt werden"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Antworte kurz.",
+        "user": "Was ist eine Hundeleine?"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Was",
+            "id": 101
+          },
+          {
+            "text": " ist",
+            "id": 102
+          },
+          {
+            "text": " eine",
+            "id": 106
+          },
+          {
+            "text": " Hund",
+            "id": 104
+          },
+          {
+            "text": "eleine",
+            "id": 207
+          },
+          {
+            "text": "?",
+            "id": 105
+          }
+        ]
+      },
+      "generation": {
+        "outputText": "Eine Hundeleine ist eine Leine zum Führen eines Hundes."
+      },
+      "highlights": {
+        "tokenFocus": [
+          "Hund",
+          "eleine"
+        ],
+        "explain": [
+          {
+            "at": "tokenizer",
+            "text": "Zusammengesetzte Wörter werden in bekannte Teilstücke zerlegt, um mit einem begrenzten Vokabular auszukommen."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ambiguitaet-bank",
+      "title": "Mehrdeutigkeit ohne Kontext: Bank",
+      "learningGoals": [
+        "Ambiguität von Tokens",
+        "Rolle von Kontext für Bedeutung"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Antworte knapp.",
+        "user": "Was ist eine Bank?"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Was",
+            "id": 101
+          },
+          {
+            "text": " ist",
+            "id": 102
+          },
+          {
+            "text": " eine",
+            "id": 106
+          },
+          {
+            "text": " Bank",
+            "id": 305
+          },
+          {
+            "text": "?",
+            "id": 105
+          }
+        ]
+      },
+      "generation": {
+        "outputText": "Eine Bank kann ein Finanzinstitut oder eine Sitzgelegenheit sein."
+      },
+      "highlights": {
+        "tokenFocus": [
+          "Bank"
+        ],
+        "explain": [
+          {
+            "at": "attention",
+            "text": "Ohne zusätzlichen Kontext bleibt die Bedeutung mehrdeutig."
+          }
+        ]
+      }
+    },
+    {
+      "id": "wiederholung-hund",
+      "title": "Wiederholung & Gewichtung: Hund Hund Hund",
+      "learningGoals": [
+        "Einfluss von Wiederholung auf Attention",
+        "Token-Gewichtung"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Beobachte die Eingabe.",
+        "user": "Hund Hund Hund"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Hund",
+            "id": 104
+          },
+          {
+            "text": " Hund",
+            "id": 104
+          },
+          {
+            "text": " Hund",
+            "id": 104
+          }
+        ]
+      },
+      "generation": {
+        "outputText": "Hund"
+      },
+      "highlights": {
+        "explain": [
+          {
+            "at": "attention",
+            "text": "Wiederholte Tokens können stärker gewichtet werden und dominieren den Kontext."
+          }
+        ]
+      }
+    },
+    {
+      "id": "stil-instruktion",
+      "title": "Instruktionen beeinflussen Stil",
+      "learningGoals": [
+        "Einfluss von Instruktionen",
+        "Form vs. Inhalt"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Antworte in genau fünf Wörtern.",
+        "user": "Was ist ein Hund?"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Was",
+            "id": 101
+          },
+          {
+            "text": " ist",
+            "id": 102
+          },
+          {
+            "text": " ein",
+            "id": 103
+          },
+          {
+            "text": " Hund",
+            "id": 104
+          },
+          {
+            "text": "?",
+            "id": 105
+          }
+        ]
+      },
+      "generation": {
+        "outputText": "Ein Hund ist ein Haustier."
+      },
+      "highlights": {
+        "explain": [
+          {
+            "at": "input",
+            "text": "Instruktionen beeinflussen die Form der Ausgabe, nicht das Weltwissen des Modells."
+          }
+        ]
+      }
+    },
+    {
+      "id": "laenge-kontext",
+      "title": "Länge & Kontext",
+      "learningGoals": [
+        "Längere Kontexte",
+        "Iterative Generierung"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Erkläre ausführlich.",
+        "user": "Was ist ein Hund und warum halten Menschen Hunde?"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Was",
+            "id": 101
+          },
+          {
+            "text": " ist",
+            "id": 102
+          },
+          {
+            "text": " ein",
+            "id": 103
+          },
+          {
+            "text": " Hund",
+            "id": 104
+          },
+          {
+            "text": " und",
+            "id": 110
+          },
+          {
+            "text": " warum",
+            "id": 111
+          },
+          {
+            "text": " halten",
+            "id": 112
+          },
+          {
+            "text": " Menschen",
+            "id": 113
+          },
+          {
+            "text": " Hunde",
+            "id": 114
+          },
+          {
+            "text": "?",
+            "id": 105
+          }
+        ]
+      },
+      "generation": {
+        "outputText": "Ein Hund ist ein domestiziertes Tier, das Menschen aus verschiedenen praktischen und sozialen Gründen halten."
+      },
+      "highlights": {
+        "explain": [
+          {
+            "at": "decoding",
+            "text": "Längere Antworten entstehen durch viele aufeinanderfolgende Generationsschritte."
+          }
+        ]
+      }
+    }
+  ]
+}
