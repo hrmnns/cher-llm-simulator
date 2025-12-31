@@ -474,7 +474,8 @@
             <div class="sub">Erklärbare Simulation von LLM-Grundprinzipien</div>
           </div>
         </div>
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span class="badge" id="loadStatus">Szenarien: —</span><span class="badge warn" id="jsStatus" title="Wenn hier nicht ‚ready‘ steht, läuft JavaScript nicht.">JS: …</span></div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span class="badge ok" id="verBadge">v—</span>
+        <span class="badge" id="loadStatus">Szenarien: —</span><span class="badge warn" id="jsStatus" title="Wenn hier nicht ‚ready‘ steht, läuft JavaScript nicht.">JS: …</span></div>
       </div>
 
       <div class="toolbar">
@@ -654,6 +655,7 @@
 
 <script>
 (() => {
+  const APP_VERSION = "v1.3.15";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -686,6 +688,7 @@
   // DOM
   // -----------------------------
   const el = {
+    verBadge: $("#verBadge"),
     loadStatus: $("#loadStatus"),
     diagBtn: $("#diagBtn"),
     diagBackdrop: $("#diagBackdrop"),
@@ -749,6 +752,7 @@
   init();
 
   async function init(){
+    if(el.verBadge) el.verBadge.textContent = APP_VERSION;
     try{ window.__cherBoot && window.__cherBoot.set("ok","JS: ready","JavaScript läuft."); }catch(e){}
     bindUI();
     // Robust: event delegation for Diagnose button (works even if element is injected later)
@@ -1054,7 +1058,7 @@
       case "tokenizer": return el.view.appendChild(viewTokenizer(scenario));
       case "embedding": return el.view.appendChild(viewEmbedding(scenario));
       case "attention": return el.view.appendChild(viewAttention(scenario));
-      case "mlp": return el.view.appendChild(viewPlaceholder("MLP", "In v1 ein Platzhalter. In v2: Vorher/Nachher-Vektoren (Delta), einfache Nichtlinearität."));
+      case "mlp": return el.view.appendChild(viewMLP(scenario));
       case "logits": return el.view.appendChild(viewLogits(scenario));
       case "decoding": return el.view.appendChild(viewOutput(scenario));
       case "summary": return el.view.appendChild(viewSummary(scenario));
@@ -1462,253 +1466,6 @@
   }
 
 
-  function attentionHeatmapElement(scenario, opts){
-    opts = opts || {};
-    const toks = (scenario && scenario.tokenization && scenario.tokenization.tokens) ? scenario.tokenization.tokens : [];
-    const focus = (scenario && scenario.highlights && scenario.highlights.tokenFocus) ? scenario.highlights.tokenFocus : [];
-    const compact = !!opts.compact;
-
-    const wrap = document.createElement("div");
-    if(!toks.length){
-      wrap.appendChild(pNotice("Keine Tokens – keine Heatmap.", true));
-      return wrap;
-    }
-
-    const M = buildAttentionMatrix(scenario, toks);
-    const T = toks.length;
-
-    const hmWrap = document.createElement("div");
-    hmWrap.className = "heatmap-wrap";
-    if(compact){
-      hmWrap.style.padding = "8px";
-    }
-
-    const grid = document.createElement("div");
-    grid.className = "heatmap-grid";
-    grid.style.gridTemplateColumns = "repeat(" + T + ", 18px)";
-
-    let maxVal = 0;
-    for(let i=0;i<T;i++) for(let j=0;j<T;j++) maxVal = Math.max(maxVal, M[i][j] || 0);
-    maxVal = Math.max(1e-9, maxVal);
-
-    for(let i=0;i<T;i++){
-      for(let j=0;j<T;j++){
-        const cell = document.createElement("div");
-        cell.className = "heatmap-cell";
-        const v = M[i][j] || 0;
-        const a = clamp01(v / maxVal);
-        cell.style.background = "rgba(102,217,239," + (0.08 + a*0.72).toFixed(3) + ")";
-
-        const fromTok = stripLeadingSpace(toks[i].text);
-        const toTok   = stripLeadingSpace(toks[j].text);
-        const masked  = (state.params.causalMask && j > i);
-        cell.title = masked
-          ? ("i=" + i + " (" + fromTok + ") → j=" + j + " (" + toTok + "): masked")
-          : ("i=" + i + " (" + fromTok + ") → j=" + j + " (" + toTok + "): " + (v*100).toFixed(1) + "%");
-
-        if(focus.indexOf(fromTok) !== -1 || focus.indexOf(toTok) !== -1){
-          cell.style.borderColor = "rgba(110,231,183,.45)";
-        }
-        grid.appendChild(cell);
-      }
-    }
-
-    const container = document.createElement("div");
-    container.style.display = "inline-block";
-    container.appendChild(grid);
-    hmWrap.appendChild(container);
-    wrap.appendChild(hmWrap);
-
-    if(!compact){
-      const axes = document.createElement("div");
-      axes.className = "heatmap-axes";
-      axes.innerHTML = `
-        <div class="heatmap-legend">
-          <span class="legend-swatch"></span>
-          <span><strong>Heller</strong> = höhere Gewichtung. Zeile <span class="mono">i</span> „achtet auf“ Spalte <span class="mono">j</span>.</span>
-        </div>
-        <div class="muted small">
-          Tipp: Mit <strong>Causal Mask</strong> kann ein Token nur auf sich selbst und vorherige Tokens achten.
-        </div>
-      `;
-      wrap.appendChild(axes);
-    }
-
-    return wrap;
-  }
-
-  function relu(x){ return Math.max(0, x); }
-
-  function matVec(W, v, b){
-    const out = new Array(W.length);
-    for(let i=0;i<W.length;i++){
-      let s = b ? (b[i] || 0) : 0;
-      const row = W[i];
-      for(let j=0;j<row.length;j++) s += row[j] * v[j];
-      out[i] = s;
-    }
-    return out;
-  }
-
-  function buildToyFFN(seed, dModel){
-    // Simple 2-layer FFN: dModel -> 2*dModel -> dModel (deterministic)
-    const dHidden = dModel * 2;
-    let x = stableHash("ffn|" + seed + "|d" + dModel) >>> 0;
-
-    const rand = () => {
-      x = xorshift32(x);
-      return ((x >>> 0) / 4294967296) * 2 - 1; // [-1,1]
-    };
-
-    const W1 = Array.from({length:dHidden}, () => Array.from({length:dModel}, () => rand() * 0.35));
-    const b1 = Array.from({length:dHidden}, () => rand() * 0.05);
-    const W2 = Array.from({length:dModel}, () => Array.from({length:dHidden}, () => rand() * 0.35));
-    const b2 = Array.from({length:dModel}, () => rand() * 0.05);
-    return { W1, b1, W2, b2 };
-  }
-
-  function renderVectorBars(vec, label){
-    const box = document.createElement("div");
-    box.className = "notice";
-    const title = document.createElement("div");
-    title.className = "small muted";
-    title.textContent = label;
-    box.appendChild(title);
-
-    const maxAbs = Math.max(1e-6, ...vec.map(v => Math.abs(v)));
-    const list = document.createElement("div");
-    list.style.display = "grid";
-    list.style.gap = "6px";
-    list.style.marginTop = "8px";
-
-    const shown = Math.min(vec.length, 16);
-    for(let i=0;i<shown;i++){
-      const row = document.createElement("div");
-      row.style.display = "grid";
-      row.style.gridTemplateColumns = "40px 1fr 64px";
-      row.style.gap = "10px";
-      row.style.alignItems = "center";
-
-      const k = document.createElement("span");
-      k.className = "mono small";
-      k.textContent = "d" + i;
-
-      const barOuter = document.createElement("div");
-      barOuter.style.height = "10px";
-      barOuter.style.borderRadius = "999px";
-      barOuter.style.border = "1px solid rgba(34,48,68,.85)";
-      barOuter.style.background = "rgba(15,22,35,.65)";
-      barOuter.style.overflow = "hidden";
-
-      const barInner = document.createElement("div");
-      barInner.style.height = "100%";
-      const w = Math.max(2, Math.round((Math.abs(vec[i]) / maxAbs) * 100));
-      barInner.style.width = w + "%";
-      barInner.style.borderRadius = "999px";
-      barInner.style.background = (vec[i] >= 0) ? "rgba(110,231,183,.70)" : "rgba(255,107,107,.55)";
-      barOuter.appendChild(barInner);
-
-      const val = document.createElement("span");
-      val.className = "mono small";
-      val.textContent = (Math.round(vec[i]*1000)/1000).toFixed(3);
-
-      row.appendChild(k);
-      row.appendChild(barOuter);
-      row.appendChild(val);
-      list.appendChild(row);
-    }
-
-    const hint = document.createElement("div");
-    hint.className = "small muted";
-    hint.style.marginTop = "8px";
-    hint.textContent = "Anzeige: erste " + shown + " Dimensionen (didaktisch).";
-    box.appendChild(list);
-    box.appendChild(hint);
-    return box;
-  }
-
-  function viewMLP(scenario){
-    const wrap = document.createElement("div");
-    wrap.appendChild(pNotice("Die MLP-/FFN-Schicht (Feed-Forward Network) verarbeitet die Token-Repräsentation nach der Attention nichtlinear weiter (z. B. ReLU/GELU). Hier zeigen wir: (1) die Attention-Heatmap zur Einordnung und (2) einen toy-FFN Vorher/Nachher-Vektor für ein ausgewähltes Token."));
-
-    // 1) Attention heatmap (compact) to keep context visible in MLP step
-    wrap.appendChild(h3("Attention-Heatmap (Kontext aus dem vorherigen Schritt)"));
-    wrap.appendChild(attentionHeatmapElement(scenario, { compact: true }));
-
-    const toks = (scenario && scenario.tokenization && scenario.tokenization.tokens) ? scenario.tokenization.tokens : [];
-    if(!toks.length){
-      wrap.appendChild(pNotice("Keine Tokens – MLP kann nicht visualisiert werden.", true));
-      return wrap;
-    }
-
-    // Token selector
-    const controls = document.createElement("div");
-    controls.className = "notice";
-    controls.style.display = "grid";
-    controls.style.gap = "10px";
-    controls.innerHTML = `
-      <div class="kv">
-        <div class="k">Token i</div>
-        <div class="v" style="display:flex; gap:10px; align-items:center;">
-          <input id="mlpTokRange" type="range" min="0" max="${toks.length-1}" step="1" />
-          <span class="mono" id="mlpTokVal"></span>
-        </div>
-      </div>
-      <div class="small muted">Zeige toy-FFN Input/Output für Token i (Repräsentation nach Attention → FFN).</div>
-    `;
-    wrap.appendChild(controls);
-
-    const r = controls.querySelector("#mlpTokRange");
-    const v = controls.querySelector("#mlpTokVal");
-    const defaultIdx = Math.max(0, toks.length-1);
-    r.value = String(defaultIdx);
-    v.textContent = defaultIdx + ": " + stripLeadingSpace(toks[defaultIdx].text);
-
-    // Compute representations
-    const E = getEmbeddingsForScenario(scenario, toks); // [T][d]
-    const M = buildAttentionMatrix(scenario, toks);
-    const dModel = state.params.dModel;
-
-    const ffn = buildToyFFN((scenario && scenario.id) ? scenario.id : "x", dModel);
-
-    const computeFor = (i) => {
-      // context vector (post-attn) for token i: sum_j a_ij * E_j
-      const ctx = new Array(dModel).fill(0);
-      for(let j=0;j<toks.length;j++){
-        const a = (M[i] && typeof M[i][j] === "number") ? M[i][j] : 0;
-        for(let k=0;k<dModel;k++){
-          ctx[k] += a * E[j][k];
-        }
-      }
-      // FFN: relu(W1*ctx+b1) then W2*h+b2
-      const h1 = matVec(ffn.W1, ctx, ffn.b1).map(relu);
-      const out = matVec(ffn.W2, h1, ffn.b2);
-      return { ctx, out };
-    };
-
-    let vectorsBox = document.createElement("div");
-    const renderFor = (i) => {
-      const tokenText = stripLeadingSpace(toks[i].text);
-      v.textContent = i + ": " + tokenText;
-
-      const res = computeFor(i);
-      vectorsBox.innerHTML = "";
-      vectorsBox.appendChild(renderVectorBars(res.ctx, "FFN-Input (nach Attention)"));
-      vectorsBox.appendChild(renderVectorBars(res.out, "FFN-Output (nach MLP)"));
-    };
-
-    r.addEventListener("input", (e) => {
-      renderFor(Number(e.target.value));
-    });
-
-    wrap.appendChild(h3("MLP Vorher/Nachher (toy-FFN)"));
-    wrap.appendChild(vectorsBox);
-    renderFor(defaultIdx);
-
-    return wrap;
-  }
-
-
   function viewOutput(scenario){
     const wrap = document.createElement("div");
     wrap.appendChild(pNotice("In Guided-Szenarien ist die Ausgabe vorgegeben. In v2 können zusätzlich Top-K/Steps (Sampling) visualisiert werden."));
@@ -1804,6 +1561,217 @@
 
     wrap.appendChild(h3("Hinweis"));
     wrap.appendChild(pNotice("Die konkreten Werte sind in v1.3 eine seeded Simulation (oder aus Szenario-Replay). Entscheidend ist der Ablauf: Logits → Softmax → Auswahl des nächsten Tokens."));
+
+    return wrap;
+  }
+
+
+  // -----------------------------
+  // MLP / FFN view (v1.3.15)
+  // -----------------------------
+  function relu(x){ return Math.max(0, x); }
+
+  function matVec(W, v, b){
+    const out = new Array(W.length);
+    for(let i=0;i<W.length;i++){
+      let s = b ? (b[i] || 0) : 0;
+      const row = W[i];
+      for(let j=0;j<row.length;j++) s += row[j] * v[j];
+      out[i] = s;
+    }
+    return out;
+  }
+
+  function buildToyFFN(seed, dModel){
+    const dHidden = dModel * 2;
+    let x = stableHash("ffn|" + seed + "|d" + dModel) >>> 0;
+    const rand = function(){
+      x = xorshift32(x);
+      return ((x >>> 0) / 4294967296) * 2 - 1;
+    };
+
+    const W1 = [], b1 = [], W2 = [], b2 = [];
+    for(let i=0;i<dHidden;i++){
+      const row = [];
+      for(let j=0;j<dModel;j++) row.push(rand() * 0.35);
+      W1.push(row);
+      b1.push(rand() * 0.05);
+    }
+    for(let i=0;i<dModel;i++){
+      const row = [];
+      for(let j=0;j<dHidden;j++) row.push(rand() * 0.35);
+      W2.push(row);
+      b2.push(rand() * 0.05);
+    }
+    return { W1: W1, b1: b1, W2: W2, b2: b2 };
+  }
+
+  function renderVectorBars(vec, label){
+    const box = document.createElement("div");
+    box.className = "notice";
+    const title = document.createElement("div");
+    title.className = "small muted";
+    title.textContent = label;
+    box.appendChild(title);
+
+    let maxAbs = 1e-6;
+    for(let i=0;i<vec.length;i++) maxAbs = Math.max(maxAbs, Math.abs(vec[i]));
+
+    const list = document.createElement("div");
+    list.style.display = "grid";
+    list.style.gap = "6px";
+    list.style.marginTop = "8px";
+
+    const shown = Math.min(vec.length, 16);
+    for(let i=0;i<shown;i++){
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gridTemplateColumns = "40px 1fr 64px";
+      row.style.gap = "10px";
+      row.style.alignItems = "center";
+
+      const k = document.createElement("span");
+      k.className = "mono small";
+      k.textContent = "d" + i;
+
+      const barOuter = document.createElement("div");
+      barOuter.style.height = "10px";
+      barOuter.style.borderRadius = "999px";
+      barOuter.style.border = "1px solid rgba(34,48,68,.85)";
+      barOuter.style.background = "rgba(15,22,35,.65)";
+      barOuter.style.overflow = "hidden";
+
+      const barInner = document.createElement("div");
+      barInner.style.height = "100%";
+      const w = Math.max(2, Math.round((Math.abs(vec[i]) / maxAbs) * 100));
+      barInner.style.width = w + "%";
+      barInner.style.borderRadius = "999px";
+      barInner.style.background = (vec[i] >= 0) ? "rgba(110,231,183,.70)" : "rgba(255,107,107,.55)";
+      barOuter.appendChild(barInner);
+
+      const val = document.createElement("span");
+      val.className = "mono small";
+      val.textContent = (Math.round(vec[i]*1000)/1000).toFixed(3);
+
+      row.appendChild(k);
+      row.appendChild(barOuter);
+      row.appendChild(val);
+      list.appendChild(row);
+    }
+
+    const hint = document.createElement("div");
+    hint.className = "small muted";
+    hint.style.marginTop = "8px";
+    hint.textContent = "Anzeige: erste " + shown + " Dimensionen (didaktisch).";
+    box.appendChild(list);
+    box.appendChild(hint);
+    return box;
+  }
+
+  function attentionHeatmapCompact(scenario){
+    const toks = (scenario && scenario.tokenization && scenario.tokenization.tokens) ? scenario.tokenization.tokens : [];
+    if(!toks.length) return pNotice("Keine Tokens – keine Heatmap.", true);
+
+    const M = buildAttentionMatrix(scenario, toks);
+    const T = toks.length;
+
+    const hmWrap = document.createElement("div");
+    hmWrap.className = "heatmap-wrap";
+    hmWrap.style.padding = "8px";
+
+    const grid = document.createElement("div");
+    grid.className = "heatmap-grid";
+    grid.style.gridTemplateColumns = "repeat(" + T + ", 18px)";
+
+    let maxVal = 0;
+    for(let i=0;i<T;i++) for(let j=0;j<T;j++) maxVal = Math.max(maxVal, M[i][j] || 0);
+    if(maxVal < 1e-9) maxVal = 1e-9;
+
+    for(let i=0;i<T;i++){
+      for(let j=0;j<T;j++){
+        const cell = document.createElement("div");
+        cell.className = "heatmap-cell";
+        const v = M[i][j] || 0;
+        const a = clamp01(v / maxVal);
+        cell.style.background = "rgba(102,217,239," + (0.08 + a*0.72).toFixed(3) + ")";
+        cell.title = "i=" + i + " → j=" + j + ": " + (v*100).toFixed(1) + "%";
+        grid.appendChild(cell);
+      }
+    }
+    hmWrap.appendChild(grid);
+    return hmWrap;
+  }
+
+  function viewMLP(scenario){
+    const wrap = document.createElement("div");
+    wrap.appendChild(pNotice("MLP/FFN: Nach der Attention wird jede Token-Repräsentation nichtlinear weiter transformiert (z. B. ReLU/GELU). Hier zeigen wir (didaktisch): Kontext-Vektor nach Attention → FFN-Output."));
+
+    wrap.appendChild(h3("Attention-Heatmap (Kontextgrundlage)"));
+    wrap.appendChild(attentionHeatmapCompact(scenario));
+
+    const toks = (scenario && scenario.tokenization && scenario.tokenization.tokens) ? scenario.tokenization.tokens : [];
+    if(!toks.length){
+      wrap.appendChild(pNotice("Keine Tokens – MLP kann nicht visualisiert werden.", true));
+      return wrap;
+    }
+
+    const controls = document.createElement("div");
+    controls.className = "notice";
+    controls.style.display = "grid";
+    controls.style.gap = "10px";
+    controls.innerHTML =
+      '<div class="kv">'
+      + '<div class="k">Token i</div>'
+      + '<div class="v" style="display:flex; gap:10px; align-items:center;">'
+      + '<input id="mlpTokRange" type="range" min="0" max="' + (toks.length-1) + '" step="1" />'
+      + '<span class="mono" id="mlpTokVal"></span>'
+      + '</div></div>'
+      + '<div class="small muted">Zeige toy-FFN Input/Output für Token i.</div>';
+    wrap.appendChild(controls);
+
+    const r = controls.querySelector("#mlpTokRange");
+    const v = controls.querySelector("#mlpTokVal");
+    const defaultIdx = Math.max(0, toks.length-1);
+    r.value = String(defaultIdx);
+    v.textContent = defaultIdx + ": " + stripLeadingSpace(toks[defaultIdx].text);
+
+    const E = getEmbeddingsForScenario(scenario, toks);
+    const A = buildAttentionMatrix(scenario, toks);
+    const dModel = state.params.dModel;
+    const ffn = buildToyFFN((scenario && scenario.id) ? scenario.id : "x", dModel);
+
+    const vectorsBox = document.createElement("div");
+
+    function computeFor(i){
+      const ctx = new Array(dModel);
+      for(let k=0;k<dModel;k++) ctx[k] = 0;
+      for(let j=0;j<toks.length;j++){
+        const a = (A[i] && typeof A[i][j] === "number") ? A[i][j] : 0;
+        for(let k=0;k<dModel;k++){
+          ctx[k] += a * E[j][k];
+        }
+      }
+      const h1 = matVec(ffn.W1, ctx, ffn.b1);
+      for(let t=0;t<h1.length;t++) h1[t] = relu(h1[t]);
+      const out = matVec(ffn.W2, h1, ffn.b2);
+      return { ctx: ctx, out: out };
+    }
+
+    function renderFor(i){
+      v.textContent = i + ": " + stripLeadingSpace(toks[i].text);
+      const res = computeFor(i);
+      vectorsBox.innerHTML = "";
+      vectorsBox.appendChild(renderVectorBars(res.ctx, "FFN-Input (nach Attention)"));
+      vectorsBox.appendChild(renderVectorBars(res.out, "FFN-Output (nach MLP/FFN)"));
+    }
+
+    r.addEventListener("input", function(e){
+      renderFor(Number(e.target.value));
+    });
+
+    wrap.appendChild(h3("MLP Vorher/Nachher (toy-FFN)"));
+    wrap.appendChild(vectorsBox);
+    renderFor(defaultIdx);
 
     return wrap;
   }
