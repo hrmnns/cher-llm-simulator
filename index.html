@@ -1281,22 +1281,6 @@
         wrap.appendChild(pNotice(`Weitere Schritte in „Logits“ (insgesamt ${steps.length}).`));
       }
     }
-
-    const steps = scenario.generation?.steps;
-    if(Array.isArray(steps) && steps.length){
-      wrap.appendChild(h3("Decoding Steps (Top-K)"));
-      const ul = document.createElement("ul");
-      ul.className = "small";
-      ul.style.margin = "0";
-      ul.style.paddingLeft = "18px";
-      for(const s of steps){
-        const li = document.createElement("li");
-        const top = (s.topK || []).slice(0,5).map(x => `${x.token} (${x.p})`).join(", ");
-        li.textContent = `Step ${s.step}: chosen=${s.chosenToken} · topK: ${top}`;
-        ul.appendChild(li);
-      }
-      wrap.appendChild(ul);
-    }
     return wrap;
   }
 
