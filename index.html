@@ -352,6 +352,50 @@
       background: rgba(102,217,239,.18);
       border-color: rgba(102,217,239,.45);
     }
+  
+    .heatmap-wrap{
+      overflow:auto;
+      border:1px solid rgba(34,48,68,.85);
+      background: rgba(15,22,35,.75);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .heatmap-grid{
+      display:grid;
+      gap: 3px;
+      align-items:stretch;
+      justify-items:stretch;
+      user-select:none;
+      touch-action: manipulation;
+    }
+    .heatmap-cell{
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid rgba(34,48,68,.35);
+      background: rgba(102,217,239,.10);
+    }
+    .heatmap-axes{
+      display:grid;
+      gap:8px;
+      margin-top:10px;
+      color: var(--muted);
+      font-size:12px;
+    }
+    .heatmap-legend{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .legend-swatch{
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(34,48,68,.35);
+      background: rgba(102,217,239,.50);
+    }
+
   </style>
 </head>
 <body>
@@ -505,7 +549,7 @@
     scenarioId: null,              // selected scenario id
     step: "input",                 // current pipeline step
     sandboxInput: "Was ist ein Hund?",
-    params: { temperature: 0.8, topP: 0.9, topK: 10, dModel: 16, posEnc: true },
+    params: { temperature: 0.8, topP: 0.9, topK: 10, dModel: 16, posEnc: true, attnLayer: 1, attnHead: 1, causalMask: true },
     cache: { embeddings: null, embeddingKey: null },
   };
 
@@ -790,7 +834,7 @@
       case "input": return el.view.appendChild(viewInput(scenario));
       case "tokenizer": return el.view.appendChild(viewTokenizer(scenario));
       case "embedding": return el.view.appendChild(viewEmbedding(scenario));
-      case "attention": return el.view.appendChild(viewPlaceholder("Attention", "In v1 ist dies ein Platzhalter. In v2: Heatmap (Head/Layers), inkl. Highlights aus Replay-Daten."));
+      case "attention": return el.view.appendChild(viewAttention(scenario));
       case "mlp": return el.view.appendChild(viewPlaceholder("MLP", "In v1 ein Platzhalter. In v2: Vorher/Nachher-Vektoren (Delta), einfache Nichtlinearität."));
       case "logits": return el.view.appendChild(viewPlaceholder("Logits/Softmax", "In v2: Top-K Balken, Umschalter Logits vs. Probabilities."));
       case "decoding": return el.view.appendChild(viewOutput(scenario));
@@ -908,6 +952,10 @@
 
     items.push({ k: "d_model", v: String(state.params.dModel) });
     items.push({ k: "posEnc", v: String(!!state.params.posEnc) });
+
+    items.push({ k: "attnLayer", v: String(state.params.attnLayer) });
+    items.push({ k: "attnHead", v: String(state.params.attnHead) });
+    items.push({ k: "causalMask", v: String(!!state.params.causalMask) });
 
     for(const it of items){
       el.inspector.appendChild(kv(it.k, it.v));
@@ -1056,6 +1104,143 @@
     return wrap;
   }
 
+  function viewAttention(scenario){
+    const wrap = document.createElement("div");
+    const toks = scenario.tokenization?.tokens ?? [];
+    const focus = scenario.highlights?.tokenFocus ?? [];
+
+    wrap.appendChild(pNotice("Attention gewichtet, welche Tokens beim nächsten Rechenschritt stärker berücksichtigt werden. Hier zeigen wir eine vereinfachte Attention-Heatmap (Zeile i: „achtet auf“ Spalte j)."));
+
+    // Controls
+    const controls = document.createElement("div");
+    controls.className = "notice";
+    controls.style.display = "grid";
+    controls.style.gap = "10px";
+
+    controls.innerHTML = `
+      <div class="kv">
+        <div class="k">Layer</div>
+        <div class="v">
+          <select id="attnLayerSel" aria-label="Layer auswählen">
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
+        </div>
+      </div>
+      <div class="kv">
+        <div class="k">Head</div>
+        <div class="v">
+          <select id="attnHeadSel" aria-label="Head auswählen">
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
+        </div>
+      </div>
+      <div class="kv">
+        <div class="k">Causal Mask</div>
+        <div class="v">
+          <label style="display:flex; align-items:center; gap:10px;">
+            <input id="causalToggle" type="checkbox" />
+            <span class="small muted">nur auf vorherige Tokens achten</span>
+          </label>
+        </div>
+      </div>
+    `;
+    wrap.appendChild(controls);
+
+    const layerSel = controls.querySelector("#attnLayerSel");
+    const headSel  = controls.querySelector("#attnHeadSel");
+    const causalToggle = controls.querySelector("#causalToggle");
+
+    layerSel.value = String(state.params.attnLayer);
+    headSel.value  = String(state.params.attnHead);
+    causalToggle.checked = !!state.params.causalMask;
+
+    layerSel.addEventListener("change", (e) => {
+      state.params.attnLayer = Number(e.target.value);
+      render();
+    });
+    headSel.addEventListener("change", (e) => {
+      state.params.attnHead = Number(e.target.value);
+      render();
+    });
+    causalToggle.addEventListener("change", (e) => {
+      state.params.causalMask = !!e.target.checked;
+      render();
+    });
+
+    if(!toks.length){
+      wrap.appendChild(pNotice("Keine Tokens – keine Heatmap.", true));
+      return wrap;
+    }
+
+    // Build matrix
+    const M = buildAttentionMatrix(scenario, toks);
+    const T = toks.length;
+
+    // Render heatmap grid
+    wrap.appendChild(h3("Heatmap"));
+    const hmWrap = document.createElement("div");
+    hmWrap.className = "heatmap-wrap";
+
+    const grid = document.createElement("div");
+    grid.className = "heatmap-grid";
+    grid.style.gridTemplateColumns = `repeat(${T}, 18px)`;
+
+    // Determine scaling: use max in matrix for opacity mapping
+    let maxVal = 0;
+    for(let i=0;i<T;i++) for(let j=0;j<T;j++) maxVal = Math.max(maxVal, M[i][j] || 0);
+    maxVal = Math.max(1e-9, maxVal);
+
+    for(let i=0;i<T;i++){
+      for(let j=0;j<T;j++){
+        const cell = document.createElement("div");
+        cell.className = "heatmap-cell";
+        const v = M[i][j] || 0;
+        const a = clamp01(v / maxVal); // 0..1
+        cell.style.background = `rgba(102,217,239, ${0.08 + a*0.72})`;
+
+        const fromTok = stripLeadingSpace(toks[i].text);
+        const toTok   = stripLeadingSpace(toks[j].text);
+        const masked  = (state.params.causalMask && j > i);
+        cell.title = masked
+          ? `i=${i} (${fromTok}) → j=${j} (${toTok}): masked`
+          : `i=${i} (${fromTok}) → j=${j} (${toTok}): ${(v*100).toFixed(1)}%`;
+
+        // Optional highlight: if either token is in focus list, add border
+        if(focus.includes(fromTok) || focus.includes(toTok)){
+          cell.style.borderColor = "rgba(110,231,183,.45)";
+        }
+
+        grid.appendChild(cell);
+      }
+    }
+
+    const container = document.createElement("div");
+    container.style.display = "inline-block";
+    container.appendChild(grid);
+    hmWrap.appendChild(container);
+
+    wrap.appendChild(hmWrap);
+
+    // Legend / axis help
+    const axes = document.createElement("div");
+    axes.className = "heatmap-axes";
+    axes.innerHTML = `
+      <div class="heatmap-legend">
+        <span class="legend-swatch"></span>
+        <span><strong>Heller</strong> = höhere Gewichtung. Zeile <span class="mono">i</span> „achtet auf“ Spalte <span class="mono">j</span>.</span>
+      </div>
+      <div class="muted small">
+        Tipp: Mit <strong>Causal Mask</strong> kann ein Token nur auf sich selbst und vorherige Tokens achten (typisch für Decoder-LLMs).
+      </div>
+    `;
+    wrap.appendChild(axes);
+
+    return wrap;
+  }
+
+
   function viewOutput(scenario){
     const wrap = document.createElement("div");
     wrap.appendChild(pNotice("In Guided-Szenarien ist die Ausgabe vorgegeben. In v2 können zusätzlich Top-K/Steps (Sampling) visualisiert werden."));
@@ -1195,6 +1380,50 @@
       render();
     });
 
+
+    // attention controls (v1.2)
+    const attn = document.createElement("div");
+    attn.className = "notice";
+    attn.innerHTML = `
+      <div class="small muted">Attention</div>
+      <div class="kv"><div class="k">Layer</div>
+        <div class="v">
+          <select id="ctlAttnLayer" aria-label="Attention Layer auswählen">
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
+        </div>
+      </div>
+      <div class="kv"><div class="k">Head</div>
+        <div class="v">
+          <select id="ctlAttnHead" aria-label="Attention Head auswählen">
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
+        </div>
+      </div>
+      <div class="kv"><div class="k">Causal Mask</div>
+        <div class="v">
+          <label style="display:flex; align-items:center; gap:10px;">
+            <input id="ctlCausal" type="checkbox" />
+            <span class="small muted">nur ≤ i</span>
+          </label>
+        </div>
+      </div>
+    `;
+    box.appendChild(attn);
+
+    const la = attn.querySelector("#ctlAttnLayer");
+    const ha = attn.querySelector("#ctlAttnHead");
+    const ca = attn.querySelector("#ctlCausal");
+    la.value = String(state.params.attnLayer);
+    ha.value = String(state.params.attnHead);
+    ca.checked = !!state.params.causalMask;
+
+    la.addEventListener("change", (e) => { state.params.attnLayer = Number(e.target.value); render(); });
+    ha.addEventListener("change", (e) => { state.params.attnHead = Number(e.target.value); render(); });
+    ca.addEventListener("change", (e) => { state.params.causalMask = !!e.target.checked; render(); });
+
     // Decoding params (display only for now)
     const dec = document.createElement("div");
     dec.className = "notice";
@@ -1314,6 +1543,82 @@
     x ^= x << 5;
     return x >>> 0;
   }
+
+  // -----------------------------
+  // Attention helpers (v1.2)
+  // -----------------------------
+  function softmax(arr){
+    if(!arr.length) return [];
+    const m = Math.max(...arr);
+    const exps = arr.map(x => Math.exp(x - m));
+    const s = exps.reduce((a,b)=>a+b, 0) || 1;
+    return exps.map(e => e / s);
+  }
+
+  function dot(a,b){
+    let s = 0;
+    const n = Math.min(a.length, b.length);
+    for(let i=0;i<n;i++) s += a[i]*b[i];
+    return s;
+  }
+
+  function buildAttentionMatrix(scenario, tokens){
+    // 1) If replay attention exists, prefer it.
+    const r = scenario?.replay?.layers;
+    if(Array.isArray(r) && r.length){
+      const layerObj = r.find(x => x.layer === state.params.attnLayer) || r[0];
+      const heads = layerObj?.heads;
+      if(Array.isArray(heads) && heads.length){
+        const headObj = heads.find(h => h.head === state.params.attnHead) || heads[0];
+        if(Array.isArray(headObj?.attention)) return headObj.attention;
+      }
+    }
+
+    // 2) Otherwise: seeded, explainable toy attention based on embedding similarity.
+    const E = getEmbeddingsForScenario(scenario, tokens); // [T][d]
+    const T = E.length;
+    const scale = 1 / Math.sqrt(Math.max(1, state.params.dModel));
+
+    // Head-specific seed perturbation to create different "patterns"
+    const headSeed = stableHash(`${scenario?.id}|L${state.params.attnLayer}|H${state.params.attnHead}|d${state.params.dModel}`);
+
+    // Create simple Q and K projections by mixing embedding dimensions deterministically
+    const Q = E.map((v, i) => mixVector(v, headSeed ^ (i*101), +1));
+    const K = E.map((v, i) => mixVector(v, headSeed ^ (i*131), -1));
+
+    const M = Array.from({length:T}, () => Array(T).fill(0));
+
+    for(let i=0;i<T;i++){
+      const scores = [];
+      for(let j=0;j<T;j++){
+        // causal mask: only attend to <= i
+        if(state.params.causalMask && j > i){
+          scores.push(-1e9);
+          continue;
+        }
+        scores.push(dot(Q[i], K[j]) * scale);
+      }
+      const probs = softmax(scores);
+      for(let j=0;j<T;j++) M[i][j] = probs[j];
+    }
+    return M;
+  }
+
+  function mixVector(v, seed, sign){
+    const dim = v.length;
+    const out = new Array(dim);
+    let x = seed >>> 0;
+    for(let i=0;i<dim;i++){
+      x = xorshift32(x);
+      const j = x % dim;
+      const noise = Math.sin((i+1) * 0.7) * 0.03 * sign;
+      out[i] = v[j] + noise;
+    }
+    return out;
+  }
+
+  function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+
 function populateScenarioSelect(){
     const doc = state.scenariosDoc;
     el.scenarioSelect.innerHTML = "";
