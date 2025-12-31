@@ -1,0 +1,1183 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>cher-llm-simulator (v1)</title>
+  <meta name="description" content="Erklärbare Simulation von LLM-Grundprinzipien für IT-affine Nutzer." />
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#111826;
+      --panel2:#0f1623;
+      --text:#e6edf3;
+      --muted:#9fb0c0;
+      --border:#223044;
+      --accent:#66d9ef;
+      --warn:#f7c948;
+      --danger:#ff6b6b;
+      --ok:#6ee7b7;
+      --shadow: 0 10px 25px rgba(0,0,0,.35);
+      --radius: 14px;
+      --radius2: 18px;
+      --gap: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --tap: 44px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 600px at 20% 0%, rgba(102,217,239,.12), transparent 55%),
+                  radial-gradient(900px 500px at 80% 10%, rgba(110,231,183,.10), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    code, pre{font-family:var(--mono)}
+    .app{
+      min-height:100vh;
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: rgba(11,15,20,.75);
+      border-bottom:1px solid var(--border);
+    }
+    .header-inner{
+      max-width:1280px;
+      margin:0 auto;
+      padding: 12px 14px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .brand{
+      display:flex; gap:10px; align-items:center;
+      min-width: 220px;
+    }
+    .logo{
+      width:34px; height:34px; border-radius:10px;
+      background: linear-gradient(135deg, rgba(102,217,239,.9), rgba(110,231,183,.9));
+      box-shadow: var(--shadow);
+    }
+    .brand h1{
+      font-size:15px; margin:0; line-height:1.1;
+      letter-spacing:.2px;
+    }
+    .brand .sub{
+      font-size:12px; color:var(--muted);
+    }
+    .toolbar{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      display:flex; align-items:center; gap:10px;
+      background: rgba(17,24,38,.75);
+      border:1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+    }
+    .pill label{font-size:12px; color:var(--muted)}
+    select, button, input[type="file"]{
+      font-family:var(--sans);
+    }
+    select{
+      background: transparent;
+      color: var(--text);
+      border:1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 10px;
+      min-height: var(--tap);
+      outline:none;
+    }
+    button{
+      background: rgba(102,217,239,.14);
+      color: var(--text);
+      border:1px solid rgba(102,217,239,.35);
+      border-radius: 999px;
+      padding: 8px 12px;
+      min-height: var(--tap);
+      cursor:pointer;
+    }
+    button:hover{background: rgba(102,217,239,.20)}
+    button.secondary{
+      background: rgba(159,176,192,.10);
+      border-color: var(--border);
+    }
+    button.secondary:hover{background: rgba(159,176,192,.16)}
+    button.danger{
+      background: rgba(255,107,107,.12);
+      border-color: rgba(255,107,107,.35);
+    }
+    button.danger:hover{background: rgba(255,107,107,.18)}
+    .mode-switch{
+      display:flex; gap:6px;
+      padding: 4px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(17,24,38,.55);
+    }
+    .mode-switch button{
+      min-height: 38px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid transparent;
+      background: transparent;
+    }
+    .mode-switch button.active{
+      background: rgba(110,231,183,.14);
+      border-color: rgba(110,231,183,.35);
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:11px; color:var(--muted);
+      padding: 4px 8px; border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(17,24,38,.55);
+    }
+    .badge.warn{
+      color: #ffdf7e;
+      border-color: rgba(247,201,72,.35);
+      background: rgba(247,201,72,.10);
+    }
+
+    main{
+      max-width:1280px;
+      margin:0 auto;
+      width:100%;
+      padding: 14px;
+      display:grid;
+      grid-template-columns: 260px 1fr 340px;
+      gap: var(--gap);
+    }
+    .card{
+      border:1px solid var(--border);
+      background: rgba(17,24,38,.55);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .card-h{
+      padding: 12px 12px 10px;
+      border-bottom:1px solid rgba(34,48,68,.7);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .card .card-h h2{
+      font-size:13px; margin:0;
+      color: var(--text);
+      letter-spacing:.2px;
+    }
+    .card .card-b{
+      padding: 12px;
+    }
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+    .mono{font-family:var(--mono)}
+    .kvs{display:grid; gap:8px}
+    .kv{
+      display:grid; grid-template-columns: 110px 1fr;
+      gap:10px;
+      align-items:start;
+    }
+    .kv .k{color:var(--muted); font-size:12px}
+    .kv .v{font-size:13px}
+    .steps{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .step-btn{
+      width:100%;
+      text-align:left;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(15,22,35,.75);
+      padding: 10px 10px;
+      min-height: var(--tap);
+      color: var(--text);
+      cursor:pointer;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .step-btn:hover{background: rgba(15,22,35,.95)}
+    .step-btn.active{
+      border-color: rgba(102,217,239,.5);
+      background: rgba(102,217,239,.10);
+    }
+
+    .content{
+      display:grid;
+      gap: var(--gap);
+    }
+    .notice{
+      border:1px dashed rgba(159,176,192,.35);
+      background: rgba(15,22,35,.6);
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .notice strong{color:var(--text)}
+    .notice.warn{
+      border-color: rgba(247,201,72,.45);
+      background: rgba(247,201,72,.08);
+      color: #ffdf7e;
+    }
+
+    .token-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      padding: 6px 0 2px;
+    }
+    .token{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid rgba(34,48,68,.85);
+      background: rgba(15,22,35,.8);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size:13px;
+      min-height: 38px;
+      cursor: default;
+    }
+    .token .id{
+      font-size:11px;
+      color: var(--muted);
+      border:1px solid rgba(34,48,68,.8);
+      border-radius:999px;
+      padding: 2px 6px;
+      font-family: var(--mono);
+    }
+    .token.focus{
+      border-color: rgba(102,217,239,.55);
+      background: rgba(102,217,239,.10);
+    }
+
+    .tabs{
+      display:none;
+      gap:8px;
+      overflow:auto;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(34,48,68,.7);
+      background: rgba(17,24,38,.35);
+    }
+    .tab{
+      border:1px solid var(--border);
+      background: rgba(15,22,35,.75);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 10px;
+      min-height: 38px;
+      white-space:nowrap;
+      cursor:pointer;
+    }
+    .tab.active{
+      border-color: rgba(102,217,239,.5);
+      background: rgba(102,217,239,.10);
+    }
+
+    footer{
+      border-top:1px solid var(--border);
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size:12px;
+      background: rgba(11,15,20,.75);
+    }
+    .footer-inner{
+      max-width:1280px; margin:0 auto;
+      display:flex; gap:12px; align-items:flex-start; justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    /* Responsive */
+    @media (max-width: 1023px){
+      main{grid-template-columns: 240px 1fr;}
+      .rightbar{display:none;}
+    }
+    @media (max-width: 767px){
+      .brand{min-width:unset}
+      main{grid-template-columns: 1fr;}
+      .leftbar{display:none;}
+      .rightbar{display:none;}
+      .tabs{display:flex;}
+      .header-inner{flex-wrap:wrap}
+      .brand{width:100%; justify-content:space-between}
+      .toolbar{width:100%; justify-content:flex-start}
+      select{width:100%}
+    }
+
+    /* Simple modal/bottom sheet */
+    .sheet-backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:flex-end;
+      z-index:50;
+    }
+    .sheet{
+      width:100%;
+      max-height: 80vh;
+      border-radius: 16px 16px 0 0;
+      border:1px solid var(--border);
+      background: rgba(17,24,38,.92);
+      box-shadow: var(--shadow);
+      overflow:auto;
+    }
+    .sheet .card-h{border-bottom:1px solid rgba(34,48,68,.7)}
+    .sheet-backdrop.show{display:flex;}
+    .sheet-tabs{
+      display:flex; gap:8px; padding:10px 12px;
+      border-bottom:1px solid rgba(34,48,68,.7);
+    }
+    .sheet-tabs button{
+      min-height: 38px;
+      padding: 6px 10px;
+    }
+    .sheet-tabs button.active{
+      background: rgba(102,217,239,.18);
+      border-color: rgba(102,217,239,.45);
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <h1>cher-llm-simulator</h1>
+            <div class="sub">Erklärbare Simulation von LLM-Grundprinzipien</div>
+          </div>
+        </div>
+        <span class="badge" id="loadStatus">Szenarien: —</span>
+      </div>
+
+      <div class="toolbar">
+        <div class="pill" style="min-width: 320px;">
+          <label for="scenarioSelect">Szenario</label>
+          <select id="scenarioSelect" aria-label="Szenario auswählen"></select>
+        </div>
+
+        <div class="mode-switch" role="tablist" aria-label="Modus wählen">
+          <button id="modeGuided" class="active" type="button" title="Geführte, kuratierte Szenarien">Guided</button>
+          <button id="modeSandbox" type="button" title="Freie Eingabe, keine semantische Garantie">Sandbox ⚠️</button>
+        </div>
+
+        <button id="resetBtn" class="secondary" type="button">Reset</button>
+        <button id="mobileToolsBtn" class="secondary" type="button" style="display:none;">Tools</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left: Steps -->
+    <section class="leftbar card" aria-label="Pipeline">
+      <div class="card-h">
+        <h2>Pipeline</h2>
+        <span class="badge small mono" id="stepBadge">—</span>
+      </div>
+      <div class="card-b">
+        <div class="steps" id="steps"></div>
+        <div style="margin-top:12px" class="notice small">
+          <strong>Hinweis:</strong> Die Guided-Szenarien sind kuratiert. Tokens und Ausgabe sind vorgegeben, um Effekte erklärbar zu machen.
+        </div>
+      </div>
+    </section>
+
+    <!-- Center: Main content -->
+    <section class="card" aria-label="Ansicht">
+      <div class="card-h">
+        <h2 id="viewTitle">—</h2>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="prevBtn" class="secondary" type="button">Zurück</button>
+          <button id="nextBtn" type="button">Weiter</button>
+        </div>
+      </div>
+
+      <div class="tabs" id="mobileTabs" aria-label="Pipeline Tabs (Mobile)"></div>
+
+      <div class="card-b content">
+        <div id="warningBox" class="notice warn" style="display:none;">
+          <strong>Sandbox:</strong> Die Ausgabe ist <strong>keine inhaltliche Antwort</strong>. Sie zeigt nur den technischen Ablauf (Tokenisierung, Gewichte, Sampling).
+        </div>
+
+        <div class="card" style="background: rgba(15,22,35,.55); border-radius: var(--radius2); border:1px solid rgba(34,48,68,.7); box-shadow:none;">
+          <div class="card-h">
+            <h2>Aktueller Schritt</h2>
+            <span class="badge small" id="scenarioGoals">—</span>
+          </div>
+          <div class="card-b" id="view"></div>
+        </div>
+
+        <div class="card" style="background: rgba(15,22,35,.55); border-radius: var(--radius2); border:1px solid rgba(34,48,68,.7); box-shadow:none;">
+          <div class="card-h">
+            <h2>Erklärung</h2>
+            <span class="badge small mono" id="explainAt">—</span>
+          </div>
+          <div class="card-b" id="explain"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Inspector -->
+    <aside class="rightbar card" aria-label="Inspector">
+      <div class="card-h">
+        <h2>Inspector</h2>
+        <span class="badge small">v1</span>
+      </div>
+      <div class="card-b">
+        <div class="kvs" id="inspector"></div>
+        <div style="margin-top:12px" class="notice small">
+          <strong>Vereinfachung:</strong> d_model / Heads / Layer sind in v1 klein, damit Visualisierung möglich bleibt.
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div>
+        <div><strong>Disclaimer:</strong> Vereinfachte Simulation zur Veranschaulichung – <strong>kein echtes LLM</strong>.</div>
+        <div class="small">Projekt: <span class="mono">cher-llm-simulator</span> · Daten: <span class="mono">scenarios/scenarios.json</span></div>
+      </div>
+      <div class="small">
+        Tipp: Für lokale Nutzung funktioniert das Laden von JSON am zuverlässigsten über einen kleinen HTTP-Server (z. B. GitHub Pages oder <span class="mono">python -m http.server</span>).
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- Mobile bottom sheet -->
+<div class="sheet-backdrop" id="sheetBackdrop" aria-hidden="true">
+  <div class="sheet card" role="dialog" aria-label="Tools">
+    <div class="card-h">
+      <h2>Tools</h2>
+      <button id="closeSheetBtn" class="secondary" type="button">Schließen</button>
+    </div>
+    <div class="sheet-tabs" id="sheetTabs">
+      <button class="secondary active" data-tab="controls" type="button">Controls</button>
+      <button class="secondary" data-tab="inspector" type="button">Inspector</button>
+      <button class="secondary" data-tab="explain" type="button">Erklärung</button>
+    </div>
+    <div class="card-b" id="sheetBody"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // -----------------------------
+  // Constants
+  // -----------------------------
+  const PIPELINE = [
+    { id: "input", label: "Input" },
+    { id: "tokenizer", label: "Tokenizer" },
+    { id: "embedding", label: "Embeddings" },
+    { id: "attention", label: "Attention" },
+    { id: "mlp", label: "MLP" },
+    { id: "logits", label: "Logits" },
+    { id: "decoding", label: "Decoding" },
+    { id: "summary", label: "Summary" },
+  ];
+
+  // -----------------------------
+  // State
+  // -----------------------------
+  const state = {
+    mode: "guided",                // guided | sandbox
+    scenariosDoc: null,            // full JSON document
+    scenarioId: null,              // selected scenario id
+    step: "input",                 // current pipeline step
+    sandboxInput: "Was ist ein Hund?",
+    params: { temperature: 0.8, topP: 0.9, topK: 10 },
+  };
+
+  // -----------------------------
+  // DOM
+  // -----------------------------
+  const el = {
+    loadStatus: $("#loadStatus"),
+    scenarioSelect: $("#scenarioSelect"),
+    modeGuided: $("#modeGuided"),
+    modeSandbox: $("#modeSandbox"),
+    resetBtn: $("#resetBtn"),
+    steps: $("#steps"),
+    stepBadge: $("#stepBadge"),
+    viewTitle: $("#viewTitle"),
+    view: $("#view"),
+    explain: $("#explain"),
+    explainAt: $("#explainAt"),
+    scenarioGoals: $("#scenarioGoals"),
+    warningBox: $("#warningBox"),
+    inspector: $("#inspector"),
+    prevBtn: $("#prevBtn"),
+    nextBtn: $("#nextBtn"),
+    mobileTabs: $("#mobileTabs"),
+    mobileToolsBtn: $("#mobileToolsBtn"),
+    sheetBackdrop: $("#sheetBackdrop"),
+    closeSheetBtn: $("#closeSheetBtn"),
+    sheetTabs: $("#sheetTabs"),
+    sheetBody: $("#sheetBody"),
+  };
+
+  // -----------------------------
+  // Boot
+  // -----------------------------
+  init();
+
+  async function init(){
+    bindUI();
+    buildSteps();
+    buildMobileTabs();
+    updateResponsiveControls();
+
+    // Try to load scenarios from canonical repo path
+    const loaded = await loadScenarios("scenarios/scenarios.json");
+    if(!loaded){
+      // Fallback to embedded minimal scenarios (keeps app usable on file://)
+      state.scenariosDoc = embeddedScenarios();
+      el.loadStatus.textContent = "Szenarien: eingebettet (Fallback)";
+      el.loadStatus.classList.add("warn");
+    }
+    populateScenarioSelect();
+    selectDefaultScenario();
+    render();
+    window.addEventListener("resize", updateResponsiveControls);
+  }
+
+  // -----------------------------
+  // Scenario loading
+  // -----------------------------
+  async function loadScenarios(url){
+    try{
+      const res = await fetch(url, { cache: "no-store" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const json = await res.json();
+      if(!json || !Array.isArray(json.scenarios)) throw new Error("Invalid scenarios doc");
+      state.scenariosDoc = json;
+      el.loadStatus.textContent = "Szenarien: geladen";
+      return true;
+    }catch(err){
+      // Most common: file:// fetch blocked by browser CORS. We'll fallback.
+      console.warn("Scenario load failed:", err);
+      el.loadStatus.textContent = "Szenarien: nicht geladen";
+      el.loadStatus.classList.add("warn");
+      return false;
+    }
+  }
+
+  function embeddedScenarios(){
+    return {
+      meta: {
+        version: "1.0",
+        project: "cher-llm-simulator",
+        description: "Embedded fallback scenarios",
+        defaultScenarioId: "baseline-hund"
+      },
+      scenarios: [
+        {
+          id: "baseline-hund",
+          title: "Baseline: Was ist ein Hund?",
+          learningGoals: ["Grundprinzipien", "Tokenisierung", "Next-Token-Loop"],
+          mode: "simulated",
+          promptStack: {
+            system: "Du bist ein sachlicher Assistent.",
+            instruction: "Antworte in einem Satz.",
+            user: "Was ist ein Hund?"
+          },
+          tokenization: {
+            tokens: [
+              {text:"Was", id:101},
+              {text:" ist", id:102},
+              {text:" ein", id:103},
+              {text:" Hund", id:104},
+              {text:"?", id:105}
+            ]
+          },
+          generation: { outputText: "Ein Hund ist ein Säugetier." },
+          highlights: {
+            explain: [
+              { at:"tokenizer", text:"Tokens sind nicht immer identisch mit Wörtern (insb. Subwords/Komposita)." },
+              { at:"decoding", text:"Die Ausgabe entsteht Token für Token." }
+            ]
+          }
+        },
+        {
+          id: "kompositum-hundeleine",
+          title: "Komposita: Hundeleine",
+          learningGoals: ["Subword-Tokenisierung", "Komposita zerlegen"],
+          mode: "simulated",
+          promptStack: {
+            system: "Du bist ein sachlicher Assistent.",
+            instruction: "Antworte kurz.",
+            user: "Was ist eine Hundeleine?"
+          },
+          tokenization: {
+            tokens: [
+              {text:"Was", id:101},
+              {text:" ist", id:102},
+              {text:" eine", id:106},
+              {text:" Hund", id:104},
+              {text:"eleine", id:207},
+              {text:"?", id:105}
+            ]
+          },
+          generation: { outputText: "Eine Hundeleine ist eine Leine zum Führen eines Hundes." },
+          highlights: {
+            tokenFocus: ["Hund","eleine"],
+            explain: [
+              { at:"tokenizer", text:"Komposita werden in bekannte Teilstücke zerlegt, damit ein endliches Vokabular ausreicht." }
+            ]
+          }
+        }
+      ]
+    };
+  }
+
+  // -----------------------------
+  // UI bindings
+  // -----------------------------
+  function bindUI(){
+    el.modeGuided.addEventListener("click", () => setMode("guided"));
+    el.modeSandbox.addEventListener("click", () => setMode("sandbox"));
+    el.resetBtn.addEventListener("click", () => reset());
+    el.scenarioSelect.addEventListener("change", (e) => {
+      state.scenarioId = e.target.value;
+      state.step = "input";
+      render();
+    });
+    el.prevBtn.addEventListener("click", () => goStep(-1));
+    el.nextBtn.addEventListener("click", () => goStep(+1));
+
+    el.mobileToolsBtn.addEventListener("click", () => openSheet("controls"));
+    el.closeSheetBtn.addEventListener("click", closeSheet);
+    el.sheetBackdrop.addEventListener("click", (e) => {
+      if(e.target === el.sheetBackdrop) closeSheet();
+    });
+
+    el.sheetTabs.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-tab]");
+      if(!btn) return;
+      [...el.sheetTabs.querySelectorAll("button[data-tab]")].forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderSheet(btn.dataset.tab);
+    });
+  }
+
+  function setMode(mode){
+    state.mode = mode;
+    el.modeGuided.classList.toggle("active", mode === "guided");
+    el.modeSandbox.classList.toggle("active", mode === "sandbox");
+    el.warningBox.style.display = mode === "sandbox" ? "" : "none";
+    // In sandbox we keep scenario selection visible but it only drives "guided" content;
+    // user input is free. In v1, sandbox is a placeholder with clear warning.
+    render();
+  }
+
+  function reset(){
+    state.step = "input";
+    state.sandboxInput = "Was ist ein Hund?";
+    // keep mode and selected scenario
+    render();
+  }
+
+  // -----------------------------
+  // Navigation
+  // -----------------------------
+  function buildSteps(){
+    el.steps.innerHTML = "";
+    for(const s of PIPELINE){
+      const b = document.createElement("button");
+      b.className = "step-btn";
+      b.type = "button";
+      b.dataset.step = s.id;
+      b.innerHTML = `<span>${escapeHtml(s.label)}</span><span class="badge small mono">${escapeHtml(s.id)}</span>`;
+      b.addEventListener("click", () => { state.step = s.id; render(); });
+      el.steps.appendChild(b);
+    }
+  }
+  function buildMobileTabs(){
+    el.mobileTabs.innerHTML = "";
+    for(const s of PIPELINE){
+      const t = document.createElement("button");
+      t.className = "tab";
+      t.type = "button";
+      t.dataset.step = s.id;
+      t.textContent = s.label;
+      t.addEventListener("click", () => { state.step = s.id; render(); });
+      el.mobileTabs.appendChild(t);
+    }
+  }
+  function goStep(delta){
+    const i = PIPELINE.findIndex(x => x.id === state.step);
+    if(i < 0) return;
+    const j = clamp(i + delta, 0, PIPELINE.length - 1);
+    state.step = PIPELINE[j].id;
+    render();
+  }
+
+  // -----------------------------
+  // Rendering
+  // -----------------------------
+  function render(){
+    // highlight navigation
+    const stepLabel = PIPELINE.find(s => s.id === state.step)?.label ?? state.step;
+    el.stepBadge.textContent = state.step;
+    el.viewTitle.textContent = stepLabel;
+
+    [...el.steps.querySelectorAll(".step-btn")].forEach(b => b.classList.toggle("active", b.dataset.step === state.step));
+    [...el.mobileTabs.querySelectorAll(".tab")].forEach(b => b.classList.toggle("active", b.dataset.step === state.step));
+
+    const scenario = getScenario();
+    renderGoals(scenario);
+    renderView(state.step, scenario);
+    renderExplain(state.step, scenario);
+    renderInspector(state.step, scenario);
+    renderButtons();
+
+    // If mobile sheet is open, refresh its content to match state.
+    if(el.sheetBackdrop.classList.contains("show")){
+      const activeTab = el.sheetTabs.querySelector("button.active")?.dataset.tab ?? "controls";
+      renderSheet(activeTab);
+    }
+  }
+
+  function renderGoals(scenario){
+    if(state.mode === "sandbox"){
+      el.scenarioGoals.textContent = "Sandbox";
+      return;
+    }
+    const goals = scenario?.learningGoals?.slice(0,2) ?? [];
+    el.scenarioGoals.textContent = goals.length ? goals.join(" · ") : "—";
+  }
+
+  function renderButtons(){
+    const i = PIPELINE.findIndex(x => x.id === state.step);
+    el.prevBtn.disabled = i <= 0;
+    el.nextBtn.disabled = i >= PIPELINE.length - 1;
+  }
+
+  function renderView(step, scenario){
+    el.view.innerHTML = "";
+    if(state.mode === "sandbox"){
+      renderSandbox(step);
+      return;
+    }
+    if(!scenario){
+      el.view.appendChild(pNotice("Kein Szenario ausgewählt.", true));
+      return;
+    }
+
+    switch(step){
+      case "input": return el.view.appendChild(viewInput(scenario));
+      case "tokenizer": return el.view.appendChild(viewTokenizer(scenario));
+      case "embedding": return el.view.appendChild(viewPlaceholder("Embeddings", "In v1 wird dieser Schritt visuell vorbereitet. In v2 können hier Vektoren/Barcodes und Positional Encoding ergänzt werden."));
+      case "attention": return el.view.appendChild(viewPlaceholder("Attention", "In v1 ist dies ein Platzhalter. In v2: Heatmap (Head/Layers), inkl. Highlights aus Replay-Daten."));
+      case "mlp": return el.view.appendChild(viewPlaceholder("MLP", "In v1 ein Platzhalter. In v2: Vorher/Nachher-Vektoren (Delta), einfache Nichtlinearität."));
+      case "logits": return el.view.appendChild(viewPlaceholder("Logits/Softmax", "In v2: Top-K Balken, Umschalter Logits vs. Probabilities."));
+      case "decoding": return el.view.appendChild(viewOutput(scenario));
+      case "summary": return el.view.appendChild(viewSummary(scenario));
+      default: return el.view.appendChild(viewPlaceholder(step, "Noch nicht implementiert."));
+    }
+  }
+
+  function renderSandbox(step){
+    const wrap = document.createElement("div");
+    wrap.className = "kvs";
+
+    // Input
+    const inputCard = document.createElement("div");
+    inputCard.className = "notice";
+    inputCard.innerHTML = `<strong>Sandbox (v1):</strong> In v1 dient die Sandbox als UI-Gerüst. In v2 kann hier eine seeded Simulation (Tokenizer → Sampling) ergänzt werden.`;
+    wrap.appendChild(inputCard);
+
+    const ta = document.createElement("textarea");
+    ta.value = state.sandboxInput;
+    ta.rows = 3;
+    ta.style.width = "100%";
+    ta.style.padding = "10px";
+    ta.style.borderRadius = "12px";
+    ta.style.border = "1px solid var(--border)";
+    ta.style.background = "rgba(15,22,35,.65)";
+    ta.style.color = "var(--text)";
+    ta.style.fontFamily = "var(--sans)";
+    ta.addEventListener("input", (e) => { state.sandboxInput = e.target.value; });
+    wrap.appendChild(ta);
+
+    // Token display (simple whitespace split placeholder)
+    const toks = (state.sandboxInput || "").trim().length
+      ? state.sandboxInput.trim().split(/\s+/).map((t,i)=>({text:t, id: 1000+i}))
+      : [];
+    wrap.appendChild(h3("Tokenizer (Placeholder)"));
+    wrap.appendChild(tokenRow(toks, []));
+
+    // Output placeholder
+    wrap.appendChild(h3("Output (Placeholder)"));
+    wrap.appendChild(pNotice("In v2: next-token Sampling (seeded). In v1 zeigen wir bewusst keine 'sinnvolle Antwort'."));
+
+    el.view.appendChild(wrap);
+  }
+
+  function renderExplain(step, scenario){
+    el.explainAt.textContent = step;
+
+    const box = document.createElement("div");
+    box.className = "small";
+    box.style.lineHeight = "1.45";
+
+    if(state.mode === "sandbox"){
+      box.innerHTML = `
+        <p><strong>Sandbox-Modus:</strong> Du kannst frei Text eingeben. Die App zeigt den technischen Ablauf – ohne semantische Garantie.</p>
+        <p class="muted">V1 enthält hier noch Platzhalter. In V2 werden Tokenisierung/Attention/Sampling seeded simuliert.</p>
+      `;
+      el.explain.replaceChildren(box);
+      return;
+    }
+
+    const explains = (scenario?.highlights?.explain ?? []).filter(x => x.at === step);
+    if(explains.length){
+      box.innerHTML = explains.map(x => `<p>• ${escapeHtml(x.text)}</p>`).join("");
+    } else {
+      // generic hints per step
+      box.innerHTML = genericExplain(step);
+    }
+    el.explain.replaceChildren(box);
+  }
+
+  function genericExplain(step){
+    switch(step){
+      case "input":
+        return `<p>Der Prompt ist Text. System- und Instruktionsanteile formen den Kontext, sind aber technisch ebenfalls nur Tokens.</p>`;
+      case "tokenizer":
+        return `<p>Tokenisierung zerlegt Text in Einheiten, die im Vokabular des Modells repräsentiert sind (Wörter, Subwords, Zeichenfragmente).</p>
+                <p class="muted">In Guided-Szenarien sind Tokens bewusst vorgegeben, um Effekte erklärbar zu machen.</p>`;
+      case "embedding":
+        return `<p>Jedes Token wird in einen Vektor (Embedding) abgebildet. Das ist die Basis für Matrixoperationen im Modell.</p>`;
+      case "attention":
+        return `<p>Attention gewichtet, auf welche Tokens das Modell beim Berechnen des nächsten Zustands „achtet“ (Kontextgewichtung).</p>`;
+      case "mlp":
+        return `<p>Der MLP-Block mischt Merkmale nichtlinear und ergänzt die Attention um weitere Transformationen.</p>`;
+      case "logits":
+        return `<p>Logits sind Rohwerte für mögliche nächste Tokens. Per Softmax werden daraus Wahrscheinlichkeiten.</p>`;
+      case "decoding":
+        return `<p>Beim Decoding wird iterativ das nächste Token gewählt (z. B. greedy oder sampling). So entsteht Text Schritt für Schritt.</p>`;
+      case "summary":
+        return `<p>Zusammenfassung des Szenarios und der wichtigsten Beobachtungen.</p>`;
+      default:
+        return `<p class="muted">Keine Erklärung hinterlegt.</p>`;
+    }
+  }
+
+  function renderInspector(step, scenario){
+    el.inspector.innerHTML = "";
+    const items = [];
+
+    items.push({ k: "Mode", v: state.mode });
+    items.push({ k: "Step", v: state.step });
+
+    if(state.mode === "guided"){
+      items.push({ k: "Szenario", v: scenario ? scenario.id : "—" });
+      items.push({ k: "Titel", v: scenario ? scenario.title : "—" });
+      items.push({ k: "Token count", v: scenario?.tokenization?.tokens?.length ?? 0 });
+    } else {
+      items.push({ k: "Input length", v: (state.sandboxInput || "").length });
+      items.push({ k: "Tokenizer", v: "Placeholder" });
+    }
+
+    items.push({ k: "temperature", v: String(state.params.temperature) });
+    items.push({ k: "topP", v: String(state.params.topP) });
+    items.push({ k: "topK", v: String(state.params.topK) });
+
+    for(const it of items){
+      el.inspector.appendChild(kv(it.k, it.v));
+    }
+  }
+
+  // -----------------------------
+  // Views (Guided)
+  // -----------------------------
+  function viewInput(scenario){
+    const wrap = document.createElement("div");
+
+    wrap.appendChild(pNotice("Guided: Prompt, Tokenisierung und Ausgabe sind kuratiert, um Unterschiede reproduzierbar zu erklären."));
+
+    const ps = scenario.promptStack || {};
+    const grid = document.createElement("div");
+    grid.className = "kvs";
+    grid.appendChild(section("Prompt-Stack", [
+      kv("System", ps.system || "—"),
+      kv("Instruktion", ps.instruction || "—"),
+      kv("User", ps.user || "—"),
+    ]));
+    wrap.appendChild(grid);
+    return wrap;
+  }
+
+  function viewTokenizer(scenario){
+    const wrap = document.createElement("div");
+    const toks = scenario.tokenization?.tokens ?? [];
+    const focus = scenario.highlights?.tokenFocus ?? [];
+
+    wrap.appendChild(pNotice("Tokenisierung ist im Guided-Mode vorgegeben. So können Subwords/Komposita und IDs sichtbar gemacht werden."));
+    wrap.appendChild(h3("Tokens"));
+    wrap.appendChild(tokenRow(toks, focus));
+
+    // raw tokens string
+    const raw = toks.map(t => t.text).join("");
+    wrap.appendChild(h3("Rekonstruktion (nur zur Kontrolle)"));
+    const pre = document.createElement("pre");
+    pre.style.margin = "0";
+    pre.style.padding = "10px 12px";
+    pre.style.borderRadius = "12px";
+    pre.style.border = "1px solid rgba(34,48,68,.85)";
+    pre.style.background = "rgba(15,22,35,.75)";
+    pre.textContent = raw;
+    wrap.appendChild(pre);
+
+    return wrap;
+  }
+
+  function viewOutput(scenario){
+    const wrap = document.createElement("div");
+    wrap.appendChild(pNotice("In Guided-Szenarien ist die Ausgabe vorgegeben. In v2 können zusätzlich Top-K/Steps (Sampling) visualisiert werden."));
+    wrap.appendChild(h3("Output"));
+    const pre = document.createElement("pre");
+    pre.style.margin = "0";
+    pre.style.padding = "10px 12px";
+    pre.style.borderRadius = "12px";
+    pre.style.border = "1px solid rgba(34,48,68,.85)";
+    pre.style.background = "rgba(15,22,35,.75)";
+    pre.textContent = scenario.generation?.outputText ?? "—";
+    wrap.appendChild(pre);
+
+    const steps = scenario.generation?.steps;
+    if(Array.isArray(steps) && steps.length){
+      wrap.appendChild(h3("Decoding Steps (Top-K)"));
+      const ul = document.createElement("ul");
+      ul.className = "small";
+      ul.style.margin = "0";
+      ul.style.paddingLeft = "18px";
+      for(const s of steps){
+        const li = document.createElement("li");
+        const top = (s.topK || []).slice(0,5).map(x => `${x.token} (${x.p})`).join(", ");
+        li.textContent = `Step ${s.step}: chosen=${s.chosenToken} · topK: ${top}`;
+        ul.appendChild(li);
+      }
+      wrap.appendChild(ul);
+    }
+    return wrap;
+  }
+
+  function viewSummary(scenario){
+    const wrap = document.createElement("div");
+    wrap.appendChild(h3("Lernziele"));
+    const ul = document.createElement("ul");
+    ul.style.margin = "0";
+    ul.style.paddingLeft = "18px";
+    ul.className = "small";
+    for(const g of (scenario.learningGoals || [])){
+      const li = document.createElement("li");
+      li.textContent = g;
+      ul.appendChild(li);
+    }
+    wrap.appendChild(ul);
+
+    wrap.appendChild(h3("Merksatz"));
+    wrap.appendChild(pNotice("Ein LLM ist kein Wissensspeicher – es erzeugt Text, indem es iterativ das nächste Token auf Basis des Kontexts wahrscheinlicher macht."));
+    return wrap;
+  }
+
+  function viewPlaceholder(title, text){
+    const wrap = document.createElement("div");
+    wrap.appendChild(pNotice(text));
+    wrap.appendChild(h3("Nächster Schritt"));
+    wrap.appendChild(pNotice("Wenn du möchtest, implementieren wir als nächstes die Attention-Heatmap (SVG/Canvas) + optional Replay-Daten aus scenarios.json.", true));
+    return wrap;
+  }
+
+  // -----------------------------
+  // Mobile sheet rendering
+  // -----------------------------
+  function updateResponsiveControls(){
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    el.mobileToolsBtn.style.display = isMobile ? "" : "none";
+    // If we leave mobile while sheet open, close it.
+    if(!isMobile) closeSheet();
+  }
+
+  function openSheet(tab){
+    el.sheetBackdrop.classList.add("show");
+    el.sheetBackdrop.setAttribute("aria-hidden", "false");
+    // activate tab
+    [...el.sheetTabs.querySelectorAll("button[data-tab]")].forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+    renderSheet(tab);
+  }
+  function closeSheet(){
+    el.sheetBackdrop.classList.remove("show");
+    el.sheetBackdrop.setAttribute("aria-hidden", "true");
+  }
+  function renderSheet(tab){
+    el.sheetBody.innerHTML = "";
+    if(tab === "controls"){
+      el.sheetBody.appendChild(renderControls());
+    } else if(tab === "inspector"){
+      // clone current inspector
+      el.sheetBody.appendChild(el.inspector.cloneNode(true));
+    } else if(tab === "explain"){
+      el.sheetBody.appendChild(el.explain.cloneNode(true));
+    }
+  }
+
+  // Controls are minimal in v1 – placeholders for v2.
+  function renderControls(){
+    const box = document.createElement("div");
+    box.className = "kvs";
+    box.appendChild(pNotice("Controls (v1): Platzhalter. In v2 werden hier Temperature/Top-p/Top-k und Visualisierungstoggles pro Schritt ergänzt."));
+
+    const r = document.createElement("div");
+    r.className = "notice";
+    r.innerHTML = `
+      <div class="small muted">Parameter (nur Anzeige, v1)</div>
+      <div class="kv"><div class="k">temperature</div><div class="v mono">${escapeHtml(String(state.params.temperature))}</div></div>
+      <div class="kv"><div class="k">topP</div><div class="v mono">${escapeHtml(String(state.params.topP))}</div></div>
+      <div class="kv"><div class="k">topK</div><div class="v mono">${escapeHtml(String(state.params.topK))}</div></div>
+    `;
+    box.appendChild(r);
+    return box;
+  }
+
+  // -----------------------------
+  // Helpers
+  // -----------------------------
+  function populateScenarioSelect(){
+    const doc = state.scenariosDoc;
+    el.scenarioSelect.innerHTML = "";
+    if(!doc || !Array.isArray(doc.scenarios) || !doc.scenarios.length){
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Keine Szenarien";
+      el.scenarioSelect.appendChild(opt);
+      return;
+    }
+    for(const s of doc.scenarios){
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.title || s.id;
+      el.scenarioSelect.appendChild(opt);
+    }
+  }
+
+  function selectDefaultScenario(){
+    const doc = state.scenariosDoc;
+    const def = doc?.meta?.defaultScenarioId;
+    const first = doc?.scenarios?.[0]?.id;
+    state.scenarioId = def || first || null;
+    if(state.scenarioId) el.scenarioSelect.value = state.scenarioId;
+  }
+
+  function getScenario(){
+    if(state.mode !== "guided") return null;
+    const list = state.scenariosDoc?.scenarios ?? [];
+    return list.find(s => s.id === state.scenarioId) || null;
+  }
+
+  function tokenRow(tokens, focusList){
+    const row = document.createElement("div");
+    row.className = "token-row";
+    for(const t of tokens){
+      const chip = document.createElement("span");
+      chip.className = "token" + (focusList.includes(stripLeadingSpace(t.text)) ? " focus" : "");
+      chip.innerHTML = `<span class="mono">${escapeHtml(t.text)}</span><span class="id">${escapeHtml(String(t.id))}</span>`;
+      row.appendChild(chip);
+    }
+    if(!tokens.length){
+      row.appendChild(pNotice("Keine Tokens.", true));
+    }
+    return row;
+  }
+
+  function stripLeadingSpace(s){ return (s || "").replace(/^\s+/, ""); }
+
+  function section(title, nodes){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.style.background = "rgba(15,22,35,.55)";
+    wrap.style.borderRadius = "14px";
+    wrap.style.border = "1px solid rgba(34,48,68,.7)";
+    wrap.style.boxShadow = "none";
+
+    const h = document.createElement("div");
+    h.className = "card-h";
+    const h2 = document.createElement("h2"); h2.textContent = title;
+    h.appendChild(h2);
+    wrap.appendChild(h);
+
+    const b = document.createElement("div");
+    b.className = "card-b";
+    for(const n of nodes) b.appendChild(n);
+    wrap.appendChild(b);
+
+    return wrap;
+  }
+
+  function kv(k, v){
+    const row = document.createElement("div");
+    row.className = "kv";
+    const kEl = document.createElement("div");
+    kEl.className = "k";
+    kEl.textContent = k;
+    const vEl = document.createElement("div");
+    vEl.className = "v";
+    vEl.textContent = v;
+    row.appendChild(kEl);
+    row.appendChild(vEl);
+    return row;
+  }
+
+  function pNotice(text, warn=false){
+    const d = document.createElement("div");
+    d.className = "notice" + (warn ? " warn" : "");
+    d.textContent = text;
+    return d;
+  }
+
+  function h3(text){
+    const h = document.createElement("div");
+    h.style.fontSize = "12px";
+    h.style.color = "var(--muted)";
+    h.style.marginTop = "10px";
+    h.style.marginBottom = "6px";
+    h.textContent = text;
+    return h;
+  }
+
+  function $(sel){ return document.querySelector(sel); }
+  function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+})();
+</script>
+</body>
+</html>
