@@ -472,7 +472,45 @@
     .dist-bar{height: 10px; border-radius: 999px; border:1px solid rgba(34,48,68,.85); background: rgba(15,22,35,.65); overflow:hidden;}
     .dist-bar > div{height:100%; border-radius:999px; background: rgba(102,217,239,.70); width:0%;}
     .pill{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid var(--border); background: rgba(15,22,35,.50);}
-    </style>
+    
+    /* v1.3.37 UI polish: improve select/option readability (esp. iOS/Android) */
+    select.input, .input select{
+      background: rgba(15,22,35,.92);
+      color: rgba(240,245,255,.92);
+      border: 1px solid rgba(34,48,68,.85);
+      -webkit-text-fill-color: rgba(240,245,255,.92);
+    }
+    select.input:focus{
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(102,217,239,.18);
+    }
+    select.input option{
+      background: rgba(10,15,24,.98);
+      color: rgba(240,245,255,.92);
+    }
+    
+
+    /* v1.3.38 UI polish: force dark selects everywhere (scenario selector + all browsers) */
+    select{
+      background: rgba(15,22,35,.92) !important;
+      color: rgba(240,245,255,.92) !important;
+      border: 1px solid rgba(34,48,68,.85) !important;
+      -webkit-text-fill-color: rgba(240,245,255,.92) !important;
+    }
+    select:focus{
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(102,217,239,.18);
+    }
+    select option{
+      background: rgba(10,15,24,.98) !important;
+      color: rgba(240,245,255,.92) !important;
+    }
+    select optgroup{
+      background: rgba(10,15,24,.98) !important;
+      color: rgba(240,245,255,.92) !important;
+    }
+
+</style>
 </head>
 <body>
 <div class="app">
@@ -676,7 +714,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.3.36";
+  const APP_VERSION = "v1.3.38";
   // -----------------------------
   // Constants
   // -----------------------------
