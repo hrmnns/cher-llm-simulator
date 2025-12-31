@@ -505,7 +505,8 @@
     scenarioId: null,              // selected scenario id
     step: "input",                 // current pipeline step
     sandboxInput: "Was ist ein Hund?",
-    params: { temperature: 0.8, topP: 0.9, topK: 10 },
+    params: { temperature: 0.8, topP: 0.9, topK: 10, dModel: 16, posEnc: true },
+    cache: { embeddings: null, embeddingKey: null },
   };
 
   // -----------------------------
@@ -693,6 +694,7 @@
   function reset(){
     state.step = "input";
     state.sandboxInput = "Was ist ein Hund?";
+    invalidateEmbeddingCache();
     // keep mode and selected scenario
     render();
   }
@@ -787,7 +789,7 @@
     switch(step){
       case "input": return el.view.appendChild(viewInput(scenario));
       case "tokenizer": return el.view.appendChild(viewTokenizer(scenario));
-      case "embedding": return el.view.appendChild(viewPlaceholder("Embeddings", "In v1 wird dieser Schritt visuell vorbereitet. In v2 können hier Vektoren/Barcodes und Positional Encoding ergänzt werden."));
+      case "embedding": return el.view.appendChild(viewEmbedding(scenario));
       case "attention": return el.view.appendChild(viewPlaceholder("Attention", "In v1 ist dies ein Platzhalter. In v2: Heatmap (Head/Layers), inkl. Highlights aus Replay-Daten."));
       case "mlp": return el.view.appendChild(viewPlaceholder("MLP", "In v1 ein Platzhalter. In v2: Vorher/Nachher-Vektoren (Delta), einfache Nichtlinearität."));
       case "logits": return el.view.appendChild(viewPlaceholder("Logits/Softmax", "In v2: Top-K Balken, Umschalter Logits vs. Probabilities."));
@@ -904,6 +906,9 @@
     items.push({ k: "topP", v: String(state.params.topP) });
     items.push({ k: "topK", v: String(state.params.topK) });
 
+    items.push({ k: "d_model", v: String(state.params.dModel) });
+    items.push({ k: "posEnc", v: String(!!state.params.posEnc) });
+
     for(const it of items){
       el.inspector.appendChild(kv(it.k, it.v));
     }
@@ -949,6 +954,104 @@
     pre.style.background = "rgba(15,22,35,.75)";
     pre.textContent = raw;
     wrap.appendChild(pre);
+
+    return wrap;
+  }
+
+
+  function viewEmbedding(scenario){
+    const wrap = document.createElement("div");
+    const toks = scenario.tokenization?.tokens ?? [];
+    const focus = scenario.highlights?.tokenFocus ?? [];
+
+    wrap.appendChild(pNotice("Embeddings sind Vektorrepräsentationen der Tokens. In dieser Simulation werden Embeddings seeded erzeugt (reproduzierbar), damit der Schritt sichtbar und erklärbar bleibt."));
+
+    // Controls (v1.1): d_model + positional encoding toggle
+    const controls = document.createElement("div");
+    controls.className = "notice";
+    controls.style.display = "grid";
+    controls.style.gap = "10px";
+
+    const dm = document.createElement("div");
+    dm.className = "kv";
+    dm.innerHTML = `
+      <div class="k">d_model</div>
+      <div class="v">
+        <select id="dModelSelect" aria-label="d_model auswählen">
+          <option value="8">8</option>
+          <option value="16">16</option>
+          <option value="32">32</option>
+        </select>
+      </div>
+    `;
+    controls.appendChild(dm);
+
+    const pe = document.createElement("div");
+    pe.className = "kv";
+    pe.innerHTML = `
+      <div class="k">Positional Encoding</div>
+      <div class="v">
+        <label style="display:flex; align-items:center; gap:10px;">
+          <input id="posEncToggle" type="checkbox" />
+          <span class="small muted">additiv (vereinfachtes sin/cos)</span>
+        </label>
+      </div>
+    `;
+    controls.appendChild(pe);
+
+    wrap.appendChild(controls);
+
+    // Apply current state to controls
+    const dModelSelect = controls.querySelector("#dModelSelect");
+    dModelSelect.value = String(state.params.dModel);
+    dModelSelect.addEventListener("change", (e) => {
+      state.params.dModel = Number(e.target.value);
+      invalidateEmbeddingCache();
+      render();
+    });
+
+    const posEncToggle = controls.querySelector("#posEncToggle");
+    posEncToggle.checked = !!state.params.posEnc;
+    posEncToggle.addEventListener("change", (e) => {
+      state.params.posEnc = !!e.target.checked;
+      invalidateEmbeddingCache();
+      render();
+    });
+
+    // Compute embeddings (cached)
+    const emb = getEmbeddingsForScenario(scenario, toks);
+
+    wrap.appendChild(h3("Token → Vektor-Barcodes"));
+    const grid = document.createElement("div");
+    grid.style.display = "grid";
+    grid.style.gap = "10px";
+
+    toks.forEach((t, i) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gridTemplateColumns = "auto 1fr";
+      row.style.gap = "10px";
+      row.style.alignItems = "center";
+
+      const chip = document.createElement("span");
+      chip.className = "token" + (focus.includes(stripLeadingSpace(t.text)) ? " focus" : "");
+      chip.innerHTML = `<span class="mono">${escapeHtml(t.text)}</span><span class="id">${escapeHtml(String(t.id))}</span>`;
+
+      const bars = vectorBars(emb[i] || []);
+      row.appendChild(chip);
+      row.appendChild(bars);
+      grid.appendChild(row);
+    });
+
+    if(!toks.length){
+      grid.appendChild(pNotice("Keine Tokens.", true));
+    }
+
+    wrap.appendChild(grid);
+
+    // Explanation block
+    wrap.appendChild(h3("Interpretation (wichtig)"));
+    wrap.appendChild(pNotice("Die Dimensionen haben keine direkte, menschenlesbare Bedeutung. Entscheidend ist: Tokens werden als Zahlenvektoren dargestellt, damit Matrixoperationen (z. B. Attention) möglich sind."));
 
     return wrap;
   }
@@ -1048,24 +1151,170 @@
   function renderControls(){
     const box = document.createElement("div");
     box.className = "kvs";
-    box.appendChild(pNotice("Controls (v1): Platzhalter. In v2 werden hier Temperature/Top-p/Top-k und Visualisierungstoggles pro Schritt ergänzt."));
 
-    const r = document.createElement("div");
-    r.className = "notice";
-    r.innerHTML = `
-      <div class="small muted">Parameter (nur Anzeige, v1)</div>
+    box.appendChild(pNotice("Controls (v1.1): Embedding-Parameter sind aktiv. Weitere Controls (Temperature/Top-p/Top-k) werden in v1.2+ für Logits/Decoding ergänzt."));
+
+    // d_model
+    const dm = document.createElement("div");
+    dm.className = "notice";
+    dm.innerHTML = `
+      <div class="small muted">Embedding</div>
+      <div class="kv"><div class="k">d_model</div>
+        <div class="v">
+          <select id="ctlDModel" aria-label="d_model auswählen">
+            <option value="8">8</option>
+            <option value="16">16</option>
+            <option value="32">32</option>
+          </select>
+        </div>
+      </div>
+      <div class="kv"><div class="k">Positional Encoding</div>
+        <div class="v">
+          <label style="display:flex; align-items:center; gap:10px;">
+            <input id="ctlPosEnc" type="checkbox" />
+            <span class="small muted">additiv sin/cos</span>
+          </label>
+        </div>
+      </div>
+    `;
+    box.appendChild(dm);
+
+    const sel = dm.querySelector("#ctlDModel");
+    sel.value = String(state.params.dModel);
+    sel.addEventListener("change", (e) => {
+      state.params.dModel = Number(e.target.value);
+      invalidateEmbeddingCache();
+      render();
+    });
+
+    const chk = dm.querySelector("#ctlPosEnc");
+    chk.checked = !!state.params.posEnc;
+    chk.addEventListener("change", (e) => {
+      state.params.posEnc = !!e.target.checked;
+      invalidateEmbeddingCache();
+      render();
+    });
+
+    // Decoding params (display only for now)
+    const dec = document.createElement("div");
+    dec.className = "notice";
+    dec.innerHTML = `
+      <div class="small muted">Decoding (Anzeige, v1)</div>
       <div class="kv"><div class="k">temperature</div><div class="v mono">${escapeHtml(String(state.params.temperature))}</div></div>
       <div class="kv"><div class="k">topP</div><div class="v mono">${escapeHtml(String(state.params.topP))}</div></div>
       <div class="kv"><div class="k">topK</div><div class="v mono">${escapeHtml(String(state.params.topK))}</div></div>
     `;
-    box.appendChild(r);
+    box.appendChild(dec);
+
     return box;
   }
 
   // -----------------------------
   // Helpers
   // -----------------------------
-  function populateScenarioSelect(){
+  
+  function invalidateEmbeddingCache(){
+    state.cache.embeddings = null;
+    state.cache.embeddingKey = null;
+  }
+
+  function getEmbeddingsForScenario(scenario, tokens){
+    const key = [
+      scenario?.id ?? "no-scenario",
+      String(state.params.dModel),
+      String(!!state.params.posEnc),
+      String(tokens?.length ?? 0),
+      (tokens || []).map(t => String(t.id)).join(",")
+    ].join("|");
+
+    if(state.cache.embeddingKey === key && Array.isArray(state.cache.embeddings)){
+      return state.cache.embeddings;
+    }
+
+    const d = state.params.dModel;
+    const seed = stableHash(key);
+
+    const out = (tokens || []).map((t, pos) => {
+      const base = seededVector(seed ^ (t.id * 2654435761), d); // deterministic per token
+      if(state.params.posEnc){
+        const pe = positionalEncoding(pos, d);
+        return base.map((v, i) => v + pe[i]);
+      }
+      return base;
+    });
+
+    state.cache.embeddingKey = key;
+    state.cache.embeddings = out;
+    return out;
+  }
+
+  // Seeded pseudo-random vector in [-1, 1]
+  function seededVector(seed, dim){
+    const v = new Array(dim);
+    let x = seed >>> 0;
+    for(let i=0;i<dim;i++){
+      x = xorshift32(x);
+      // map to [0,1)
+      const u = (x >>> 0) / 4294967296;
+      v[i] = (u * 2) - 1;
+    }
+    return v;
+  }
+
+  // Simple sin/cos positional encoding (not exact to any specific model, but consistent)
+  function positionalEncoding(pos, dim){
+    const pe = new Array(dim);
+    for(let i=0;i<dim;i++){
+      const denom = Math.pow(10000, (2 * Math.floor(i/2)) / dim);
+      const angle = pos / denom;
+      pe[i] = (i % 2 === 0) ? Math.sin(angle) : Math.cos(angle);
+    }
+    return pe;
+  }
+
+  // Small bar visualization for vectors (auto-scaled by absolute value)
+  function vectorBars(vec){
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gridTemplateColumns = `repeat(${Math.min(vec.length, 32)}, 1fr)`;
+    wrap.style.gap = "3px";
+    wrap.style.alignItems = "end";
+    wrap.style.padding = "8px 10px";
+    wrap.style.borderRadius = "12px";
+    wrap.style.border = "1px solid rgba(34,48,68,.85)";
+    wrap.style.background = "rgba(15,22,35,.75)";
+
+    const maxAbs = Math.max(0.0001, ...vec.map(x => Math.abs(x)));
+    for(let i=0;i<vec.length;i++){
+      const b = document.createElement("div");
+      const h = Math.max(2, Math.round((Math.abs(vec[i]) / maxAbs) * 36));
+      b.style.height = h + "px";
+      b.style.borderRadius = "4px";
+      // Use opacity to encode sign (positive brighter)
+      b.style.background = "rgba(102,217,239," + (vec[i] >= 0 ? "0.75" : "0.30") + ")";
+      wrap.appendChild(b);
+    }
+
+    return wrap;
+  }
+
+  // Deterministic hash for strings (32-bit)
+  function stableHash(str){
+    let h = 2166136261 >>> 0;
+    for(let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function xorshift32(x){
+    x ^= x << 13;
+    x ^= x >>> 17;
+    x ^= x << 5;
+    return x >>> 0;
+  }
+function populateScenarioSelect(){
     const doc = state.scenariosDoc;
     el.scenarioSelect.innerHTML = "";
     if(!doc || !Array.isArray(doc.scenarios) || !doc.scenarios.length){
