@@ -655,7 +655,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.3.15";
+  const APP_VERSION = "v1.3.18";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1534,6 +1534,16 @@
     `;
     wrap.appendChild(controls);
 
+    const deltaToggle = document.createElement("div");
+    deltaToggle.className = "notice";
+    deltaToggle.innerHTML =
+      '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
+      + '<input id="mlpShowDelta" type="checkbox" checked />'
+      + '<span><strong>Delta anzeigen</strong> (Kontext − Embedding)</span>'
+      + '</label>'
+      + '<div class="small muted" style="margin-top:6px;">Ohne Attention bleibt nur das Embedding. Mit Attention entsteht ein Kontextvektor. Das Delta macht sichtbar, was der Kontext ergänzt.</div>';
+    wrap.appendChild(deltaToggle);
+
     const r = controls.querySelector("#logitStepRange");
     const v = controls.querySelector("#logitStepVal");
     r.value = String(clamp(Number(state.params.logitStep) || 1, 1, steps.length));
@@ -1604,6 +1614,13 @@
       b2.push(rand() * 0.05);
     }
     return { W1: W1, b1: b1, W2: W2, b2: b2 };
+  }
+
+  function renderDeltaBars(aVec, bVec, label){
+    const dModel = Math.min(aVec.length, bVec.length);
+    const delta = new Array(dModel);
+    for(let i=0;i<dModel;i++) delta[i] = aVec[i] - bVec[i];
+    return renderVectorBars(delta, label);
   }
 
   function renderVectorBars(vec, label){
@@ -1702,10 +1719,12 @@
     return hmWrap;
   }
 
+  
   function viewMLP(scenario){
     const wrap = document.createElement("div");
-    wrap.appendChild(pNotice("MLP/FFN: Nach der Attention wird jede Token-Repräsentation nichtlinear weiter transformiert (z. B. ReLU/GELU). Hier zeigen wir (didaktisch): Kontext-Vektor nach Attention → FFN-Output."));
+    wrap.appendChild(pNotice("MLP/FFN ergänzt die Attention: Attention mischt Information über Tokens (Kontext), MLP transformiert pro Token nichtlinear. Für ein Token i siehst du: Embedding (ohne Kontext), Kontext nach Attention, optional Delta (Kontext − Embedding) und den FFN-Output."));
 
+    // Context reminder: compact heatmap
     wrap.appendChild(h3("Attention-Heatmap (Kontextgrundlage)"));
     wrap.appendChild(attentionHeatmapCompact(scenario));
 
@@ -1715,6 +1734,7 @@
       return wrap;
     }
 
+    // Controls: token selector
     const controls = document.createElement("div");
     controls.className = "notice";
     controls.style.display = "grid";
@@ -1729,39 +1749,65 @@
       + '<div class="small muted">Zeige toy-FFN Input/Output für Token i.</div>';
     wrap.appendChild(controls);
 
+    // Controls: delta toggle (persist in state)
+    if(typeof state.params.showDelta !== "boolean") state.params.showDelta = true;
+    const deltaToggle = document.createElement("div");
+    deltaToggle.className = "notice";
+    deltaToggle.innerHTML =
+      '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
+      + '<input id="mlpShowDelta" type="checkbox" />'
+      + '<span><strong>Delta anzeigen</strong> (Kontext − Embedding)</span>'
+      + '</label>'
+      + '<div class="small muted" style="margin-top:6px;">Aha-Punkt: Ohne Attention bleibt nur das Embedding. Mit Attention entsteht ein Kontextvektor. Das Delta macht sichtbar, was der Kontext ergänzt.</div>';
+    wrap.appendChild(deltaToggle);
+
     const r = controls.querySelector("#mlpTokRange");
     const v = controls.querySelector("#mlpTokVal");
-    const defaultIdx = Math.max(0, toks.length-1);
+    const chk = deltaToggle.querySelector("#mlpShowDelta");
+
+    const defaultIdx = Math.max(0, toks.length - 1);
     r.value = String(defaultIdx);
     v.textContent = defaultIdx + ": " + stripLeadingSpace(toks[defaultIdx].text);
+    chk.checked = !!state.params.showDelta;
 
-    const E = getEmbeddingsForScenario(scenario, toks);
-    const A = buildAttentionMatrix(scenario, toks);
+    // Build representations
+    const E = getEmbeddingsForScenario(scenario, toks); // [T][d]
+    const A = buildAttentionMatrix(scenario, toks);     // [T][T]
     const dModel = state.params.dModel;
     const ffn = buildToyFFN((scenario && scenario.id) ? scenario.id : "x", dModel);
 
     const vectorsBox = document.createElement("div");
+    wrap.appendChild(h3("MLP Vorher/Nachher (toy-FFN)"));
+    wrap.appendChild(vectorsBox);
 
     function computeFor(i){
+      const emb = E[i];
       const ctx = new Array(dModel);
       for(let k=0;k<dModel;k++) ctx[k] = 0;
+
       for(let j=0;j<toks.length;j++){
         const a = (A[i] && typeof A[i][j] === "number") ? A[i][j] : 0;
         for(let k=0;k<dModel;k++){
           ctx[k] += a * E[j][k];
         }
       }
+
       const h1 = matVec(ffn.W1, ctx, ffn.b1);
       for(let t=0;t<h1.length;t++) h1[t] = relu(h1[t]);
       const out = matVec(ffn.W2, h1, ffn.b2);
-      return { ctx: ctx, out: out };
+
+      return { emb: emb, ctx: ctx, out: out };
     }
 
     function renderFor(i){
       v.textContent = i + ": " + stripLeadingSpace(toks[i].text);
       const res = computeFor(i);
       vectorsBox.innerHTML = "";
-      vectorsBox.appendChild(renderVectorBars(res.ctx, "FFN-Input (nach Attention)"));
+      vectorsBox.appendChild(renderVectorBars(res.emb, "Embedding (ohne Kontext)"));
+      vectorsBox.appendChild(renderVectorBars(res.ctx, "Kontext nach Attention (Input in FFN)"));
+      if(!!state.params.showDelta){
+        vectorsBox.appendChild(renderDeltaBars(res.ctx, res.emb, "Delta: Kontext − Embedding"));
+      }
       vectorsBox.appendChild(renderVectorBars(res.out, "FFN-Output (nach MLP/FFN)"));
     }
 
@@ -1769,14 +1815,17 @@
       renderFor(Number(e.target.value));
     });
 
-    wrap.appendChild(h3("MLP Vorher/Nachher (toy-FFN)"));
-    wrap.appendChild(vectorsBox);
-    renderFor(defaultIdx);
+    chk.addEventListener("change", function(){
+      state.params.showDelta = !!chk.checked;
+      renderFor(Number(r.value));
+    });
 
+    renderFor(defaultIdx);
     return wrap;
   }
 
-function viewSummary(scenario){
+
+  function viewSummary(scenario){
     const wrap = document.createElement("div");
     wrap.appendChild(h3("Lernziele"));
     const ul = document.createElement("ul");
