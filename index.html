@@ -489,7 +489,7 @@
         </div>
 
         <button id="resetBtn" class="secondary" type="button">Reset</button>
-        <button id="mobileToolsBtn" class="secondary" type="button" style="display:none;">Tools</button>
+        <button id="mobileToolsBtn" class="secondary" type="button" style="display:none;" onclick="window.cherSim && window.cherSim.openTools()">Tools</button>
       </div>
     </div>
   </header>
@@ -577,7 +577,7 @@
   <div class="sheet card" role="dialog" aria-label="Tools">
     <div class="card-h">
       <h2>Tools</h2>
-      <button id="closeSheetBtn" class="secondary" type="button">Schließen</button>
+      <button id="closeSheetBtn" class="secondary" type="button" onclick="window.cherSim && window.cherSim.closeTools()">Schließen</button>
     </div>
     <div class="sheet-tabs" id="sheetTabs">
       <button class="secondary active" data-tab="controls" type="button">Controls</button>
@@ -592,7 +592,7 @@
   <div class="modal" role="dialog" aria-label="Szenario-Diagnose">
     <div class="card-h">
       <h2>Szenario-Diagnose</h2>
-      <button id="diagCloseBtn" class="secondary" type="button">Schließen</button>
+      <button id="diagCloseBtn" class="secondary" type="button" onclick="window.cherSim && window.cherSim.closeDiag()">Schließen</button>
     </div>
     <div class="body">
       <div class="notice" id="diagSummary">—</div>
@@ -904,6 +904,12 @@
     el.modeGuided.addEventListener("click", () => setMode("guided"));
     el.modeSandbox.addEventListener("click", () => setMode("sandbox"));
     el.resetBtn.addEventListener("click", () => reset());
+
+    // Extra: pointer/touch handlers (iOS Safari sometimes misses click on overlays)
+    el.closeSheetBtn?.addEventListener("pointerup", (e) => { e.preventDefault(); closeSheet(); });
+    el.diagBtn?.addEventListener("pointerup", (e) => { e.preventDefault(); openDiag(); });
+    el.diagCloseBtn?.addEventListener("pointerup", (e) => { e.preventDefault(); closeDiag(); });
+
 
 
     // Diagnose modal
@@ -1623,7 +1629,7 @@ function viewSummary(scenario){
           <div class="modal" role="dialog" aria-label="Szenario-Diagnose">
             <div class="card-h">
               <h2>Szenario-Diagnose</h2>
-              <button id="diagCloseBtn" class="secondary" type="button">Schließen</button>
+              <button id="diagCloseBtn" class="secondary" type="button" onclick="window.cherSim && window.cherSim.closeDiag()">Schließen</button>
             </div>
             <div class="body">
               <div class="notice" id="diagSummary">—</div>
