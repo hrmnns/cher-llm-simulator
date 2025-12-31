@@ -147,6 +147,16 @@
       border-color: rgba(247,201,72,.35);
       background: rgba(247,201,72,.10);
     }
+    .badge.ok{
+      color: #b7f7df;
+      border-color: rgba(110,231,183,.40);
+      background: rgba(110,231,183,.10);
+    }
+    .badge.danger{
+      color: #ffd0d0;
+      border-color: rgba(255,107,107,.45);
+      background: rgba(255,107,107,.12);
+    }
 
     main{
       max-width:1280px;
@@ -396,6 +406,60 @@
       background: rgba(102,217,239,.50);
     }
 
+  
+    .modal-backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 14px;
+      z-index:60;
+    }
+    .modal-backdrop.show{display:flex;}
+    .modal{
+      width: min(720px, 100%);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(17,24,38,.96);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modal .body{
+      padding: 12px;
+      display:grid;
+      gap:10px;
+    }
+    .modal pre{
+      margin:0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(34,48,68,.85);
+      background: rgba(15,22,35,.75);
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+  
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 80;
+      max-width: min(720px, calc(100% - 28px));
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(17,24,38,.96);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      display:none;
+    }
+    .toast.show{display:block;}
+    .toast .small{color: var(--muted);}
+
   </style>
 </head>
 <body>
@@ -410,7 +474,7 @@
             <div class="sub">Erklärbare Simulation von LLM-Grundprinzipien</div>
           </div>
         </div>
-        <span class="badge" id="loadStatus">Szenarien: —</span>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span class="badge" id="loadStatus">Szenarien: —</span><span class="badge warn" id="jsStatus" title="Wenn hier nicht ‚ready‘ steht, läuft JavaScript nicht.">JS: …</span><button id="diagBtn" class="secondary" type="button" title="Szenario-Diagnose anzeigen" onclick="window.__cherDiag && window.__cherDiag()">Diagnose</button></div>
       </div>
 
       <div class="toolbar">
@@ -522,7 +586,71 @@
     </div>
     <div class="card-b" id="sheetBody"></div>
   </div>
+
+<!-- Diagnose modal -->
+<div class="modal-backdrop" id="diagBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-label="Szenario-Diagnose">
+    <div class="card-h">
+      <h2>Szenario-Diagnose</h2>
+      <button id="diagCloseBtn" class="secondary" type="button">Schließen</button>
+    </div>
+    <div class="body">
+      <div class="notice" id="diagSummary">—</div>
+      <div class="notice">
+        <div class="small muted">Details</div>
+        <pre id="diagDetails">—</pre>
+      </div>
+      <div class="notice">
+        <div class="small muted">Hinweise</div>
+        <div class="small" id="diagHints"></div>
+      </div>
+    </div>
+  </div>
 </div>
+
+</div>
+
+<script>
+// Early boot diagnostics (v1.3.6)
+(function(){
+  const set = (kind, text, title) => {
+    const el = document.getElementById("jsStatus");
+    if(!el) return;
+    el.classList.remove("ok","warn","danger");
+    if(kind) el.classList.add(kind);
+    el.textContent = text;
+    if(title) el.title = title;
+  };
+  set("warn","JS: boot","JavaScript wird initialisiert …");
+  window.__cherBoot = { set };
+
+  const showFatal = (msg) => {
+    // Always visible fallback, even if main app fails
+    let t = document.getElementById("toast");
+    if(!t){
+      t = document.createElement("div");
+      t.id = "toast";
+      t.className = "toast show";
+      t.innerHTML = '<div style="font-weight:600;" id="toastTitle">Fehler</div><div class="small" id="toastBody"></div>';
+      document.body.appendChild(t);
+    }
+    const b = document.getElementById("toastBody");
+    if(b) b.textContent = msg;
+  };
+
+  window.addEventListener("error", (e) => {
+    set("danger","JS: error","Ein JavaScript-Fehler verhindert die App-Ausführung. Öffne die Konsole für Details.");
+    const msg = (e && e.message) ? e.message : "Unbekannter JavaScript-Fehler";
+    showFatal("JavaScript error: " + msg);
+  });
+
+  window.addEventListener("unhandledrejection", (e) => {
+    set("danger","JS: error","Ein Promise-Fehler verhindert die App-Ausführung. Öffne die Konsole für Details.");
+    const msg = (e && e.reason) ? String(e.reason) : "Unhandled promise rejection";
+    showFatal("Promise rejection: " + msg);
+  });
+})();
+</script>
 
 <script>
 (() => {
@@ -546,6 +674,7 @@
   const state = {
     mode: "guided",                // guided | sandbox
     scenariosDoc: null,            // full JSON document
+    status: { kind: '', text: 'Szenarien: —', details: '' },
     scenarioId: null,              // selected scenario id
     step: "input",                 // current pipeline step
     sandboxInput: "Was ist ein Hund?",
@@ -558,6 +687,15 @@
   // -----------------------------
   const el = {
     loadStatus: $("#loadStatus"),
+    diagBtn: $("#diagBtn"),
+    diagBackdrop: $("#diagBackdrop"),
+    diagCloseBtn: $("#diagCloseBtn"),
+    diagSummary: $("#diagSummary"),
+    diagDetails: $("#diagDetails"),
+    diagHints: $("#diagHints"),
+    toast: $("#toast"),
+    toastTitle: $("#toastTitle"),
+    toastBody: $("#toastBody"),
     scenarioSelect: $("#scenarioSelect"),
     modeGuided: $("#modeGuided"),
     modeSandbox: $("#modeSandbox"),
@@ -582,23 +720,56 @@
   };
 
   // -----------------------------
+  // Status helpers
+  // -----------------------------
+  function setLoadStatus(kind, text, details=""){
+    // kind: ok | warn | danger
+    el.loadStatus.classList.remove("ok","warn","danger");
+    if(kind) el.loadStatus.classList.add(kind);
+    el.loadStatus.textContent = text;
+    el.loadStatus.title = details || text;
+    state.status = { kind: kind || "", text: text || "", details: details || "" };
+  }
+
+  function showToast(title, body, ms=2500){
+    if(!el.toast) return;
+    el.toastTitle.textContent = title || "";
+    el.toastBody.textContent = body || "";
+    el.toast.classList.add("show");
+    window.clearTimeout(showToast._t);
+    showToast._t = window.setTimeout(() => {
+      el.toast.classList.remove("show");
+    }, ms);
+  }
+
+
+  // -----------------------------
   // Boot
   // -----------------------------
   init();
 
   async function init(){
+    try{ window.__cherBoot && window.__cherBoot.set("ok","JS: ready","JavaScript läuft."); }catch(e){}
     bindUI();
+    // Robust: event delegation for Diagnose button (works even if element is injected later)
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest && e.target.closest("#diagBtn");
+      if(btn){ openDiag(); }
+    });
     buildSteps();
     buildMobileTabs();
     updateResponsiveControls();
-
     // Try to load scenarios from canonical repo path
+    setLoadStatus("", "Szenarien: lade …", "Versuche scenarios/scenarios.json zu laden.");
     const loaded = await loadScenarios("scenarios/scenarios.json");
     if(!loaded){
       // Fallback to embedded minimal scenarios (keeps app usable on file://)
       state.scenariosDoc = embeddedScenarios();
-      el.loadStatus.textContent = "Szenarien: eingebettet (Fallback)";
-      el.loadStatus.classList.add("warn");
+      const proto = (location && location.protocol) ? location.protocol : "";
+      const hint = proto === "file:"
+        ? "Fallback aktiv, weil Browser fetch() unter file:// häufig blockiert (CORS). Starte die App über einen lokalen Server oder GitHub Pages."
+        : "Fallback aktiv. Szenario-Datei konnte nicht geladen oder validiert werden.";
+      setLoadStatus("warn", "Szenarien: Fallback aktiv", hint);
     }
     populateScenarioSelect();
     selectDefaultScenario();
@@ -613,16 +784,47 @@
     try{
       const res = await fetch(url, { cache: "no-store" });
       if(!res.ok) throw new Error("HTTP " + res.status);
-      const json = await res.json();
-      if(!json || !Array.isArray(json.scenarios)) throw new Error("Invalid scenarios doc");
+
+      let json;
+      try{
+        json = await res.json();
+      }catch(parseErr){
+        throw new Error("ParseError: scenarios.json ist kein gültiges JSON.");
+      }
+
+      if(!json || !Array.isArray(json.scenarios)){
+        throw new Error("SchemaError: scenarios.json hat nicht die erwartete Struktur (meta + scenarios[]).");
+      }
+      if(json.scenarios.length === 0){
+        throw new Error("SchemaError: scenarios.json enthält keine Szenarien.");
+      }
+      // minimal per-scenario validation
+      const bad = json.scenarios.find(s => !s || !s.id || !s.title || !s.promptStack || !s.tokenization || !s.generation);
+      if(bad){
+        throw new Error(`SchemaError: Szenario unvollständig (id=${bad?.id ?? "?"}). Erwartet: id,title,promptStack,tokenization,generation.`);
+      }
+
       state.scenariosDoc = json;
-      el.loadStatus.textContent = "Szenarien: geladen";
+      setLoadStatus("ok", "Szenarien: geladen", `Quelle: ${url} · ${json.scenarios.length} Szenario(s)`);
       return true;
     }catch(err){
-      // Most common: file:// fetch blocked by browser CORS. We'll fallback.
       console.warn("Scenario load failed:", err);
-      el.loadStatus.textContent = "Szenarien: nicht geladen";
-      el.loadStatus.classList.add("warn");
+      const proto = (location && location.protocol) ? location.protocol : "";
+      const common = proto === "file:"
+        ? "Browser blockiert fetch() unter file:// oft. Nutze einen lokalen Server (z. B. python -m http.server) oder GitHub Pages."
+        : "Prüfe Pfad/Dateiname und JSON-Struktur.";
+
+      // Differentiate by message
+      const msg = String(err?.message || err);
+      if(msg.startsWith("ParseError")){
+        setLoadStatus("danger", "Szenarien: JSON-Fehler", msg + " " + common);
+      } else if(msg.startsWith("SchemaError")){
+        setLoadStatus("danger", "Szenarien: Schema-Fehler", msg + " " + common);
+      } else if(msg.startsWith("HTTP")){
+        setLoadStatus("danger", "Szenarien: HTTP-Fehler", msg + " " + common);
+      } else {
+        setLoadStatus("danger", "Szenarien: Fehler", msg + " " + common);
+      }
       return false;
     }
   }
@@ -702,6 +904,11 @@
     el.modeGuided.addEventListener("click", () => setMode("guided"));
     el.modeSandbox.addEventListener("click", () => setMode("sandbox"));
     el.resetBtn.addEventListener("click", () => reset());
+
+
+    // Diagnose modal
+    el.diagBtn?.addEventListener("click", () => openDiag());
+
     el.scenarioSelect.addEventListener("change", (e) => {
       state.scenarioId = e.target.value;
       state.step = "input";
@@ -804,6 +1011,9 @@
     if(el.sheetBackdrop.classList.contains("show")){
       const activeTab = el.sheetTabs.querySelector("button.active")?.dataset.tab ?? "controls";
       renderSheet(activeTab);
+    }
+    if(el.diagBackdrop && el.diagBackdrop.classList.contains("show")){
+      renderDiag();
     }
   }
 
@@ -1393,6 +1603,80 @@ function viewSummary(scenario){
     el.sheetBackdrop.classList.remove("show");
     el.sheetBackdrop.setAttribute("aria-hidden", "true");
   }
+
+  function openDiag(){
+    // Always provide visible feedback, even if everything is OK.
+    const s = state.status || { kind:"", text:"Szenarien: —", details:"" };
+    const title = (s.kind === "danger") ? "Diagnose: Problem" : (s.kind === "warn") ? "Diagnose: Hinweis" : "Diagnose: Alles in Ordnung";
+    const body  = s.details || (s.kind === "ok" ? "Szenarien wurden erfolgreich geladen." : "Keine weiteren Details.");
+
+    // Try to open modal; if not possible, at least show toast.
+    try{
+      // Defensive: if DOM nodes are missing, inject minimal dialog.
+      if(!el.diagBackdrop || !document.getElementById("diagBackdrop")){
+        console.warn("diagBackdrop missing – injecting minimal diagnose modal.");
+        const div = document.createElement("div");
+        div.className = "modal-backdrop";
+        div.id = "diagBackdrop";
+        div.setAttribute("aria-hidden","true");
+        div.innerHTML = `
+          <div class="modal" role="dialog" aria-label="Szenario-Diagnose">
+            <div class="card-h">
+              <h2>Szenario-Diagnose</h2>
+              <button id="diagCloseBtn" class="secondary" type="button">Schließen</button>
+            </div>
+            <div class="body">
+              <div class="notice" id="diagSummary">—</div>
+              <div class="notice"><div class="small muted">Details</div><pre id="diagDetails">—</pre></div>
+              <div class="notice"><div class="small muted">Hinweise</div><div class="small" id="diagHints"></div></div>
+            </div>
+          </div>`;
+        document.body.appendChild(div);
+        // refresh refs
+        el.diagBackdrop = document.getElementById("diagBackdrop");
+        el.diagCloseBtn = document.getElementById("diagCloseBtn");
+        el.diagSummary  = document.getElementById("diagSummary");
+        el.diagDetails  = document.getElementById("diagDetails");
+        el.diagHints    = document.getElementById("diagHints");
+        el.diagCloseBtn?.addEventListener("click", closeDiag);
+        el.diagBackdrop?.addEventListener("click", (e) => { if(e.target === el.diagBackdrop) closeDiag(); });
+      }
+      renderDiag();
+      el.diagBackdrop.classList.add("show");
+      el.diagBackdrop.setAttribute("aria-hidden", "false");
+      showToast(title, body, 1800);
+    }catch(err){
+      console.warn("openDiag failed:", err);
+      showToast(title, body, 3500);
+    }
+  }
+  function closeDiag(){
+    if(!el.diagBackdrop) return;
+    el.diagBackdrop.classList.remove("show");
+    el.diagBackdrop.setAttribute("aria-hidden", "true");
+  }
+  function renderDiag(){
+    const proto = (location && location.protocol) ? location.protocol : "";
+    const isFile = proto === "file:";
+    const s = state.status || { kind:"", text:"", details:"" };
+
+    const doc = state.scenariosDoc;
+    const count = Array.isArray(doc?.scenarios) ? doc.scenarios.length : 0;
+    const defId = doc?.meta?.defaultScenarioId || "—";
+    const selected = state.scenarioId || "—";
+
+    const okNote = (s.kind === "ok") ? "Alles in Ordnung. " : "";
+    el.diagSummary.textContent = `${okNote}${s.text} · ausgewählt: ${selected} · default: ${defId} · count: ${count}`;
+    el.diagDetails.textContent = s.details || "(keine Details)";
+    el.diagHints.innerHTML = `
+      <ul style="margin:0; padding-left:18px;">
+        <li>Pfad erwartet: <span class="mono">scenarios/scenarios.json</span></li>
+        <li>Wenn du lokal testest: <span class="mono">${isFile ? "file://" : proto}</span> ${isFile ? "→ fetch() wird oft blockiert. Starte einen lokalen Server." : ""}</li>
+        <li>JSON muss Struktur <span class="mono">{ meta, scenarios: [] }</span> haben.</li>
+      </ul>
+    `;
+  }
+
   function renderSheet(tab){
     el.sheetBody.innerHTML = "";
     if(tab === "controls"){
@@ -2037,5 +2321,10 @@ function populateScenarioSelect(){
   }
 })();
 </script>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <div id="toastTitle" style="font-weight:600;">—</div>
+  <div id="toastBody" class="small">—</div>
+</div>
 </body>
 </html>
