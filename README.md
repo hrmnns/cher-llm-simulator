@@ -74,43 +74,60 @@ ersetzen sie jedoch nicht.
 
 Weiterentwicklungen erfolgen in nachfolgenden Versionen.
 
-## Zentrales Konzept: Szenario-basierte Simulation
-
-Die App ist **datengetrieben** aufgebaut.
-
-Alle Beispiele und Lernpfade werden über JSON-Szenarien definiert.
-Der Code stellt die Pipeline dar – **die Didaktik steckt in den Daten**.
-
-Ein Szenario kann unter anderem festlegen:
-
-- den Eingabe-Prompt (Prompt-Stack)
-- die Tokenisierung (Tokens und IDs)
-- die erwartete Ausgabe
-- optionale Zwischenschritte (z. B. Attention-Matrizen)
-- erklärende Hinweise pro Verarbeitungsschritt
-
-Neue Szenarien können ergänzt werden, **ohne den Code zu verändern**.
-
 ## Guided Simulation vs. Mechanik-Sandbox
 
-Die App unterscheidet bewusst zwei Modi:
+Die App unterscheidet bewusst zwei Modi mit unterschiedlicher Zielsetzung.
 
 ### Guided Simulation (Standard)
 
 - kuratierte, vorgegebene Szenarien
 - kontrollierte Tokenisierung und Ausgabe
-- klar definierte Lernziele
+- klar definierte Lernziele pro Szenario
 - reproduzierbare, erklärbare Abläufe
 
-➡️ Dieser Modus dient dem **strukturierten Verständnis**.
+➡️ Dieser Modus dient dem **strukturierten Verständnis** zentraler Konzepte.
 
-### Mechanik-Sandbox (optional)
+### Mechanik-Sandbox (v1)
 
-- freie Eingabe
-- keine Garantie auf sinnvolle oder konsistente Ausgabe
-- Fokus auf technische Abläufe
+Die Mechanik-Sandbox ist in v1 bewusst als **technischer Experimentierraum** angelegt.
 
-➡️ Dieser Modus zeigt, **was die Architektur technisch tut – unabhängig von Bedeutung**.
+Sie dient dazu, die **reinen Abläufe der Architektur** sichtbar zu machen –
+unabhängig von didaktisch kuratierten Szenarien oder inhaltlich sinnvollen Antworten.
+
+#### Aktueller Stand (v1)
+
+In der aktuellen Version ermöglicht die Sandbox:
+
+- freie Texteingabe
+- Durchlaufen der technischen Pipeline
+- Visualisierung der Verarbeitungsschritte
+
+Dabei gilt ausdrücklich:
+
+- keine semantische Garantie
+- keine konsistente oder „richtige“ Ausgabe
+- keine inhaltliche Reproduzierbarkeit
+
+Die Sandbox ist damit **kein LLM-Ersatz** und kein Modus zur Bewertung von Antworten.
+
+#### Einordnung
+
+Die Sandbox zeigt, **was die Architektur technisch tut**, nicht,
+was sie „bedeutet“ oder „weiß“.
+
+Sie ist bewusst roh gehalten und bildet den Gegenpol zur Guided Simulation:
+Während dort Didaktik im Vordergrund steht, zeigt die Sandbox
+die Mechanik ohne didaktische Leitplanken.
+
+#### Ausblick
+
+Die Sandbox ist als Ausbaupunkt für spätere Versionen vorgesehen, z. B. für:
+
+- konfigurierbares Sampling
+- reproduzierbare Läufe
+- gezielte Variation einzelner Parameter
+
+Diese Funktionen sind **nicht Teil von v1**.
 
 ## Zielgruppe
 
@@ -149,7 +166,7 @@ Keine Installation notwendig.
 
 1. Repository klonen oder herunterladen  
 2. `index.html` im Browser öffnen  
-3. Szenario auswählen  
+3. Szenario auswählen oder Sandbox aktivieren  
 4. Pipeline Schritt für Schritt erkunden  
 
 Die Anwendung ist vollständig **clientseitig** und benötigt keinen Server.
