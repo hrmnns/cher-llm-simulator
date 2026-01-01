@@ -1,6 +1,7 @@
 # Parameter – Embeddings & Positionsinformation
 
-Diese Datei beschreibt die **Wirkung früher Parameter im Embedding-Schritt** des *LLM Simulators* (Referenzstand **v1.3.40**).
+Diese Datei beschreibt die **Wirkung früher Parameter im Embedding-Schritt** des  
+*LLM Simulator by cherware.de* (Referenzstand **v1.3.40**).
 
 Der Fokus liegt darauf, **transparent und nachvollziehbar** zu erklären,
 
@@ -76,10 +77,16 @@ Eingabe-Vektor = Token-Embedding + Positions-Vektor
 
 In der App wird dieser Mechanismus **vereinfacht simuliert**:
 - additiv
-- sinus-/cosinus-ähnlich
 - deterministisch (reproduzierbar)
+- ohne Lernprozess
 
-Es findet **kein Lernen** statt.
+Die Positionswerte folgen dabei einem **regelmäßigen, wellenartigen Zahlenmuster**
+(sinus-/cosinus-ähnlich), das sich mit der Token-Position systematisch verändert.
+
+Wichtig dabei:
+- Die Werte sind **nicht zufällig** und **nicht gelernt**
+- Benachbarte Positionen erzeugen **ähnliche**, weiter entfernte **unterschiedlichere** Muster
+- Ziel ist eine **stabile numerische Positionsmarkierung**, keine exakte mathematische Nachbildung
 
 ### Warum ist Positional Encoding notwendig?
 
