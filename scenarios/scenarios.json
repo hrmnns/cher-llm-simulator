@@ -1,14 +1,14 @@
 {
   "meta": {
-    "version": "1.0",
+    "version": "v1.0",
     "project": "cher-llm-simulator",
-    "description": "Offizielle Referenzszenarien + Basisbeispiele (v1.0)",
-    "defaultScenarioId": "baseline-hund"
+    "description": "LLM Simulator – Referenzszenarien v1.0 (kuratiert)",
+    "defaultScenarioId": "ref-01-posenc-hund-hund-hund"
   },
   "scenarios": [
     {
       "id": "posenc-hund-hund-hund",
-      "title": "Positionsinformation: Hund Hund Hund",
+      "title": "Ref 01 · Positionsinformation — Positionsinformation: Hund Hund Hund",
       "learningGoals": [
         "Embeddings",
         "Positional Encoding",
@@ -49,11 +49,14 @@
         "focusByStep": {
           "embedding": "Positional Encoding · Gleiche Tokens werden positionsabhängig"
         }
-      }
+      },
+      "tags": [
+        "referenz"
+      ]
     },
     {
       "id": "attention-hund-beisst-mann",
-      "title": "Kontext: Der Hund beißt den Mann",
+      "title": "Ref 02 · Kontext (Attention/MLP) — Kontext: Der Hund beißt den Mann",
       "learningGoals": [
         "Attention",
         "Kontext",
@@ -107,11 +110,14 @@
           "attention": "Attention · Kontextgewichtung als Heatmap",
           "mlp": "MLP/FFN · Weiterverarbeitung mit/ohne Kontext"
         }
-      }
+      },
+      "tags": [
+        "referenz"
+      ]
     },
     {
       "id": "decoding-der-hund-ist-ein",
-      "title": "Auswahl: Der Hund ist ein …",
+      "title": "Ref 03 · Auswahl (Logits/Decoding) — Auswahl: Der Hund ist ein …",
       "learningGoals": [
         "Logits",
         "Decoding",
@@ -161,11 +167,14 @@
           "logits": "Logits · Kandidaten-Bewertungen",
           "decoding": "Decoding · Auswahlregeln & Variation"
         }
-      }
+      },
+      "tags": [
+        "referenz"
+      ]
     },
     {
       "id": "roles-mann-sieht-hund",
-      "title": "Reihenfolge: Der Mann sieht den Hund",
+      "title": "Ref 04a · Reihenfolge & Rollen — Reihenfolge: Der Mann sieht den Hund",
       "learningGoals": [
         "Positional Encoding",
         "Attention",
@@ -219,11 +228,14 @@
           "embedding": "Positionsinformation · Gleiche Tokens, andere Ordnung",
           "attention": "Attention · Beziehungen kippen mit der Reihenfolge"
         }
-      }
+      },
+      "tags": [
+        "referenz"
+      ]
     },
     {
       "id": "roles-hund-sieht-mann",
-      "title": "Reihenfolge: Der Hund sieht den Mann",
+      "title": "Ref 04b · Reihenfolge & Rollen — Reihenfolge: Der Hund sieht den Mann",
       "learningGoals": [
         "Positional Encoding",
         "Attention",
@@ -277,11 +289,14 @@
           "embedding": "Positionsinformation · Gleiche Tokens, andere Ordnung",
           "attention": "Attention · Beziehungen kippen mit der Reihenfolge"
         }
-      }
+      },
+      "tags": [
+        "referenz"
+      ]
     },
     {
       "id": "limits-bank-geschlossen",
-      "title": "Grenzen: Die Bank ist geschlossen",
+      "title": "Ref 05 · Grenzen & Mehrdeutigkeit — Grenzen: Die Bank ist geschlossen",
       "learningGoals": [
         "Mehrdeutigkeit",
         "Kontextgrenzen",
@@ -326,11 +341,14 @@
         "focusByStep": {
           "attention": "Grenzen · Kontextgewichtung ist kein Weltwissen"
         }
-      }
+      },
+      "tags": [
+        "referenz"
+      ]
     },
     {
       "id": "baseline-hund",
-      "title": "Baseline: Was ist ein Hund?",
+      "title": "Basic · Baseline — Baseline: Was ist ein Hund?",
       "learningGoals": [
         "Grundprinzipien",
         "Tokenisierung",
@@ -384,11 +402,14 @@
           "tokenizer": "Subword-Tokenisierung · Warum Token nicht immer Wörter sind",
           "decoding": "Token-für-Token · Auswahl der nächsten Einheit"
         }
-      }
+      },
+      "tags": [
+        "basic"
+      ]
     },
     {
       "id": "kompositum-hundeleine",
-      "title": "Komposita: Hundeleine",
+      "title": "Basic · Tokenisierung (Komposita) — Komposita: Hundeleine",
       "learningGoals": [
         "Tokenisierung",
         "Subwords",
@@ -445,7 +466,10 @@
         "focusByStep": {
           "tokenizer": "Komposita zerlegen · Subword-Splitting"
         }
-      }
+      },
+      "tags": [
+        "basic"
+      ]
     }
   ]
 }
