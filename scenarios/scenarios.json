@@ -3,7 +3,7 @@
     "version": "v1.0",
     "project": "cher-llm-simulator",
     "description": "LLM Simulator – Referenzszenarien v1.0 (kuratiert)",
-    "defaultScenarioId": "ref-01-posenc-hund-hund-hund"
+    "defaultScenarioId": "posenc-hund-hund-hund"
   },
   "scenarios": [
     {
@@ -28,11 +28,11 @@
           },
           {
             "text": " Hund",
-            "id": 1202
+            "id": 1201
           },
           {
             "text": " Hund",
-            "id": 1203
+            "id": 1201
           }
         ]
       },
@@ -251,23 +251,23 @@
         "tokens": [
           {
             "text": "Der",
-            "id": 1601
+            "id": 1501
           },
           {
             "text": " Hund",
-            "id": 1602
+            "id": 1505
           },
           {
             "text": " sieht",
-            "id": 1603
+            "id": 1503
           },
           {
             "text": " den",
-            "id": 1604
+            "id": 1504
           },
           {
             "text": " Mann",
-            "id": 1605
+            "id": 1502
           }
         ]
       },
@@ -390,7 +390,7 @@
       "highlights": {
         "explain": [
           {
-            "at": "tokenizer",
+            "at": "tokenization",
             "text": "Token sind nicht immer identisch mit Wörtern. Häufig werden Subwords bzw. Teilstücke genutzt (z. B. bei Komposita)."
           },
           {
@@ -399,8 +399,8 @@
           }
         ],
         "focusByStep": {
-          "tokenizer": "Subword-Tokenisierung · Warum Token nicht immer Wörter sind",
-          "decoding": "Token-für-Token · Auswahl der nächsten Einheit"
+          "decoding": "Token-für-Token · Auswahl der nächsten Einheit",
+          "tokenization": "Subword-Tokenisierung · Warum Token nicht immer Wörter sind"
         }
       },
       "tags": [
@@ -459,12 +459,12 @@
         ],
         "explain": [
           {
-            "at": "tokenizer",
+            "at": "tokenization",
             "text": "Komposita werden in bekannte Teilstücke (Subwords) zerlegt, damit ein endliches Vokabular ausreicht."
           }
         ],
         "focusByStep": {
-          "tokenizer": "Komposita zerlegen · Subword-Splitting"
+          "tokenization": "Komposita zerlegen · Subword-Splitting"
         }
       },
       "tags": [
