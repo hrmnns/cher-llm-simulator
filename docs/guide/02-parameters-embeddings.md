@@ -75,6 +75,8 @@ Eingabe-Vektor = Token-Embedding + Positions-Vektor
 - Der Positions-Vektor hängt **nur von der Token-Position** ab, nicht vom Token-Inhalt.
 - Gleiche Tokens an unterschiedlichen Positionen erhalten dadurch **unterschiedliche Eingabe-Vektoren**.
 
+> Das Token sagt dem Modell, was dort steht. Die Positionsinformation sagt dem Modell, wo es steht. Erst zusammen ergibt das eine unterscheidbare Eingabe.
+
 In der App wird dieser Mechanismus **vereinfacht simuliert**:
 - additiv
 - deterministisch (reproduzierbar)
