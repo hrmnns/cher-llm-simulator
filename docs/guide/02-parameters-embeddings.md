@@ -77,6 +77,8 @@ Eingabe-Vektor = Token-Embedding + Positions-Vektor
 
 > Das Token sagt dem Modell, was dort steht. Die Positionsinformation sagt dem Modell, wo es steht. Erst zusammen ergibt das eine unterscheidbare Eingabe.
 
+Beispielhaft wird das an dem Prompt "Hund Hund Hund" deutlich. Ohne *Positional Encoding* sind alle Eingabevektoren identisch. Das ändert sich mit aktiviertem *Positional Encoding*.
+
 In der App wird dieser Mechanismus **vereinfacht simuliert**:
 - additiv
 - deterministisch (reproduzierbar)
