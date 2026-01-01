@@ -7,125 +7,6 @@
   },
   "scenarios": [
     {
-      "id": "baseline-hund",
-      "title": "Baseline: Was ist ein Hund?",
-      "learningGoals": [
-        "Grundprinzipien",
-        "Tokenisierung",
-        "Next-Token-Loop"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Antworte in einem Satz.",
-        "user": "Was ist ein Hund?"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Was",
-            "id": 1001
-          },
-          {
-            "text": " ist",
-            "id": 1002
-          },
-          {
-            "text": " ein",
-            "id": 1003
-          },
-          {
-            "text": " Hund",
-            "id": 1004
-          },
-          {
-            "text": "?",
-            "id": 1005
-          }
-        ]
-      },
-      "generation": {
-        "outputText": "Ein Hund ist ein Säugetier."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "tokenizer",
-            "text": "Token sind nicht immer identisch mit Wörtern. Häufig werden Subwords bzw. Teilstücke genutzt (z. B. bei Komposita)."
-          },
-          {
-            "at": "decoding",
-            "text": "Die Ausgabe entsteht schrittweise: Das Modell wählt jeweils das nächste Token (Next-Token-Prinzip)."
-          }
-        ],
-        "focusByStep": {
-          "tokenizer": "Subword-Tokenisierung · Warum Token nicht immer Wörter sind",
-          "decoding": "Token-für-Token · Auswahl der nächsten Einheit"
-        }
-      }
-    },
-    {
-      "id": "kompositum-hundeleine",
-      "title": "Komposita: Hundeleine",
-      "learningGoals": [
-        "Tokenisierung",
-        "Subwords",
-        "Komposita"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Antworte kurz.",
-        "user": "Was ist eine Hundeleine?"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Was",
-            "id": 1101
-          },
-          {
-            "text": " ist",
-            "id": 1102
-          },
-          {
-            "text": " eine",
-            "id": 1103
-          },
-          {
-            "text": " Hund",
-            "id": 1104
-          },
-          {
-            "text": "eleine",
-            "id": 1105
-          },
-          {
-            "text": "?",
-            "id": 1106
-          }
-        ]
-      },
-      "generation": {
-        "outputText": "Eine Hundeleine ist eine Leine zum Führen eines Hundes."
-      },
-      "highlights": {
-        "tokenFocus": [
-          "Hund",
-          "eleine"
-        ],
-        "explain": [
-          {
-            "at": "tokenizer",
-            "text": "Komposita werden in bekannte Teilstücke (Subwords) zerlegt, damit ein endliches Vokabular ausreicht."
-          }
-        ],
-        "focusByStep": {
-          "tokenizer": "Komposita zerlegen · Subword-Splitting"
-        }
-      }
-    },
-    {
       "id": "posenc-hund-hund-hund",
       "title": "Positionsinformation: Hund Hund Hund",
       "learningGoals": [
@@ -161,12 +42,12 @@
       "highlights": {
         "explain": [
           {
-            "at": "embeddings",
+            "at": "embedding",
             "text": "Ohne Positionsinformation wären identische Tokens an allen Stellen gleich. Mit Positional Encoding werden sie unterscheidbar."
           }
         ],
         "focusByStep": {
-          "embeddings": "Positional Encoding · Gleiche Tokens werden positionsabhängig"
+          "embedding": "Positional Encoding · Gleiche Tokens werden positionsabhängig"
         }
       }
     },
@@ -326,7 +207,7 @@
       "highlights": {
         "explain": [
           {
-            "at": "embeddings",
+            "at": "embedding",
             "text": "Gleiche Token-Menge, andere Reihenfolge: mit Positional Encoding entstehen andere Eingabe-Vektoren."
           },
           {
@@ -335,7 +216,7 @@
           }
         ],
         "focusByStep": {
-          "embeddings": "Positionsinformation · Gleiche Tokens, andere Ordnung",
+          "embedding": "Positionsinformation · Gleiche Tokens, andere Ordnung",
           "attention": "Attention · Beziehungen kippen mit der Reihenfolge"
         }
       }
@@ -384,7 +265,7 @@
       "highlights": {
         "explain": [
           {
-            "at": "embeddings",
+            "at": "embedding",
             "text": "Gleiche Token-Menge, andere Reihenfolge: mit Positional Encoding entstehen andere Eingabe-Vektoren."
           },
           {
@@ -393,7 +274,7 @@
           }
         ],
         "focusByStep": {
-          "embeddings": "Positionsinformation · Gleiche Tokens, andere Ordnung",
+          "embedding": "Positionsinformation · Gleiche Tokens, andere Ordnung",
           "attention": "Attention · Beziehungen kippen mit der Reihenfolge"
         }
       }
@@ -444,6 +325,125 @@
         ],
         "focusByStep": {
           "attention": "Grenzen · Kontextgewichtung ist kein Weltwissen"
+        }
+      }
+    },
+    {
+      "id": "baseline-hund",
+      "title": "Baseline: Was ist ein Hund?",
+      "learningGoals": [
+        "Grundprinzipien",
+        "Tokenisierung",
+        "Next-Token-Loop"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Antworte in einem Satz.",
+        "user": "Was ist ein Hund?"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Was",
+            "id": 1001
+          },
+          {
+            "text": " ist",
+            "id": 1002
+          },
+          {
+            "text": " ein",
+            "id": 1003
+          },
+          {
+            "text": " Hund",
+            "id": 1004
+          },
+          {
+            "text": "?",
+            "id": 1005
+          }
+        ]
+      },
+      "generation": {
+        "outputText": "Ein Hund ist ein Säugetier."
+      },
+      "highlights": {
+        "explain": [
+          {
+            "at": "tokenizer",
+            "text": "Token sind nicht immer identisch mit Wörtern. Häufig werden Subwords bzw. Teilstücke genutzt (z. B. bei Komposita)."
+          },
+          {
+            "at": "decoding",
+            "text": "Die Ausgabe entsteht schrittweise: Das Modell wählt jeweils das nächste Token (Next-Token-Prinzip)."
+          }
+        ],
+        "focusByStep": {
+          "tokenizer": "Subword-Tokenisierung · Warum Token nicht immer Wörter sind",
+          "decoding": "Token-für-Token · Auswahl der nächsten Einheit"
+        }
+      }
+    },
+    {
+      "id": "kompositum-hundeleine",
+      "title": "Komposita: Hundeleine",
+      "learningGoals": [
+        "Tokenisierung",
+        "Subwords",
+        "Komposita"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Antworte kurz.",
+        "user": "Was ist eine Hundeleine?"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Was",
+            "id": 1101
+          },
+          {
+            "text": " ist",
+            "id": 1102
+          },
+          {
+            "text": " eine",
+            "id": 1103
+          },
+          {
+            "text": " Hund",
+            "id": 1104
+          },
+          {
+            "text": "eleine",
+            "id": 1105
+          },
+          {
+            "text": "?",
+            "id": 1106
+          }
+        ]
+      },
+      "generation": {
+        "outputText": "Eine Hundeleine ist eine Leine zum Führen eines Hundes."
+      },
+      "highlights": {
+        "tokenFocus": [
+          "Hund",
+          "eleine"
+        ],
+        "explain": [
+          {
+            "at": "tokenizer",
+            "text": "Komposita werden in bekannte Teilstücke (Subwords) zerlegt, damit ein endliches Vokabular ausreicht."
+          }
+        ],
+        "focusByStep": {
+          "tokenizer": "Komposita zerlegen · Subword-Splitting"
         }
       }
     }
