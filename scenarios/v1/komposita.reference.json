@@ -1,0 +1,50 @@
+{
+  id: "komposita-hundeleine",
+  title: "Komposita – Subword-Zerlegung am Beispiel „Hundeleine“",
+
+  learningGoals: [
+    "Subword-Repräsentation",
+    "Umgang mit zusammengesetzten Begriffen"
+  ],
+
+  mode: "simulated",
+
+  promptStack: {
+    system: "Du bist ein sachlicher Assistent.",
+    instruction: "Antworte kurz und präzise.",
+    user: "Was ist eine Hundeleine?"
+  },
+
+  tokenization: {
+    tokens: [
+      { text: "Was", id: 201 },
+      { text: " ist", id: 202 },
+      { text: " eine", id: 203 },
+      { text: " Hund", id: 204 },
+      { text: "e", id: 205 },
+      { text: "leine", id: 206 },
+      { text: "?", id: 207 }
+    ]
+  },
+
+  generation: {
+    outputText: "Eine Hundeleine ist eine Leine, mit der ein Hund geführt wird."
+  },
+
+  highlights: {
+    focusByStep: {
+      tokenizer: "Subword-Zerlegung",
+      attention: "Kontext über Teilstücke"
+    },
+    explain: [
+      {
+        at: "tokenizer",
+        text: "Zusammengesetzte Wörter werden oft in mehrere Subwords zerlegt, um bekannte Wortteile wiederzuverwenden."
+      },
+      {
+        at: "attention",
+        text: "Die Bedeutung entsteht aus der Gewichtung einzelner Teilstücke im Kontext des gesamten Satzes."
+      }
+    ]
+  }
+}
