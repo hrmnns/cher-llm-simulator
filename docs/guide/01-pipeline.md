@@ -7,7 +7,12 @@ Sie erläutert jeden einzelnen Schritt so, dass klar wird,
 - was in der App sichtbar ist,
 - und was konkret beobachtet oder ausprobiert werden kann.
 
-Die Pipeline ist didaktisch aufgebaut und bildet **keine vollständige Transformer-Architektur** ab.
+Die dargestellte Pipeline ist keine formale Standarddefinition aus der Forschung,
+sondern eine didaktische Struktur, die reale Verarbeitungsschritte moderner LLMs
+verständlich ordnet und voneinander abgrenzt.
+
+Alle beschriebenen Phasen basieren auf etablierten Konzepten aus der Transformer-Architektur,
+werden hier jedoch bewusst getrennt dargestellt, um ihre jeweilige Rolle nachvollziehbar zu machen.
 
 ## Überblick
 
