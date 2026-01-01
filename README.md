@@ -1,4 +1,4 @@
-# cher-llm-simulator
+# LLM Simulator by cherware.de
 
 **Erklärbare Simulation von LLM-Grundprinzipien für IT-affine Nutzer.**
 
@@ -7,19 +7,21 @@ vom Texteingang über Tokenisierung, Embeddings und Attention bis hin zur Ausgab
 
 Der Fokus liegt nicht auf „intelligenten Antworten“, sondern auf **Nachvollziehbarkeit, Transparenz und korrekten mentalen Modellen**.
 
-## Was ist dieses Projekt?
+## Ziel & Einordnung
 
-Der *cher-llm-simulator* visualisiert den typischen Verarbeitungsweg eines LLMs in vereinfachter, erklärbarer Form:
+Der *LLM Simulator by cherware.de* visualisiert den typischen Verarbeitungsweg eines LLMs in vereinfachter, erklärbarer Form:
 
 **Text → Tokens → Vektoren → Attention → Wahrscheinlichkeiten → Ausgabe**
 
-Dabei werden die einzelnen Schritte schrittweise dargestellt und kommentiert, sodass insbesondere IT-affine Nutzer nachvollziehen können:
+Die Anwendung richtet sich an technisch interessierte Nutzer, die verstehen möchten,
 
 - warum Tokenisierung notwendig ist
 - warum Wörter nicht gleich Tokens sind
 - wie Attention Kontext gewichtet
 - warum LLMs Token für Token generieren
 - warum Architektur allein kein „Wissen“ erzeugt
+
+Die Simulation ersetzt **keine echten Modelle**, sondern macht deren grundlegende Mechanik nachvollziehbar.
 
 ## Was dieses Projekt explizit *nicht* ist
 
@@ -28,28 +30,66 @@ Dabei werden die einzelnen Schritte schrittweise dargestellt und kommentiert, so
 ❌ Kein Wissensmodell  
 ❌ Kein Ersatz für ChatGPT, Gemini oder ähnliche Systeme  
 
-> **Wichtig:**  
+> **Hinweis:**  
 > Diese Anwendung simuliert ausschließlich **Mechanik und Abläufe**.  
-> Bedeutung, Weltwissen und Modellqualität echter LLMs werden nicht abgebildet.
+> Bedeutung, Weltwissen und Modellqualität realer LLMs werden bewusst nicht abgebildet.
 
 Alle Ausgaben im *Guided Mode* sind **didaktisch vorgegeben** und dienen ausschließlich der Erklärung.
+
+## Referenzszenarien (v1)
+
+Die Version v1 des LLM Simulators enthält sogenannte **Referenzszenarien**.
+Diese Szenarien sind didaktisch eingefroren und dienen als stabile Grundlage
+für die Erklärung zentraler LLM-Grundprinzipien.
+
+Referenzszenarien sind keine Tests und keine realistischen Modellläufe.
+Sie stellen bewusst vereinfachte, deterministische Abläufe dar, um
+bestimmte Konzepte gezielt sichtbar zu machen.
+
+### Zweck der Referenzszenarien
+
+Referenzszenarien erfüllen drei Aufgaben:
+
+- didaktische Orientierung (Was soll hier verstanden werden?)
+- strukturelle Vorlage für weitere Szenarien
+- Vergleichsbasis für spätere Versionen des Simulators
+
+Sie bilden damit den inhaltlichen und konzeptionellen Ausgangspunkt von v1.
+
+### Enthaltene Referenzszenarien
+
+**Baseline – Einfache Begriffsabfrage**  
+Zeigt die grundlegende Verarbeitung eines einfachen Prompts:
+tokenbasierte Verarbeitung und probabilistische Textgenerierung.
+
+**Komposita – Subword-Zerlegung am Beispiel „Hundeleine“**  
+Vertieft das Verständnis von Tokenisierung anhand zusammengesetzter Begriffe
+und zeigt, warum Wörter intern häufig in Teilstücke zerlegt werden.
+
+### Einordnung
+
+Referenzszenarien sind bewusst stabil gehalten und ändern sich innerhalb von v1 nicht.
+Neue Szenarien oder Erweiterungen orientieren sich an diesen Referenzen,
+ersetzen sie jedoch nicht.
+
+Weiterentwicklungen erfolgen in nachfolgenden Versionen.
 
 ## Zentrales Konzept: Szenario-basierte Simulation
 
 Die App ist **datengetrieben** aufgebaut.
 
 Alle Beispiele und Lernpfade werden über JSON-Szenarien definiert.
-Der Code stellt lediglich die Pipeline dar – **die Didaktik steckt in den Daten**.
+Der Code stellt die Pipeline dar – **die Didaktik steckt in den Daten**.
 
-Ein Szenario kann u. a. festlegen:
+Ein Szenario kann unter anderem festlegen:
 
 - den Eingabe-Prompt (Prompt-Stack)
-- die Tokenisierung (Tokens + IDs)
+- die Tokenisierung (Tokens und IDs)
 - die erwartete Ausgabe
-- optionale Zwischenschritte (z. B. Attention-Matrizen, Top-K-Wahrscheinlichkeiten)
-- erklärende Hinweise („Achte hier besonders auf …“)
+- optionale Zwischenschritte (z. B. Attention-Matrizen)
+- erklärende Hinweise pro Verarbeitungsschritt
 
-Neue Beispiele können ergänzt werden, **ohne den Code zu ändern**.
+Neue Szenarien können ergänzt werden, **ohne den Code zu verändern**.
 
 ## Guided Simulation vs. Mechanik-Sandbox
 
@@ -57,9 +97,9 @@ Die App unterscheidet bewusst zwei Modi:
 
 ### Guided Simulation (Standard)
 
-- kuratierte, vorgegebene Beispiele
+- kuratierte, vorgegebene Szenarien
 - kontrollierte Tokenisierung und Ausgabe
-- klar definierte Lernziele pro Szenario
+- klar definierte Lernziele
 - reproduzierbare, erklärbare Abläufe
 
 ➡️ Dieser Modus dient dem **strukturierten Verständnis**.
@@ -67,7 +107,7 @@ Die App unterscheidet bewusst zwei Modi:
 ### Mechanik-Sandbox (optional)
 
 - freie Eingabe
-- keine Garantie auf sinnvolle Ausgabe
+- keine Garantie auf sinnvolle oder konsistente Ausgabe
 - Fokus auf technische Abläufe
 
 ➡️ Dieser Modus zeigt, **was die Architektur technisch tut – unabhängig von Bedeutung**.
@@ -75,7 +115,7 @@ Die App unterscheidet bewusst zwei Modi:
 ## Zielgruppe
 
 - IT-Fachleute, Architekten und Entwickler
-- technisch interessierte Leser, die LLMs wirklich verstehen möchten
+- technisch interessierte Leser, die LLMs verstehen möchten
 - Vortragende, Trainer und Lehrende
 - Leser begleitender Blog-Artikel (z. B. im reflectIT-Kontext)
 
@@ -88,11 +128,13 @@ Die App unterscheidet bewusst zwei Modi:
 ├─ LICENSE
 │
 ├─ scenarios/
-│   ├─ scenarios.json      # Kuratierte Guided-Szenarien
-│   └─ README.md           # Erklärung des Szenario-Formats
+│   ├─ scenarios.json
+│   └─ v1/
+│      ├─ baseline.reference.json
+│      └─ komposita.reference.json
 │
 ├─ docs/
-│   ├─ concept.md          # Didaktisches Gesamtkonzept
+│   ├─ concept.md
 │   ├─ guided-vs-sandbox.md
 │   ├─ architecture.md
 │   └─ json-schema.md
@@ -106,7 +148,7 @@ Die App unterscheidet bewusst zwei Modi:
 Keine Installation notwendig.
 
 1. Repository klonen oder herunterladen  
-2. index.html im Browser öffnen  
+2. `index.html` im Browser öffnen  
 3. Szenario auswählen  
 4. Pipeline Schritt für Schritt erkunden  
 
@@ -126,7 +168,7 @@ auch wenn das bedeutet, auf „Wow-Effekte“ zu verzichten.
 
 - `docs/concept.md` – didaktische Leitidee
 - `docs/guided-vs-sandbox.md` – Erklärung der Modi
-- `docs/architecture.md` – App- & State-Architektur
+- `docs/architecture.md` – App- und State-Architektur
 - `docs/json-schema.md` – Szenario-Format
 
 ## Lizenz
