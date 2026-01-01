@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "schemaVersion": "1.0",
+    "contentVersion": "0.1.0",
+    "language": "de",
+    "updated": "2026-01-01",
+    "source": "LLM Simulator by cherware.de"
+  },
+  "steps": {
+    "tokenization": {
+      "coreRef": "v1.steps.tokenization.core",
+      "expand": [
+        { "blockId": "blk.tokenization.subwords", "priority": 10 }
+      ],
+      "links": [
+        { "linkId": "lnk.wiki.tokenization" }
+      ]
+    },
+    "attention": {
+      "coreRef": "v1.steps.attention.core",
+      "expand": [
+        { "blockId": "blk.attention.misconception_understanding", "priority": 10 }
+      ]
+    }
+  },
+  "blocks": {
+    "blk.tokenization.subwords": {
+      "type": "detail",
+      "title": "Subwords statt Wörter",
+      "body": "Tokens sind nicht immer ganze Wörter. Häufig werden Wörter in Teilstücke zerlegt, um neue oder seltene Begriffe effizient abzubilden."
+    },
+    "blk.attention.misconception_understanding": {
+      "type": "misconception",
+      "title": "Missverständnis: Attention bedeutet Verstehen",
+      "body": "Attention ist eine Rechenstrategie zur Gewichtung von Beziehungen zwischen Tokens. Das ist nicht gleichbedeutend mit menschlichem Sprachverständnis."
+    }
+  },
+  "links": {
+    "lnk.wiki.tokenization": {
+      "label": "Mehr zur Tokenisierung (Wiki)",
+      "url": "https://example.com/wiki/tokenization",
+      "target": "external"
+    }
+  }
+}
