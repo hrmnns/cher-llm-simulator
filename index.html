@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>cher-llm-simulator (v1)</title>
+  <title>LLM Simulator by cherware.de</title>
   <meta name="description" content="Erklärbare Simulation von LLM-Grundprinzipien für IT-affine Nutzer." />
   <style>
     :root{
@@ -520,8 +520,8 @@
         <div style="display:flex; gap:10px; align-items:center;">
           <div class="logo" aria-hidden="true"></div>
           <div>
-            <h1>cher-llm-simulator</h1>
-            <div class="sub">Erklärbare Simulation von LLM-Grundprinzipien</div>
+            <h1>LLM Simulator by cherware.de</h1>
+            <div class="sub">Erklärbare Simulation zentraler LLM-Grundprinzipien</div>
           </div>
         </div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span class="badge ok" id="verBadge">v—</span>
@@ -530,16 +530,16 @@
 
       <div class="toolbar">
         <div class="pill" style="min-width: 320px;">
-          <label for="scenarioSelect">Szenario</label>
+          <label for="scenarioSelect">Szenario (Guided)</label>
           <select id="scenarioSelect" aria-label="Szenario auswählen"></select>
         </div>
 
         <div class="mode-switch" role="tablist" aria-label="Modus wählen">
           <button id="modeGuided" class="active" type="button" title="Geführte, kuratierte Szenarien">Guided</button>
-          <button id="modeSandbox" type="button" title="Freie Eingabe, keine semantische Garantie">Sandbox ⚠️</button>
+          <button id="modeSandbox" type="button" title="Freie Eingabe · keine semantische oder inhaltliche Garantie">Sandbox ⚠️</button>
         </div>
 
-        <button id="resetBtn" class="secondary" type="button">Reset</button>
+        <button id="resetBtn" class="secondary" type="button" title="Setzt den Ablauf auf den ersten Schritt zurück">Reset</button>
         <button id="mobileToolsBtn" class="secondary" type="button" style="display:none;" onclick="window.cherSim && window.cherSim.openTools()">Tools</button>
       </div>
     </div>
@@ -555,7 +555,7 @@
       <div class="card-b">
         <div class="steps" id="steps"></div>
         <div style="margin-top:12px" class="notice small">
-          <strong>Hinweis:</strong> Die Guided-Szenarien sind kuratiert. Tokens und Ausgabe sind vorgegeben, um Effekte erklärbar zu machen.
+          <strong>Hinweis:</strong> Guided-Szenarien sind kuratiert. Tokenisierung und Ausgabe sind vorgegeben, damit Effekte reproduzierbar erklärbar bleiben.
         </div>
       </div>
     </section>
@@ -574,7 +574,7 @@
 
       <div class="card-b content">
         <div id="warningBox" class="notice warn" style="display:none;">
-          <strong>Sandbox:</strong> Die Ausgabe ist <strong>keine inhaltliche Antwort</strong>. Sie zeigt nur den technischen Ablauf (Tokenisierung, Gewichte, Sampling).
+          <strong>Sandbox:</strong> Die Ausgabe ist <strong>keine inhaltliche Antwort</strong>. Sie zeigt nur den technischen Ablauf (Tokenisierung, Gewichte, Sampling) – ohne semantische Garantie.
         </div>
 
         <div class="card" style="background: rgba(15,22,35,.55); border-radius: var(--radius2); border:1px solid rgba(34,48,68,.7); box-shadow:none;">
@@ -604,7 +604,7 @@
       <div class="card-b">
         <div class="kvs" id="inspector"></div>
         <div style="margin-top:12px" class="notice small">
-          <strong>Vereinfachung:</strong> d_model / Heads / Layer sind in v1 klein, damit Visualisierung möglich bleibt.
+          <strong>Vereinfachung:</strong> d_model, Heads und Layer sind in v1 bewusst klein gehalten, damit die Visualisierung übersichtlich bleibt.
         </div>
       </div>
     </aside>
@@ -714,19 +714,19 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.3.38";
+  const APP_VERSION = "v1.3.40";
   // -----------------------------
   // Constants
   // -----------------------------
   const PIPELINE = [
-    { id: "input", label: "Input" },
-    { id: "tokenizer", label: "Tokenizer" },
+    { id: "input", label: "Eingabe" },
+    { id: "tokenizer", label: "Tokenisierung" },
     { id: "embedding", label: "Embeddings" },
     { id: "attention", label: "Attention" },
     { id: "mlp", label: "MLP" },
     { id: "logits", label: "Logits" },
     { id: "decoding", label: "Decoding" },
-    { id: "summary", label: "Summary" },
+    { id: "summary", label: "Zusammenfassung" },
   ];
 
   // -----------------------------
@@ -792,7 +792,7 @@ temperature: 0.8, topP: 0.9, topK: 10, dModel: 16, posEnc: true, attnLayer: 1, a
     sheetBackdrop: $("#sheetBackdrop"),
     closeSheetBtn: $("#closeSheetBtn"),
     sheetTabs: $("#sheetTabs"),
-    sheetBody: $("#sheetBody"),
+    sheetBody: $("#sheetBody")
   };
 
   // -----------------------------
@@ -945,9 +945,13 @@ async function loadScenarios(url){
           generation: { outputText: "Ein Hund ist ein Säugetier." },
           highlights: {
             explain: [
-              { at:"tokenizer", text:"Tokens sind nicht immer identisch mit Wörtern (insb. Subwords/Komposita)." },
-              { at:"decoding", text:"Die Ausgabe entsteht Token für Token." }
-            ]
+              { at:"tokenizer", text:"Token sind nicht immer identisch mit Wörtern – häufig werden Subwords bzw. Teilstücke genutzt (z. B. bei Komposita)." },
+              { at:"decoding", text:"Die Ausgabe entsteht schrittweise: Das Modell wählt jeweils das nächste Token (Next-Token-Prinzip)." }
+            ],
+            focusByStep: {
+              tokenizer: "Subword-Tokenisierung",
+              decoding: "Token-für-Token"
+            }
           }
         },
         {
@@ -974,8 +978,11 @@ async function loadScenarios(url){
           highlights: {
             tokenFocus: ["Hund","eleine"],
             explain: [
-              { at:"tokenizer", text:"Komposita werden in bekannte Teilstücke zerlegt, damit ein endliches Vokabular ausreicht." }
-            ]
+              { at:"tokenizer", text:"Komposita werden in bekannte Teilstücke (Subwords) zerlegt, damit ein endliches Vokabular ausreicht." }
+            ],
+            focusByStep: {
+              tokenizer: "Komposita zerlegen"
+            }
           }
         }
       ]
@@ -1109,12 +1116,105 @@ async function loadScenarios(url){
   }
 
   function renderGoals(scenario){
+    // Badge neben „Aktueller Schritt“: didaktischer Fokus (schritt-sensitiv),
+    // ohne den aktuellen Pipeline-Schritt zu wiederholen.
     if(state.mode === "sandbox"){
       el.scenarioGoals.textContent = "Sandbox";
       return;
     }
-    const goals = scenario?.learningGoals?.slice(0,2) ?? [];
-    el.scenarioGoals.textContent = goals.length ? goals.join(" · ") : "—";
+    if(!scenario){
+      el.scenarioGoals.textContent = "—";
+      return;
+    }
+
+    const stepId = String(state.step || "").toLowerCase();
+
+    const norm = (s) => String(s || "").trim();
+    const eq = (a,b) => norm(a).toLowerCase() === norm(b).toLowerCase();
+
+    // UI-Step-Labels (DE) – dienen nur zum Filtern redundanter Begriffe.
+    const STEP_LABEL_DE = {
+      input: "Eingabe",
+      tokenizer: "Tokenisierung",
+      embedding: "Embeddings",
+      attention: "Attention",
+      mlp: "MLP",
+      logits: "Logits",
+      decoding: "Decoding",
+      summary: "Zusammenfassung"
+    };
+
+    // Konsistente, kurze Fokus-Begriffe (nur wenn der Schritt im Szenario erklärt wird)
+    const DEFAULT_STEP_FOCUS = {
+      input: "Prompt-Kontext",
+      tokenizer: "Subword-Tokenisierung",
+      embedding: "Vektorrepräsentation",
+      attention: "Kontextgewichtung",
+      mlp: "Nichtlineare Transformation",
+      logits: "Token-Scores",
+      decoding: "Next-Token-Auswahl",
+      summary: "Kurzüberblick"
+    };
+
+    const hasExplainForStep = (scenario?.highlights?.explain || []).some(x =>
+      String(x?.at || "").toLowerCase() === stepId
+    );
+
+    // ---------- 1) Explizite Overrides pro Schritt ----------
+    // Szenario kann optional setzen:
+    // highlights: { focusByStep: { tokenizer: "Komposita zerlegen", decoding: ["Sampling", "Seed"] } }
+    const override = scenario?.highlights?.focusByStep?.[stepId];
+    if(override){
+      const parts = [];
+      if(Array.isArray(override)){
+        for(const x of override){
+          const n = norm(x);
+          if(n && !parts.some(p => eq(p,n))) parts.push(n);
+          if(parts.length >= 2) break;
+        }
+      }else{
+        const n = norm(override);
+        if(n) parts.push(n);
+      }
+
+      // Optional 2. Teil: ein Szenario-Ziel (falls sinnvoll)
+      const goals = Array.isArray(scenario?.learningGoals) ? scenario.learningGoals : [];
+      const stepLabel = STEP_LABEL_DE[stepId] || "";
+      const candidate = goals.map(norm).find(g =>
+        g &&
+        !parts.some(p => eq(p,g)) &&
+        (!stepLabel || !eq(g, stepLabel)) &&
+        (!DEFAULT_STEP_FOCUS[stepId] || !eq(g, DEFAULT_STEP_FOCUS[stepId]))
+      );
+      if(candidate && parts.length < 2) parts.push(candidate);
+
+      el.scenarioGoals.textContent = parts.length ? parts.join(" · ") : "—";
+      return;
+    }
+
+    // ---------- 2) Default: Schritt-Fokus (nur wenn erklärt) + optional 1 Szenario-Ziel ----------
+    const goals = Array.isArray(scenario?.learningGoals) ? scenario.learningGoals : [];
+    const stepLabel = STEP_LABEL_DE[stepId] || "";
+
+    const stepFocus = (hasExplainForStep && DEFAULT_STEP_FOCUS[stepId]) ? DEFAULT_STEP_FOCUS[stepId] : "";
+
+    const secondary = goals.map(norm).find(g =>
+      g &&
+      (!stepFocus || !eq(g, stepFocus)) &&
+      (!stepLabel || !eq(g, stepLabel)) &&
+      (!DEFAULT_STEP_FOCUS[stepId] || !eq(g, DEFAULT_STEP_FOCUS[stepId]))
+    ) || "";
+
+    const parts = [];
+    if(stepFocus) parts.push(stepFocus);
+    if(secondary && parts.length < 2) parts.push(secondary);
+
+    if(!parts.length){
+      const first = goals.map(norm).find(Boolean);
+      el.scenarioGoals.textContent = first || "—";
+      return;
+    }
+    el.scenarioGoals.textContent = parts.join(" · ");
   }
 
   function renderButtons(){
@@ -1174,12 +1274,12 @@ async function loadScenarios(url){
     const toks = (state.sandboxInput || "").trim().length
       ? state.sandboxInput.trim().split(/\s+/).map((t,i)=>({text:t, id: 1000+i}))
       : [];
-    wrap.appendChild(h3("Tokenizer (Placeholder)"));
+    wrap.appendChild(h3("Tokenisierung (Platzhalter)"));
     wrap.appendChild(tokenRow(toks, []));
 
     // Output placeholder
-    wrap.appendChild(h3("Output (Placeholder)"));
-    wrap.appendChild(pNotice("In v2: next-token Sampling (seeded). In v1 zeigen wir bewusst keine 'sinnvolle Antwort'."));
+    wrap.appendChild(h3("Ausgabe (Platzhalter)"));
+    wrap.appendChild(pNotice("In v2: Next-Token-Sampling (seeded). In v1 zeigen wir bewusst keine inhaltlich „sinnvolle“ Antwort."));
 
     el.view.appendChild(wrap);
   }
@@ -1193,8 +1293,8 @@ async function loadScenarios(url){
 
     if(state.mode === "sandbox"){
       box.innerHTML = `
-        <p><strong>Sandbox-Modus:</strong> Du kannst frei Text eingeben. Die App zeigt den technischen Ablauf – ohne semantische Garantie.</p>
-        <p class="muted">V1 enthält hier noch Platzhalter. In V2 werden Tokenisierung/Attention/Sampling seeded simuliert.</p>
+        <p><strong>Sandbox-Modus:</strong> Du kannst frei Text eingeben. Die App visualisiert den Ablauf (Tokenisierung → Rechnen → Next-Token-Auswahl), aber erzeugt dabei <strong>keine verlässliche inhaltliche Antwort</strong>.</p>
+        <p class="muted">Hinweis: In v1 sind einige Teile im Sandbox-Modus noch Platzhalter. Guided-Szenarien sind für reproduzierbare Erklärungen gedacht.</p>
       `;
       el.explain.replaceChildren(box);
       return;
@@ -1213,22 +1313,24 @@ async function loadScenarios(url){
   function genericExplain(step){
     switch(step){
       case "input":
-        return `<p>Der Prompt ist Text. System- und Instruktionsanteile formen den Kontext, sind aber technisch ebenfalls nur Tokens.</p>`;
+        return `<p><strong>Prompt-Stack:</strong> System, Instruktion und User-Text bilden gemeinsam den Eingabekontext. Technisch ist alles nur Text, der später tokenisiert wird.</p>`;
       case "tokenizer":
-        return `<p>Tokenisierung zerlegt Text in Einheiten, die im Vokabular des Modells repräsentiert sind (Wörter, Subwords, Zeichenfragmente).</p>
-                <p class="muted">In Guided-Szenarien sind Tokens bewusst vorgegeben, um Effekte erklärbar zu machen.</p>`;
+        return `<p><strong>Tokenisierung:</strong> Der Text wird in Token zerlegt, also Einheiten aus dem Modellvokabular (Wörter, Subwords, Satzzeichen).</p>
+                <p class="muted">Guided: Die Token sind bewusst vorgegeben, damit Subwords/Komposita und IDs reproduzierbar sichtbar werden.</p>`;
       case "embedding":
-        return `<p>Jedes Token wird in einen Vektor (Embedding) abgebildet. Das ist die Basis für Matrixoperationen im Modell.</p>`;
+        return `<p><strong>Embeddings:</strong> Jedes Token wird auf einen Zahlenvektor abgebildet. Erst dadurch werden die folgenden Schritte zu Matrixoperationen.</p>
+                <p class="muted">In dieser v1 werden Embeddings seeded simuliert (reproduzierbar) – kein echtes Modell.</p>`;
       case "attention":
-        return `<p>Attention gewichtet, auf welche Tokens das Modell beim Berechnen des nächsten Zustands „achtet“ (Kontextgewichtung).</p>`;
+        return `<p><strong>Attention:</strong> Für jedes Token wird gewichtet, auf welche anderen Tokens es „schaut“. Das ist eine Kontextmischung, kein logisches Schlussfolgern.</p>
+                <p class="muted">Mit <strong>Causal Mask</strong> darf ein Token nur auf sich selbst und frühere Tokens achten (Decoder-typisch).</p>`;
       case "mlp":
-        return `<p>Der MLP-Block mischt Merkmale nichtlinear und ergänzt die Attention um weitere Transformationen.</p>`;
+        return `<p><strong>MLP/FFN:</strong> Nichtlineare Transformation pro Token. Attention liefert Kontext, der MLP transformiert die Repräsentation weiter.</p>`;
       case "logits":
-        return `<p>Logits sind Rohwerte für mögliche nächste Tokens. Per Softmax werden daraus Wahrscheinlichkeiten.</p>`;
+        return `<p><strong>Logits:</strong> Rohscores für mögliche nächste Token. Nach <strong>Softmax</strong> werden daraus Wahrscheinlichkeiten (Verteilung).</p>`;
       case "decoding":
-        return `<p>Beim Decoding wird iterativ das nächste Token gewählt (z. B. greedy oder sampling). So entsteht Text Schritt für Schritt.</p>`;
+        return `<p><strong>Decoding:</strong> Aus der Verteilung wird iterativ das nächste Token gewählt (z. B. greedy oder sampling). So entsteht der Text Token für Token.</p>`;
       case "summary":
-        return `<p>Zusammenfassung des Szenarios und der wichtigsten Beobachtungen.</p>`;
+        return `<p><strong>Zusammenfassung:</strong> Kurzüberblick über Prompt, Pipeline und die wichtigsten Beobachtungen im Szenario.</p>`;
       default:
         return `<p class="muted">Keine Erklärung hinterlegt.</p>`;
     }
@@ -1238,16 +1340,16 @@ async function loadScenarios(url){
     el.inspector.innerHTML = "";
     const items = [];
 
-    items.push({ k: "Mode", v: state.mode });
-    items.push({ k: "Step", v: state.step });
+    items.push({ k: "Modus", v: state.mode });
+    items.push({ k: "Schritt", v: state.step });
 
     if(state.mode === "guided"){
-      items.push({ k: "Szenario", v: scenario ? scenario.id : "—" });
+      items.push({ k: "Szenario-ID", v: scenario ? scenario.id : "—" });
       items.push({ k: "Titel", v: scenario ? scenario.title : "—" });
-      items.push({ k: "Token count", v: scenario?.tokenization?.tokens?.length ?? 0 });
+      items.push({ k: "Token-Anzahl", v: scenario?.tokenization?.tokens?.length ?? 0 });
     } else {
-      items.push({ k: "Input length", v: (state.sandboxInput || "").length });
-      items.push({ k: "Tokenizer", v: "Placeholder" });
+      items.push({ k: "Input-Länge", v: (state.sandboxInput || "").length });
+      items.push({ k: "Tokenizer", v: "Platzhalter" });
     }
 
     items.push({ k: "temperature", v: String(state.params.temperature) });
@@ -1274,7 +1376,7 @@ async function loadScenarios(url){
   function viewInput(scenario){
     const wrap = document.createElement("div");
 
-    wrap.appendChild(pNotice("Guided: Prompt, Tokenisierung und Ausgabe sind kuratiert, um Unterschiede reproduzierbar zu erklären."));
+    wrap.appendChild(pNotice("Guided: Prompt, Tokenisierung und Ausgabe sind kuratiert, damit Effekte reproduzierbar und erklärbar bleiben."));
 
     const ps = scenario.promptStack || {};
     const grid = document.createElement("div");
@@ -1293,13 +1395,13 @@ async function loadScenarios(url){
     const toks = scenario.tokenization?.tokens ?? [];
     const focus = scenario.highlights?.tokenFocus ?? [];
 
-    wrap.appendChild(pNotice("Tokenisierung ist im Guided-Mode vorgegeben. So können Subwords/Komposita und IDs sichtbar gemacht werden."));
-    wrap.appendChild(h3("Tokens"));
+    wrap.appendChild(pNotice("Im Guided-Modus ist die Tokenisierung vorgegeben. So werden Subwords/Komposita und Token-IDs sichtbar."));
+    wrap.appendChild(h3("Token"));
     wrap.appendChild(tokenRow(toks, focus));
 
     // raw tokens string
     const raw = toks.map(t => t.text).join("");
-    wrap.appendChild(h3("Rekonstruktion (nur zur Kontrolle)"));
+    wrap.appendChild(h3("Rekonstruktion (Kontrolle)"));
     const pre = document.createElement("pre");
     pre.style.margin = "0";
     pre.style.padding = "10px 12px";
@@ -1318,7 +1420,7 @@ async function loadScenarios(url){
     const toks = scenario.tokenization?.tokens ?? [];
     const focus = scenario.highlights?.tokenFocus ?? [];
 
-    wrap.appendChild(pNotice("Embeddings sind Vektorrepräsentationen der Tokens. In dieser Simulation werden Embeddings seeded erzeugt (reproduzierbar), damit der Schritt sichtbar und erklärbar bleibt."));
+    wrap.appendChild(pNotice("Embeddings sind Vektorrepräsentationen von Token. In dieser Simulation werden sie deterministisch (seeded) erzeugt, damit der Schritt reproduzierbar bleibt."));
 
     // Controls (v1.1): d_model + positional encoding toggle
     const controls = document.createElement("div");
@@ -1347,7 +1449,7 @@ async function loadScenarios(url){
       <div class="v">
         <label style="display:flex; align-items:center; gap:10px;">
           <input id="posEncToggle" type="checkbox" />
-          <span class="small muted">additiv (vereinfachtes sin/cos)</span>
+          <span class="small muted">additiv (vereinfacht: sin/cos)</span>
         </label>
       </div>
     `;
@@ -1375,7 +1477,7 @@ async function loadScenarios(url){
     // Compute embeddings (cached)
     const emb = getEmbeddingsForScenario(scenario, toks);
 
-    wrap.appendChild(h3("Token → Vektor-Barcodes"));
+    wrap.appendChild(h3("Token → Vektor (Barcode-Ansicht)"));
     const grid = document.createElement("div");
     grid.style.display = "grid";
     grid.style.gap = "10px";
@@ -1415,7 +1517,7 @@ async function loadScenarios(url){
     const toks = scenario.tokenization?.tokens ?? [];
     const focus = scenario.highlights?.tokenFocus ?? [];
 
-    wrap.appendChild(pNotice("Attention gewichtet, welche Tokens beim nächsten Rechenschritt stärker berücksichtigt werden. Hier zeigen wir eine vereinfachte Attention-Heatmap (Zeile i: „achtet auf“ Spalte j)."));
+    wrap.appendChild(pNotice("Attention gewichtet, welche Token beim nächsten Rechenschritt stärker berücksichtigt werden. Hier zeigen wir eine vereinfachte Attention-Heatmap (Zeile i gewichtet Spalte j)."));
 
     // Controls
     const controls = document.createElement("div");
@@ -1447,7 +1549,7 @@ async function loadScenarios(url){
         <div class="v">
           <label style="display:flex; align-items:center; gap:10px;">
             <input id="causalToggle" type="checkbox" />
-            <span class="small muted">nur auf vorherige Tokens achten</span>
+            <span class="small muted">nur auf aktuelle und vorherige Token</span>
           </label>
         </div>
       </div>
@@ -1549,7 +1651,7 @@ async function loadScenarios(url){
 
   function viewOutput(scenario){
     const wrap = document.createElement("div");
-    wrap.appendChild(pNotice("In Guided-Szenarien ist die Ausgabe vorgegeben. In v2 können zusätzlich Top-K/Steps (Sampling) visualisiert werden."));
+    wrap.appendChild(pNotice("Im Guided-Modus ist die Ausgabe vorgegeben. In v2 können zusätzlich Sampling-Schritte (Top‑k/Top‑p) visualisiert werden."));
     wrap.appendChild(h3("Output"));
     const pre = document.createElement("pre");
     pre.style.margin = "0";
@@ -1565,7 +1667,7 @@ async function loadScenarios(url){
       wrap.appendChild(h3("Decoding (Top-K pro Schritt)"));
       const note = document.createElement("div");
       note.className = "notice";
-      note.textContent = "In der Logits-Ansicht kannst du jeden Schritt einzeln inspizieren. Hier siehst du eine kompakte Übersicht.";
+      note.textContent = "In der Logits-Ansicht kannst du jeden Schritt einzeln ansehen. Hier siehst du eine kompakte Übersicht.";
       wrap.appendChild(note);
 
       // Show first 3 steps as preview (keeps view compact)
@@ -1579,7 +1681,7 @@ async function loadScenarios(url){
         wrap.appendChild(box);
       }
       if(steps.length > previewCount){
-        wrap.appendChild(pNotice(`Weitere Schritte in „Logits“ (insgesamt ${steps.length}).`));
+        wrap.appendChild(pNotice(`Weitere Schritte findest du unter „Logits“ (insgesamt ${steps.length}).`));
       }
     }
     
@@ -1843,7 +1945,7 @@ async function loadScenarios(url){
           <span class="mono" id="logitStepVal"></span>
         </div>
       </div>
-      <div class="small muted">Tip: Ändere <span class="mono">temperature</span>, <span class="mono">topP</span> und <span class="mono">topK</span> in den Tools, um die Verteilung zu sehen.</div>
+      <div class="small muted">Tipp: Ändere <span class="mono">temperature</span>, <span class="mono">topP</span> und <span class="mono">topK</span> unter Tools, um die Verteilung zu verändern.</div>
     `;
     wrap.appendChild(controls);
 
@@ -2203,16 +2305,46 @@ async function loadScenarios(url){
   }
 
 
-  function viewSummary(scenario){
+  
+function viewSummary(scenario){
   const wrap = document.createElement("div");
 
-  // --- Input / Output ---
+  // --- Ergebnis (Prompt / Output) ---
   wrap.appendChild(h3("Ergebnis"));
+
   const io = document.createElement("div");
   io.className = "notice";
-  io.innerHTML =
-    '<div class="kv"><div class="k">Prompt</div><div class="v mono">' + escapeHtml(scenario.prompt || "—") + '</div></div>'
-    + '<div class="kv"><div class="k">Ausgabe</div><div class="v mono">' + escapeHtml(scenario.output || "—") + '</div></div>';
+  io.style.display = "grid";
+  io.style.gap = "10px";
+
+  const ps = scenario?.promptStack || {};
+  const outText = scenario?.generation?.outputText ?? scenario?.output ?? "—";
+
+  // Build a readable prompt stack (multi-line)
+  const lines = [];
+  const sys = ps.system || "";
+  const ins = ps.instruction || "";
+  const usr = ps.user || scenario?.prompt || "—";
+  if(sys) lines.push("SYSTEM: " + sys);
+  if(ins) lines.push("INSTRUKTION: " + ins);
+  lines.push("USER: " + usr);
+  const promptStackText = lines.join("\n");
+const promptBox = document.createElement("div");
+  promptBox.innerHTML =
+    '<div class="small muted">Prompt (Stack)</div>'
+    + '<pre class="mono small" style="margin:6px 0 0; padding:10px 12px; border-radius:12px; border:1px solid rgba(34,48,68,.85); background: rgba(15,22,35,.75); white-space:pre-wrap; word-break:break-word;">'
+    + escapeHtml(promptStackText)
+    + '</pre>';
+
+  const outBox = document.createElement("div");
+  outBox.innerHTML =
+    '<div class="small muted">Ausgabe</div>'
+    + '<pre class="mono small" style="margin:6px 0 0; padding:10px 12px; border-radius:12px; border:1px solid rgba(34,48,68,.85); background: rgba(15,22,35,.75); white-space:pre-wrap; word-break:break-word;">'
+    + escapeHtml(outText)
+    + '</pre>';
+
+  io.appendChild(promptBox);
+  io.appendChild(outBox);
   wrap.appendChild(io);
 
   // --- Pipeline Recap ---
@@ -2220,14 +2352,14 @@ async function loadScenarios(url){
   const recap = document.createElement("div");
   recap.className = "notice";
   recap.innerHTML =
-    '<ul class="small">'
-    + '<li><strong>Tokenisierung:</strong> Text → Tokens</li>'
-    + '<li><strong>Embedding:</strong> Tokens → Vektoren</li>'
-    + '<li><strong>Attention:</strong> Kontextgewichtung zwischen Tokens</li>'
+    '<ul class="small" style="margin:0; padding-left:18px;">'
+    + '<li><strong>Tokenisierung:</strong> Text → Token</li>'
+    + '<li><strong>Embedding:</strong> Token → Vektoren</li>'
+    + '<li><strong>Attention:</strong> Kontextgewichtung zwischen Token</li>'
     + '<li><strong>MLP:</strong> Nichtlineare Transformation</li>'
-    + '<li><strong>Logits:</strong> Scores für mögliche nächste Tokens</li>'
+    + '<li><strong>Logits:</strong> Scores für mögliche nächste Token</li>'
     + '<li><strong>Decoding:</strong> Auswahl eines Tokens (Greedy / Sampling)</li>'
-    + '<li><strong>Output:</strong> Tokenfolge → Text</li>'
+    + '<li><strong>Ausgabe:</strong> Tokenfolge → Text</li>'
     + '</ul>';
   wrap.appendChild(recap);
 
@@ -2236,10 +2368,10 @@ async function loadScenarios(url){
   const take = document.createElement("div");
   take.className = "notice";
   take.innerHTML =
-    '<ul class="small">'
+    '<ul class="small" style="margin:0; padding-left:18px;">'
     + '<li>Ein LLM optimiert Wahrscheinlichkeiten – es „versteht“ nicht wie ein Mensch.</li>'
-    + '<li>Attention mischt Kontext, sie ist kein logisches Denken.</li>'
-    + '<li>Die Decoding-Strategie beeinflusst Varianz, Stil und Wiederholungen stark.</li>'
+    + '<li>Attention mischt Kontext; sie ist kein logisches Denken.</li>'
+    + '<li>Die Decoding-Strategie beeinflusst Varianz, Stil und Wiederholungen deutlich.</li>'
     + '</ul>';
   wrap.appendChild(take);
 
@@ -2262,6 +2394,13 @@ async function loadScenarios(url){
 
   const pre = document.createElement("pre");
   pre.className = "mono small";
+  pre.style.margin = "0 0 10px";
+  pre.style.padding = "10px 12px";
+  pre.style.borderRadius = "12px";
+  pre.style.border = "1px solid rgba(34,48,68,.85)";
+  pre.style.background = "rgba(15,22,35,.75)";
+  pre.style.whiteSpace = "pre-wrap";
+  pre.style.wordBreak = "break-word";
   pre.textContent = JSON.stringify(snapshot, null, 2);
 
   const btn = document.createElement("button");
@@ -2280,7 +2419,10 @@ async function loadScenarios(url){
         document.execCommand("copy");
         document.body.removeChild(ta);
       }
-    }catch(e){}
+      showToast("Snapshot kopiert", "JSON wurde in die Zwischenablage kopiert.", 1800);
+    }catch(e){
+      showToast("Kopieren fehlgeschlagen", "Zwischenablage nicht verfügbar.", 2400);
+    }
   };
 
   snap.appendChild(pre);
@@ -2289,6 +2431,7 @@ async function loadScenarios(url){
 
   return wrap;
 }
+
 
 
   function viewPlaceholder(title, text){
@@ -2411,7 +2554,7 @@ async function loadScenarios(url){
     const box = document.createElement("div");
     box.className = "kvs";
 
-    box.appendChild(pNotice("Controls (v1.1): Embedding-Parameter sind aktiv. Weitere Controls (Temperature/Top-p/Top-k) werden in v1.2+ für Logits/Decoding ergänzt."));
+    box.appendChild(pNotice("Tools: Embedding-Parameter sind aktiv. Weitere Regler beeinflussen Logits/Decoding."));
 
     // d_model
     const dm = document.createElement("div");
