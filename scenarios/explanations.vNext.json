@@ -1,13 +1,14 @@
 {
   "meta": {
     "schemaVersion": "1.0",
-    "contentVersion": "0.2.0",
+    "contentVersion": "0.3.0",
     "language": "de",
     "updated": "2026-01-01",
     "source": "LLM Simulator by cherware.de",
     "notes": [
       "Globale Schritt-Erklärungen (vNext). Core bleibt in v1.0 im Code; coreRef ist nur Referenz.",
-      "Expand-Blöcke: kurz, optional, mobile-safe. Regeln siehe /docs/ux/expanded-explanations.md"
+      "Expand-Blöcke: kurz, optional, mobile-safe. Regeln siehe /docs/ux/expanded-explanations.md",
+      "Issue #5 Content Pilot: tokenizer Schritt vertieft."
     ]
   },
   "steps": {
@@ -28,16 +29,20 @@
       "coreRef": "v1.steps.tokenizer.core",
       "expand": [
         {
-          "blockId": "blk.tokenizer.detail_subwords",
+          "blockId": "blk.tokenizer.misconception_token_is_word",
           "priority": 10
         },
         {
-          "blockId": "blk.tokenizer.misconception_token_is_word",
+          "blockId": "blk.tokenizer.detail_why_split",
           "priority": 20
         },
         {
-          "blockId": "blk.tokenizer.example_split",
+          "blockId": "blk.tokenizer.why_technical_step",
           "priority": 30
+        },
+        {
+          "blockId": "blk.tokenizer.example_compound",
+          "priority": 40
         }
       ],
       "links": [
@@ -262,6 +267,21 @@
       "type": "boundary",
       "title": "Nicht Teil der Modell-Inferenz",
       "body": "Diese Zusammenfassung ist eine App‑Funktion zur Orientierung. Reale LLMs haben keinen eingebauten „Zusammenfassen“-Schritt im Rechenpfad."
+    },
+    "blk.tokenizer.detail_why_split": {
+      "type": "detail",
+      "title": "Warum Tokens zerlegt werden",
+      "body": "Durch die Zerlegung kann das Modell auch mit unbekannten oder zusammengesetzten Wörtern umgehen. Bekannte Teilstücke lassen sich flexibel kombinieren, ohne jedes Wort separat zu lernen."
+    },
+    "blk.tokenizer.why_technical_step": {
+      "type": "why",
+      "title": "Warum Tokenisierung ein technischer Schritt ist",
+      "body": "Tokenisierung dient nicht dem Verstehen von Sprache. Sie übersetzt Text lediglich in eine Form, mit der das Modell rechnen kann."
+    },
+    "blk.tokenizer.example_compound": {
+      "type": "example",
+      "title": "Mini-Beispiel aus dem Alltag",
+      "body": "Ein zusammengesetztes Wort wird in mehrere bekannte Teilstücke zerlegt. Ähnlich liest man ein unbekanntes Wort, indem man es gedanklich auseinanderzieht."
     }
   },
   "links": {
