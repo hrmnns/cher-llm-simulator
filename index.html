@@ -715,7 +715,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.3.40";
+  const APP_VERSION = "v1.4.0";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -740,6 +740,8 @@
 const state = {
     mode: "guided",                // guided | sandbox
     scenariosDoc: null,            // full JSON document
+    explanationsDoc: null,         // optional: global explanations (vNext)
+    explanationsStatus: { kind: '', text: 'Explanations: —', details: '' },
     status: { kind: '', text: 'Szenarien: —', details: '' },
     scenarioId: null,              // selected scenario id
     step: "input",                 // current pipeline step
@@ -844,6 +846,10 @@ async function init(){
     // Try to load scenarios from canonical repo path
     setLoadStatus("", "Szenarien: lade …", "Versuche scenarios/scenarios.json zu laden.");
     const loaded = await loadScenarios("scenarios/scenarios.json");
+
+    // optional: load global explanations (non-blocking)
+    loadExplanationsOptional("scenarios/explanations.vNext.json")
+      .then(() => { render(); });
     if(!loaded){
       // Fallback to embedded minimal scenarios (keeps app usable on file://)
       state.scenariosDoc = embeddedScenarios();
@@ -914,6 +920,38 @@ async function loadScenarios(url){
       return false;
     }
   }
+
+  // -----------------------------
+  // Optional explanations loading (vNext)
+  // -----------------------------
+  async function loadExplanationsOptional(url){
+    try{
+      const res = await fetch(url, { cache: "no-store" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+
+      let json;
+      try{
+        json = await res.json();
+      }catch(_){
+        throw new Error("ParseError: explanations JSON ist kein gültiges JSON.");
+      }
+
+      // minimal sanity checks (defensiv, nicht „hart“)
+      if(!json || typeof json !== "object") throw new Error("SchemaError: explanations ist kein Objekt.");
+      if(!json.steps || typeof json.steps !== "object") throw new Error("SchemaError: explanations.steps fehlt/ungültig.");
+
+      state.explanationsDoc = json;
+      state.explanationsStatus = { kind: "ok", text: "Explanations: geladen", details: `Quelle: ${url}` };
+      return true;
+    }catch(err){
+      // Optional means: never fail the app
+      console.warn("Explanations load skipped:", err);
+      state.explanationsDoc = null;
+      state.explanationsStatus = { kind: "warn", text: "Explanations: nicht geladen", details: String(err?.message || err) };
+      return false;
+    }
+  }
+
 
   function embeddedScenarios(){
     return {
@@ -1285,6 +1323,68 @@ async function loadScenarios(url){
     el.view.appendChild(wrap);
   }
 
+  function resolveCoreExplainHTML(step, scenario){
+    if(state.mode === "sandbox"){
+      return `
+        <p><strong>Sandbox-Modus:</strong> Du kannst frei Text eingeben. Die App visualisiert den Ablauf (Tokenisierung → Rechnen → Next-Token-Auswahl), aber erzeugt dabei <strong>keine verlässliche inhaltliche Antwort</strong>.</p>
+        <p class="muted">Hinweis: In v1 sind einige Teile im Sandbox-Modus noch Platzhalter. Guided-Szenarien sind für reproduzierbare Erklärungen gedacht.</p>
+      `;
+    }
+
+    const explains = (scenario?.highlights?.explain ?? []).filter(x => x.at === step);
+    if(explains.length){
+      return explains.map(x => `<p>• ${escapeHtml(x.text)}</p>`).join("");
+    }
+    return genericExplain(step);
+  }
+
+  function resolveExplanationVM(step, scenario){
+    const coreHtml = resolveCoreExplainHTML(step, scenario);
+
+    const doc = state.explanationsDoc;
+    if(!doc) return { coreHtml, blocks: [], links: [] };
+
+    const stepNode = doc.steps?.[step];
+    if(!stepNode) return { coreHtml, blocks: [], links: [] };
+
+    const blocks = [];
+    const refs = Array.isArray(stepNode.expand) ? stepNode.expand : [];
+    for(const ref of refs){
+      const id = ref?.blockId;
+      if(!id) continue;
+      const b = doc.blocks?.[id];
+      if(!b) continue;
+      if(!b.type || !b.title || !b.body) continue;
+
+      blocks.push({
+        type: String(b.type),
+        title: String(b.title),
+        body: Array.isArray(b.body) ? b.body.map(String) : [String(b.body)],
+        priority: Number.isFinite(ref?.priority) ? Number(ref.priority) : 100
+      });
+    }
+    blocks.sort((a,b) => a.priority - b.priority);
+    if(blocks.length > 6) blocks.length = 6;
+
+    const links = [];
+    const lrefs = Array.isArray(stepNode.links) ? stepNode.links : [];
+    for(const ref of lrefs){
+      const id = ref?.linkId;
+      if(!id) continue;
+      const l = doc.links?.[id];
+      if(!l) continue;
+      if(!l.label || !l.url) continue;
+      links.push({
+        label: String(l.label),
+        url: String(l.url),
+        target: String(l.target || "external")
+      });
+    }
+    if(links.length > 2) links.length = 2;
+
+    return { coreHtml, blocks, links };
+  }
+
   function renderExplain(step, scenario){
     el.explainAt.textContent = step;
 
@@ -1292,22 +1392,64 @@ async function loadScenarios(url){
     box.className = "small";
     box.style.lineHeight = "1.45";
 
-    if(state.mode === "sandbox"){
-      box.innerHTML = `
-        <p><strong>Sandbox-Modus:</strong> Du kannst frei Text eingeben. Die App visualisiert den Ablauf (Tokenisierung → Rechnen → Next-Token-Auswahl), aber erzeugt dabei <strong>keine verlässliche inhaltliche Antwort</strong>.</p>
-        <p class="muted">Hinweis: In v1 sind einige Teile im Sandbox-Modus noch Platzhalter. Guided-Szenarien sind für reproduzierbare Erklärungen gedacht.</p>
-      `;
-      el.explain.replaceChildren(box);
-      return;
+    const vm = resolveExplanationVM(step, scenario);
+
+    // Core always
+    box.innerHTML = vm.coreHtml;
+
+    // Expanded blocks (optional)
+    if(vm.blocks.length){
+      const hr = document.createElement("div");
+      hr.style.margin = "10px 0";
+      hr.style.borderTop = "1px solid rgba(34,48,68,.7)";
+      box.appendChild(hr);
+
+      for(const b of vm.blocks){
+        const d = document.createElement("details");
+        d.style.margin = "8px 0";
+        d.style.border = "1px solid rgba(34,48,68,.7)";
+        d.style.borderRadius = "12px";
+        d.style.background = "rgba(15,22,35,.55)";
+        d.style.padding = "8px 10px";
+
+        const s = document.createElement("summary");
+        s.style.cursor = "pointer";
+        s.style.fontWeight = "600";
+        s.textContent = b.title;
+
+        const body = document.createElement("div");
+        body.style.marginTop = "8px";
+        body.innerHTML = b.body.map(line => `<p class="small" style="margin:6px 0;">${escapeHtml(line)}</p>`).join("");
+
+        d.appendChild(s);
+        d.appendChild(body);
+        box.appendChild(d);
+      }
     }
 
-    const explains = (scenario?.highlights?.explain ?? []).filter(x => x.at === step);
-    if(explains.length){
-      box.innerHTML = explains.map(x => `<p>• ${escapeHtml(x.text)}</p>`).join("");
-    } else {
-      // generic hints per step
-      box.innerHTML = genericExplain(step);
+    // Links (optional)
+    if(vm.links.length){
+      const wrap = document.createElement("div");
+      wrap.style.marginTop = "10px";
+      wrap.innerHTML = `<div class="small muted" style="margin-bottom:6px;">Weiterführend</div>`;
+      const ul = document.createElement("ul");
+      ul.style.margin = "0";
+      ul.style.paddingLeft = "18px";
+
+      for(const l of vm.links){
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.textContent = l.label;
+        a.href = l.url;
+        a.target = (l.target === "external") ? "_blank" : "_self";
+        a.rel = "noopener noreferrer";
+        li.appendChild(a);
+        ul.appendChild(li);
+      }
+      wrap.appendChild(ul);
+      box.appendChild(wrap);
     }
+
     el.explain.replaceChildren(box);
   }
 
