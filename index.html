@@ -524,8 +524,7 @@
             <div class="sub">Erklärbare Simulation zentraler LLM-Grundprinzipien</div>
           </div>
         </div>
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span class="badge ok" id="verBadge">v—</span>
-        <span class="badge" id="loadStatus">Szenarien: —</span><span class="badge warn" id="jsStatus" title="Wenn hier nicht ‚ready‘ steht, läuft JavaScript nicht.">JS: …</span></div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span class="badge" id="loadStatus">Szenarien: —</span><span class="badge warn" id="jsStatus" title="Wenn hier nicht ‚ready‘ steht, läuft JavaScript nicht.">JS: …</span></div>
       </div>
 
       <div class="toolbar">
@@ -715,7 +714,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.2";
+  const APP_VERSION = "v1.4.3";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1532,6 +1531,28 @@ async function loadScenarios(url){
     el.inspector.innerHTML = "";
     const items = [];
 
+    // --- App / Data versions (v1.4.3) ---
+    items.push({ k: "App", v: APP_VERSION });
+
+    const sMeta = state.scenariosDoc?.meta || {};
+    const sVer = sMeta.version || sMeta.contentVersion || "—";
+    const sUpd = sMeta.updatedAt || sMeta.updated || "";
+    const sLabel = sUpd ? `${sVer} · ${sUpd}` : String(sVer);
+    items.push({ k: "Szenarien", v: sLabel });
+
+    const eStatus = state.explanationsStatus?.text || "Explanations: —";
+    const eMeta = state.explanationsDoc?.meta || {};
+    const eSchema = eMeta.schemaVersion || "—";
+    const eContent = eMeta.contentVersion || eMeta.version || "—";
+    const eUpd = eMeta.updatedAt || eMeta.updated || "";
+    const eLabelParts = [];
+    if(eContent && eContent !== "—") eLabelParts.push(String(eContent));
+    if(eSchema && eSchema !== "—") eLabelParts.push(`schema ${eSchema}`);
+    if(eUpd) eLabelParts.push(String(eUpd));
+    const eLabel = eLabelParts.length ? eLabelParts.join(" · ") : "—";
+    items.push({ k: "Erklärungen", v: `${eStatus.replace("Explanations:","").trim() || eStatus} · ${eLabel}` });
+
+    // --- Runtime ---
     items.push({ k: "Modus", v: state.mode });
     items.push({ k: "Schritt", v: state.step });
 
