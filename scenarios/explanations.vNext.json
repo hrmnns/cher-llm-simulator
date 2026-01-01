@@ -1,44 +1,298 @@
 {
   "meta": {
     "schemaVersion": "1.0",
-    "contentVersion": "0.1.0",
+    "contentVersion": "0.2.0",
     "language": "de",
     "updated": "2026-01-01",
-    "source": "LLM Simulator by cherware.de"
+    "source": "LLM Simulator by cherware.de",
+    "notes": [
+      "Globale Schritt-Erklärungen (vNext). Core bleibt in v1.0 im Code; coreRef ist nur Referenz.",
+      "Expand-Blöcke: kurz, optional, mobile-safe. Regeln siehe /docs/ux/expanded-explanations.md"
+    ]
   },
   "steps": {
-    "tokenization": {
-      "coreRef": "v1.steps.tokenization.core",
+    "input": {
+      "coreRef": "v1.steps.input.core",
       "expand": [
-        { "blockId": "blk.tokenization.subwords", "priority": 10 }
+        {
+          "blockId": "blk.input.boundary_simulation",
+          "priority": 10
+        },
+        {
+          "blockId": "blk.input.why_short_prompts",
+          "priority": 20
+        }
+      ]
+    },
+    "tokenizer": {
+      "coreRef": "v1.steps.tokenizer.core",
+      "expand": [
+        {
+          "blockId": "blk.tokenizer.detail_subwords",
+          "priority": 10
+        },
+        {
+          "blockId": "blk.tokenizer.misconception_token_is_word",
+          "priority": 20
+        },
+        {
+          "blockId": "blk.tokenizer.example_split",
+          "priority": 30
+        }
       ],
       "links": [
-        { "linkId": "lnk.wiki.tokenization" }
+        {
+          "linkId": "lnk.wiki.tokenizer"
+        }
+      ]
+    },
+    "embedding": {
+      "coreRef": "v1.steps.embedding.core",
+      "expand": [
+        {
+          "blockId": "blk.embedding.detail_vectors",
+          "priority": 10
+        },
+        {
+          "blockId": "blk.embedding.misconception_meaning",
+          "priority": 20
+        },
+        {
+          "blockId": "blk.embedding.boundary_visual",
+          "priority": 30
+        }
+      ],
+      "links": [
+        {
+          "linkId": "lnk.wiki.embedding"
+        }
       ]
     },
     "attention": {
       "coreRef": "v1.steps.attention.core",
       "expand": [
-        { "blockId": "blk.attention.misconception_understanding", "priority": 10 }
+        {
+          "blockId": "blk.attention.detail_weighting",
+          "priority": 10
+        },
+        {
+          "blockId": "blk.attention.misconception_understanding",
+          "priority": 20
+        },
+        {
+          "blockId": "blk.attention.why_context",
+          "priority": 30
+        }
+      ],
+      "links": [
+        {
+          "linkId": "lnk.wiki.attention"
+        }
+      ]
+    },
+    "mlp": {
+      "coreRef": "v1.steps.mlp.core",
+      "expand": [
+        {
+          "blockId": "blk.mlp.detail_transform",
+          "priority": 10
+        },
+        {
+          "blockId": "blk.mlp.boundary_not_rules",
+          "priority": 20
+        }
+      ],
+      "links": [
+        {
+          "linkId": "lnk.wiki.mlp"
+        }
+      ]
+    },
+    "logits": {
+      "coreRef": "v1.steps.logits.core",
+      "expand": [
+        {
+          "blockId": "blk.logits.detail_scores",
+          "priority": 10
+        },
+        {
+          "blockId": "blk.logits.misconception_probs",
+          "priority": 20
+        }
+      ],
+      "links": [
+        {
+          "linkId": "lnk.wiki.logits"
+        }
+      ]
+    },
+    "decoding": {
+      "coreRef": "v1.steps.decoding.core",
+      "expand": [
+        {
+          "blockId": "blk.decoding.detail_choice",
+          "priority": 10
+        },
+        {
+          "blockId": "blk.decoding.misconception_random",
+          "priority": 20
+        },
+        {
+          "blockId": "blk.decoding.example_temperature",
+          "priority": 30
+        }
+      ],
+      "links": [
+        {
+          "linkId": "lnk.wiki.decoding"
+        }
+      ]
+    },
+    "summary": {
+      "coreRef": "v1.steps.summary.core",
+      "expand": [
+        {
+          "blockId": "blk.summary.detail_recap",
+          "priority": 10
+        },
+        {
+          "blockId": "blk.summary.boundary_not_model_step",
+          "priority": 20
+        }
       ]
     }
   },
   "blocks": {
-    "blk.tokenization.subwords": {
+    "blk.input.boundary_simulation": {
+      "type": "boundary",
+      "title": "Wichtig: Das hier ist eine Simulation",
+      "body": "Die App zeigt den typischen Verarbeitungsweg eines LLM vereinfacht. Die angezeigten Zwischenwerte sind didaktisch gewählt und keine echten Modell-Berechnungen."
+    },
+    "blk.input.why_short_prompts": {
+      "type": "why",
+      "title": "Warum kurze Eingaben oft besser sichtbar sind",
+      "body": "Kurze Eingaben machen die einzelnen Schritte leichter nachvollziehbar. Bei langen Texten steigen Anzahl der Tokens und die Visualisierung wird schnell unübersichtlich."
+    },
+    "blk.tokenizer.detail_subwords": {
       "type": "detail",
       "title": "Subwords statt Wörter",
-      "body": "Tokens sind nicht immer ganze Wörter. Häufig werden Wörter in Teilstücke zerlegt, um neue oder seltene Begriffe effizient abzubilden."
+      "body": "Tokens sind nicht immer ganze Wörter. Häufig werden Wörter in Teilstücke zerlegt, damit das Modell auch mit neuen oder seltenen Begriffen umgehen kann."
+    },
+    "blk.tokenizer.misconception_token_is_word": {
+      "type": "misconception",
+      "title": "Missverständnis: Ein Token ist ein Wort",
+      "body": "Oft stimmt das nicht. Ein einzelnes Wort kann aus mehreren Tokens bestehen, und ein Token kann auch nur ein Teil eines Wortes sein."
+    },
+    "blk.tokenizer.example_split": {
+      "type": "example",
+      "title": "Mini‑Beispiel",
+      "body": "Ein zusammengesetztes Wort kann in mehrere Teilstücke zerlegt werden. Das ist normal und hilft, bekannte Teile in neuen Wörtern wiederzuverwenden."
+    },
+    "blk.embedding.detail_vectors": {
+      "type": "detail",
+      "title": "Von Token zu Zahlenvektor",
+      "body": "Embeddings sind Zahlenvektoren, die Tokens in eine Form bringen, mit der das Modell rechnen kann. Ähnliche Tokens liegen dabei oft näher beieinander als sehr unterschiedliche."
+    },
+    "blk.embedding.misconception_meaning": {
+      "type": "misconception",
+      "title": "Missverständnis: Embeddings sind „Bedeutung“",
+      "body": "Embeddings sind eine nützliche Repräsentation für Berechnungen, aber keine feste, menschliche Bedeutung. Sie hängen vom Training und vom Kontext ab."
+    },
+    "blk.embedding.boundary_visual": {
+      "type": "boundary",
+      "title": "Hinweis zur Visualisierung",
+      "body": "Die App zeigt Embeddings stark vereinfacht (z. B. wenige Dimensionen). Reale Modelle arbeiten mit deutlich größeren Vektoren."
+    },
+    "blk.attention.detail_weighting": {
+      "type": "detail",
+      "title": "Gewichtung von Kontext",
+      "body": "Attention macht sichtbar, dass Tokens nicht isoliert verarbeitet werden. Stattdessen werden Beziehungen zwischen Tokens gewichtet – je nach Kontext unterschiedlich stark."
     },
     "blk.attention.misconception_understanding": {
       "type": "misconception",
-      "title": "Missverständnis: Attention bedeutet Verstehen",
+      "title": "Missverständnis: Attention ist „Verstehen“",
       "body": "Attention ist eine Rechenstrategie zur Gewichtung von Beziehungen zwischen Tokens. Das ist nicht gleichbedeutend mit menschlichem Sprachverständnis."
+    },
+    "blk.attention.why_context": {
+      "type": "why",
+      "title": "Warum Kontext so wichtig ist",
+      "body": "Viele Wörter sind mehrdeutig. Der umliegende Text hilft dem Modell, eine passende Fortsetzung zu wählen – deshalb wird Kontext rechnerisch berücksichtigt."
+    },
+    "blk.mlp.detail_transform": {
+      "type": "detail",
+      "title": "Nichtlineare Weiterverarbeitung",
+      "body": "Die MLP‑Stufe transformiert die internen Repräsentationen weiter. Grob gesagt werden dabei Muster kombiniert und für den nächsten Schritt vorbereitet."
+    },
+    "blk.mlp.boundary_not_rules": {
+      "type": "boundary",
+      "title": "Keine festen Regeln",
+      "body": "Hier werden keine expliziten Grammatik- oder Faktenregeln angewendet. Es ist Statistik/Pattern‑Verarbeitung auf Basis des Trainings."
+    },
+    "blk.logits.detail_scores": {
+      "type": "detail",
+      "title": "Scores vor Wahrscheinlichkeiten",
+      "body": "Logits sind rohe Punktwerte für mögliche nächste Tokens. Erst danach werden daraus (vereinfacht gesagt) Wahrscheinlichkeiten abgeleitet."
+    },
+    "blk.logits.misconception_probs": {
+      "type": "misconception",
+      "title": "Missverständnis: Logits sind schon Prozentwerte",
+      "body": "Logits sind keine Prozentzahlen. Sie sind nur relative Scores – ein größerer Score bedeutet: dieses Token wird bevorzugt."
+    },
+    "blk.decoding.detail_choice": {
+      "type": "detail",
+      "title": "Auswahl des nächsten Tokens",
+      "body": "Beim Decoding wird entschieden, welches Token als nächstes ausgegeben wird. Je nach Strategie (z. B. greedy oder sampling) kann die Ausgabe stabil oder variabler sein."
+    },
+    "blk.decoding.misconception_random": {
+      "type": "misconception",
+      "title": "Missverständnis: KI ist nur Zufall",
+      "body": "Auch bei sampling ist es nicht „reiner Zufall“. Die Auswahl folgt den Scores – manche Tokens sind viel wahrscheinlicher als andere."
+    },
+    "blk.decoding.example_temperature": {
+      "type": "example",
+      "title": "Beispiel: Temperature",
+      "body": "Eine niedrigere Temperature macht die Auswahl konservativer, eine höhere macht sie kreativer/variabler. In der Simulation ist das ein Regler für Variation, nicht für „Intelligenz“."
+    },
+    "blk.summary.detail_recap": {
+      "type": "detail",
+      "title": "Was diese Zusammenfassung leistet",
+      "body": "Die Zusammenfassung fasst die wichtigsten Beobachtungen aus dem Durchlauf zusammen. Sie hilft, den Ablauf einzuordnen – ohne zusätzliche Details zu erzwingen."
+    },
+    "blk.summary.boundary_not_model_step": {
+      "type": "boundary",
+      "title": "Nicht Teil der Modell-Inferenz",
+      "body": "Diese Zusammenfassung ist eine App‑Funktion zur Orientierung. Reale LLMs haben keinen eingebauten „Zusammenfassen“-Schritt im Rechenpfad."
     }
   },
   "links": {
-    "lnk.wiki.tokenization": {
+    "lnk.wiki.tokenizer": {
       "label": "Mehr zur Tokenisierung (Wiki)",
-      "url": "https://example.com/wiki/tokenization",
+      "url": "https://example.com/wiki/tokenizer",
+      "target": "external"
+    },
+    "lnk.wiki.embedding": {
+      "label": "Mehr zu Embeddings (Wiki)",
+      "url": "https://example.com/wiki/embedding",
+      "target": "external"
+    },
+    "lnk.wiki.attention": {
+      "label": "Mehr zu Attention (Wiki)",
+      "url": "https://example.com/wiki/attention",
+      "target": "external"
+    },
+    "lnk.wiki.mlp": {
+      "label": "Mehr zur MLP‑Stufe (Wiki)",
+      "url": "https://example.com/wiki/mlp",
+      "target": "external"
+    },
+    "lnk.wiki.logits": {
+      "label": "Mehr zu Logits (Wiki)",
+      "url": "https://example.com/wiki/logits",
+      "target": "external"
+    },
+    "lnk.wiki.decoding": {
+      "label": "Mehr zu Decoding (Wiki)",
+      "url": "https://example.com/wiki/decoding",
       "target": "external"
     }
   }
