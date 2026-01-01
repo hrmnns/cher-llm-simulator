@@ -1415,10 +1415,51 @@ async function loadScenarios(url){
         const s = document.createElement("summary");
         s.style.cursor = "pointer";
         s.style.fontWeight = "600";
-        s.textContent = b.title;
+        // subtle "clickable control" feel (mobile-safe)
+        s.style.listStyle = "none";
+        s.style.outline = "none";
+        s.style.userSelect = "none";
+
+        // arrow + title + type badge (very subtle)
+        const arrow = document.createElement("span");
+        arrow.textContent = "▸ ";
+        arrow.style.opacity = "0.75";
+
+        const title = document.createElement("span");
+        title.textContent = String(b.title || "");
+
+        const typeLabel = ({
+          detail: "Hinweis",
+          misconception: "Missverständnis",
+          example: "Beispiel",
+          boundary: "Abgrenzung",
+          why: "Warum?"
+        })[b.type] || "Info";
+
+        const badge = document.createElement("span");
+        badge.textContent = typeLabel;
+        badge.style.fontSize = "0.75em";
+        badge.style.opacity = "0.75";
+        badge.style.marginLeft = "8px";
+        badge.style.padding = "2px 6px";
+        badge.style.borderRadius = "999px";
+        badge.style.border = "1px solid rgba(120,130,160,.5)";
+        badge.style.whiteSpace = "nowrap";
+
+        s.appendChild(arrow);
+        s.appendChild(title);
+        s.appendChild(badge);
+
+        // toggle arrow indicator
+        d.addEventListener("toggle", () => {
+          arrow.textContent = d.open ? "▾ " : "▸ ";
+        });
 
         const body = document.createElement("div");
         body.style.marginTop = "8px";
+        // subtle separation for readability
+        body.style.paddingLeft = "6px";
+        body.style.borderLeft = "2px solid rgba(120,130,160,.35)";
         body.innerHTML = b.body.map(line => `<p class="small" style="margin:6px 0;">${escapeHtml(line)}</p>`).join("");
 
         d.appendChild(s);
