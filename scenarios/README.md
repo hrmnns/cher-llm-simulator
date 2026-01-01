@@ -1,24 +1,56 @@
-# Szenarien – Guided Simulation
+# Szenarien – Guided Simulation (v1)
 
-Dieses Verzeichnis enthält die **didaktischen Szenarien** für den *cher-llm-simulator*.
+Dieses Verzeichnis enthält die **didaktischen Szenarien** für den *LLM Simulator by cherware.de*.
 
-Die Szenarien sind das **Herzstück der Anwendung**:  
+Die Szenarien sind das **Herzstück der Anwendung**:
 Sie definieren, *was* gezeigt wird, *wie* es erklärt wird und *worauf* der Nutzer achten soll.
 
-Der Anwendungscode visualisiert lediglich die Pipeline –  
-**alle inhaltlichen Lernpfade stecken in den Szenarien**.
+Der Anwendungscode visualisiert ausschließlich die Pipeline –
+**alle didaktischen Lernpfade und inhaltlichen Akzente stecken in den Szenarien**.
+
+## Einordnung (v1)
+
+In Version v1 unterscheidet der Simulator klar zwischen:
+
+- **Guided Simulation** (szenariobasiert, didaktisch geführt)
+- **Mechanik-Sandbox** (freie Eingabe, ohne didaktische Garantie)
+
+Dieses Verzeichnis bezieht sich **ausschließlich auf den Guided Mode**.
+Szenarien sind nicht für die Sandbox gedacht und setzen **keine freie Texteingabe** voraus.
+
+## Referenzszenarien (v1)
+
+Ein Teil der Szenarien ist als **Referenzszenarien** gekennzeichnet.
+
+Referenzszenarien sind:
+
+- didaktisch eingefroren
+- strukturelle und inhaltliche Vorlagen
+- Vergleichsbasis für spätere Versionen
+
+Sie definieren den **kanonischen v1-Zustand** der Szenariostruktur.
+
+Aktuell enthaltene Referenzszenarien:
+
+- **Baseline – Einfache Begriffsabfrage**  
+  Einführung in tokenbasierte Verarbeitung und probabilistische Textgenerierung.
+
+- **Komposita – Subword-Zerlegung am Beispiel „Hundeleine“**  
+  Vertiefung der Tokenisierung anhand zusammengesetzter Begriffe.
+
+Referenzszenarien liegen unter:
+
+```
+scenarios/v1/*.reference.json
+```
+
+Sie werden innerhalb von v1 **nicht verändert**.
 
 ## Überblick
 
-- Alle Szenarien werden in einer oder mehreren JSON-Dateien definiert.
-- Jedes Szenario beschreibt einen **konkreten Lernfall** (z. B. Tokenisierung, Komposita, Mehrdeutigkeit).
-- Neue Szenarien können ergänzt werden, **ohne den Code zu ändern**.
-
-Standarddatei:
-
-```
-scenarios.json
-```
+- Alle Szenarien werden als JSON-Dateien definiert.
+- Jedes Szenario beschreibt **genau einen Lernfall**.
+- Neue Szenarien können ergänzt werden, **ohne den Anwendungscode zu ändern**.
 
 ## Didaktisches Prinzip
 
@@ -26,14 +58,18 @@ Jedes Szenario soll:
 
 1. **genau einen Hauptlernfokus** haben  
 2. auf **kontrollierten Eingaben** basieren  
-3. **keine falschen Erwartungen** an „echte“ Modellintelligenz erzeugen  
+3. **keine falschen Erwartungen** an reale Modellintelligenz erzeugen  
 
-Beispiele für Lernfoki:
-- Tokenisierung & Subwords (z. B. „Hundeleine“)
-- Mehrdeutigkeit ohne Kontext (z. B. „Bank“)
+Szenarien sind keine Tests und keine Benchmarks,
+sondern **didaktische Konstrukte**.
+
+Beispiele für typische Lernfoki:
+
+- Tokenisierung & Subwords (z. B. Komposita)
+- Mehrdeutigkeit ohne Kontext
 - Einfluss von Instruktionen auf die Ausgabeform
 - Iterative Token-Generierung
-- Sampling & Wahrscheinlichkeiten
+- Wahrscheinlichkeiten und Sampling (konzeptionell)
 
 ## Aufbau eines Szenarios (Kurzfassung)
 
@@ -45,37 +81,43 @@ Ein Szenario besteht aus folgenden Pflichtbestandteilen:
 - Erwartete Ausgabe
 - Erklärtexte (Highlights)
 
-Optional können Replay-Daten ergänzt werden, um Abläufe exakt vorzugeben.
+Optional können zusätzliche Fokus- oder Replay-Informationen ergänzt werden,
+um Abläufe präziser zu steuern.
 
 ## Beispiel (vereinfacht)
 
 ```json
 {
-  "id": "kompositum-hundeleine",
-  "title": "Komposita: Hundeleine",
+  "id": "komposita-hundeleine",
+  "title": "Komposita – Subword-Zerlegung am Beispiel „Hundeleine“",
   "learningGoals": [
-    "Subword-Tokenisierung verstehen"
+    "Subword-Repräsentation",
+    "Umgang mit zusammengesetzten Begriffen"
   ],
   "mode": "simulated",
   "promptStack": {
     "system": "Du bist ein sachlicher Assistent.",
-    "instruction": "Antworte kurz.",
+    "instruction": "Antworte kurz und präzise.",
     "user": "Was ist eine Hundeleine?"
   },
   "tokenization": {
     "tokens": [
-      { "text": "Hund", "id": 104 },
-      { "text": "eleine", "id": 207 }
+      { "text": "Hund", "id": 204 },
+      { "text": "e", "id": 205 },
+      { "text": "leine", "id": 206 }
     ]
   },
   "generation": {
-    "outputText": "Eine Hundeleine ist eine Leine zum Führen eines Hundes."
+    "outputText": "Eine Hundeleine ist eine Leine, mit der ein Hund geführt wird."
   },
   "highlights": {
+    "focusByStep": {
+      "tokenizer": "Subword-Zerlegung"
+    },
     "explain": [
       {
         "at": "tokenizer",
-        "text": "Komposita werden in bekannte Teilstücke zerlegt."
+        "text": "Zusammengesetzte Wörter werden oft in mehrere Subwords zerlegt."
       }
     ]
   }
@@ -84,26 +126,36 @@ Optional können Replay-Daten ergänzt werden, um Abläufe exakt vorzugeben.
 
 ## Guided Simulation vs. Mechanik-Sandbox
 
-Szenarien werden primär für den **Guided Mode** verwendet.
+Szenarien werden **ausschließlich im Guided Mode** verwendet.
 
-- Im *Guided Mode* sind Prompt, Tokens und Ausgabe kontrolliert.
-- Im *Mechanik-Sandbox*-Modus kann dieselbe Pipeline mit freier Eingabe verwendet werden, jedoch ohne didaktische Garantien.
+- Im **Guided Mode** sind Prompt, Tokenisierung und Ausgabe kontrolliert
+  und auf ein Lernziel abgestimmt.
+- In der **Mechanik-Sandbox** läuft dieselbe Pipeline,
+  jedoch ohne Szenarien und ohne didaktische Leitplanken.
 
-Szenarien sollen **keine freie Texteingabe** voraussetzen.
+Szenarien sollen daher:
 
-## Replay- vs. Simulated-Szenarien
+- keine freie Texteingabe voraussetzen
+- nicht versuchen, Sandbox-Verhalten zu erklären
+- bewusst auf Klarheit statt Vollständigkeit setzen
+
+## Simulated- vs. Replay-Szenarien
 
 ### Simulated
+
 - Prompt, Tokens und Ausgabe sind vorgegeben
-- Zwischenwerte werden intern simuliert (seeded)
-- Weniger Pflegeaufwand
+- Zwischenwerte werden intern simuliert
+- geringerer Pflegeaufwand
+- Standardfall für v1
 
 ### Replay
-- Attention-Gewichte und Generationsschritte sind explizit vorgegeben
-- Maximale Reproduzierbarkeit
-- Ideal für Vorträge, Schulungen und Erklärvideos
 
-Beide Varianten können gemischt verwendet werden.
+- Zwischenschritte (z. B. Attention-Gewichte) sind explizit definiert
+- maximale Reproduzierbarkeit
+- geeignet für Vorträge, Schulungen und Erklärvideos
+
+Beide Varianten können kombiniert werden,
+sollten jedoch didaktisch klar getrennt bleiben.
 
 ## Gute Szenarien erkennen
 
@@ -112,9 +164,9 @@ Ein gutes Szenario:
 - ist kurz und fokussiert  
 - erklärt *warum* etwas passiert, nicht nur *dass*  
 - vermeidet unnötige Komplexität  
-- lässt sich in wenigen Minuten erklären  
+- lässt sich in wenigen Minuten erfassen  
 
-Wenn ein Szenario mehrere Effekte gleichzeitig erklären soll,  
+Wenn ein Szenario mehrere Effekte gleichzeitig erklären soll,
 ist es meist besser, es aufzuteilen.
 
 ## Weiterführende Dokumentation
