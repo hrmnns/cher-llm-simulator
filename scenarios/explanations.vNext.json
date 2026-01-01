@@ -1,14 +1,15 @@
 {
   "meta": {
     "schemaVersion": "1.0",
-    "contentVersion": "0.3.0",
+    "contentVersion": "0.4.0",
     "language": "de",
     "updated": "2026-01-01",
     "source": "LLM Simulator by cherware.de",
     "notes": [
       "Globale Schritt-Erklärungen (vNext). Core bleibt in v1.0 im Code; coreRef ist nur Referenz.",
       "Expand-Blöcke: kurz, optional, mobile-safe. Regeln siehe /docs/ux/expanded-explanations.md",
-      "Issue #5 Content Pilot: tokenizer Schritt vertieft."
+      "Issue #5 Content Pilot: tokenizer Schritt vertieft.",
+      "Issue #5 Content Pilot: attention Schritt ergänzt."
     ]
   },
   "steps": {
@@ -77,16 +78,20 @@
       "coreRef": "v1.steps.attention.core",
       "expand": [
         {
-          "blockId": "blk.attention.detail_weighting",
+          "blockId": "blk.attention.misconception_understanding",
           "priority": 10
         },
         {
-          "blockId": "blk.attention.misconception_understanding",
+          "blockId": "blk.attention.detail_weighting",
           "priority": 20
         },
         {
           "blockId": "blk.attention.why_context",
           "priority": 30
+        },
+        {
+          "blockId": "blk.attention.boundary_not_intelligence",
+          "priority": 40
         }
       ],
       "links": [
@@ -210,18 +215,18 @@
     },
     "blk.attention.detail_weighting": {
       "type": "detail",
-      "title": "Gewichtung von Kontext",
-      "body": "Attention macht sichtbar, dass Tokens nicht isoliert verarbeitet werden. Stattdessen werden Beziehungen zwischen Tokens gewichtet – je nach Kontext unterschiedlich stark."
+      "title": "Worum es bei Attention wirklich geht",
+      "body": "Attention sorgt dafür, dass Tokens nicht isoliert verarbeitet werden. Jedes Token berücksichtigt andere Tokens unterschiedlich stark, abhängig vom aktuellen Kontext."
     },
     "blk.attention.misconception_understanding": {
       "type": "misconception",
-      "title": "Missverständnis: Attention ist „Verstehen“",
-      "body": "Attention ist eine Rechenstrategie zur Gewichtung von Beziehungen zwischen Tokens. Das ist nicht gleichbedeutend mit menschlichem Sprachverständnis."
+      "title": "Missverständnis: Attention bedeutet Verstehen",
+      "body": "Attention ist keine Form von menschlichem Verstehen. Sie beschreibt eine Rechenmethode, mit der Beziehungen zwischen Tokens gewichtet werden. Das Modell berechnet, was im Kontext wichtig ist – nicht, was etwas bedeutet."
     },
     "blk.attention.why_context": {
       "type": "why",
-      "title": "Warum Kontext so wichtig ist",
-      "body": "Viele Wörter sind mehrdeutig. Der umliegende Text hilft dem Modell, eine passende Fortsetzung zu wählen – deshalb wird Kontext rechnerisch berücksichtigt."
+      "title": "Warum Kontext so entscheidend ist",
+      "body": "Viele Wörter sind mehrdeutig. Erst der umliegende Text macht klar, welche Fortsetzung sinnvoll ist. Attention ist der Mechanismus, mit dem dieser Kontext rechnerisch einbezogen wird."
     },
     "blk.mlp.detail_transform": {
       "type": "detail",
@@ -282,6 +287,11 @@
       "type": "example",
       "title": "Mini-Beispiel aus dem Alltag",
       "body": "Ein zusammengesetztes Wort wird in mehrere bekannte Teilstücke zerlegt. Ähnlich liest man ein unbekanntes Wort, indem man es gedanklich auseinanderzieht."
+    },
+    "blk.attention.boundary_not_intelligence": {
+      "type": "boundary",
+      "title": "Was Attention nicht leistet",
+      "body": "Attention speichert kein Wissen und trifft keine bewussten Entscheidungen. Sie ist ein Teil der Rechenpipeline – nicht die \"Intelligenz\" des Modells."
     }
   },
   "links": {
@@ -315,5 +325,4 @@
       "url": "https://github.com/hrmnns/cher-llm-simulator/blob/main/docs/guide/04-parameters-logits-decoding.md",
       "target": "external"
     }
-  }
-}
+  }}
