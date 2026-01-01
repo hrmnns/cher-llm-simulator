@@ -715,7 +715,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.0";
+  const APP_VERSION = "v1.4.2";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1363,7 +1363,15 @@ async function loadScenarios(url){
         priority: Number.isFinite(ref?.priority) ? Number(ref.priority) : 100
       });
     }
-    blocks.sort((a,b) => a.priority - b.priority);
+    const typeRank = (t) => ({
+      misconception: 0,
+      detail: 1,
+      example: 2,
+      boundary: 3,
+      why: 4
+    })[t] ?? 9;
+
+    blocks.sort((a,b) => (a.priority - b.priority) || (typeRank(a.type) - typeRank(b.type)) || String(a.title).localeCompare(String(b.title)));
     if(blocks.length > 6) blocks.length = 6;
 
     const links = [];
