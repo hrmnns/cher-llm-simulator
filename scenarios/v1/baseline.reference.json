@@ -1,0 +1,48 @@
+{
+  id: "baseline-hund",
+  title: "Baseline – Einfache Begriffsabfrage",
+
+  learningGoals: [
+    "Token-basierte Verarbeitung",
+    "Probabilistische Textgenerierung"
+  ],
+
+  mode: "simulated",
+
+  promptStack: {
+    system: "Du bist ein sachlicher Assistent.",
+    instruction: "Antworte in einem Satz.",
+    user: "Was ist ein Hund?"
+  },
+
+  tokenization: {
+    tokens: [
+      { text: "Was", id: 101 },
+      { text: " ist", id: 102 },
+      { text: " ein", id: 103 },
+      { text: " Hund", id: 104 },
+      { text: "?", id: 105 }
+    ]
+  },
+
+  generation: {
+    outputText: "Ein Hund ist ein Säugetier."
+  },
+
+  highlights: {
+    focusByStep: {
+      tokenizer: "Token ≠ Wort",
+      decoding: "Next-Token-Prinzip"
+    },
+    explain: [
+      {
+        at: "tokenizer",
+        text: "Ein Token kann ein Wort, ein Wortteil oder ein einzelnes Zeichen sein."
+      },
+      {
+        at: "decoding",
+        text: "Das Modell wählt das nächste Token ausschließlich auf Basis von Wahrscheinlichkeiten."
+      }
+    ]
+  }
+}
