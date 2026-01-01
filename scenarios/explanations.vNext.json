@@ -1,7 +1,7 @@
 {
   "meta": {
     "schemaVersion": "1.0",
-    "contentVersion": "0.4.0",
+    "contentVersion": "0.5.0",
     "language": "de",
     "updated": "2026-01-01",
     "source": "LLM Simulator by cherware.de",
@@ -9,7 +9,8 @@
       "Globale Schritt-Erklärungen (vNext). Core bleibt in v1.0 im Code; coreRef ist nur Referenz.",
       "Expand-Blöcke: kurz, optional, mobile-safe. Regeln siehe /docs/ux/expanded-explanations.md",
       "Issue #5 Content Pilot: tokenizer Schritt vertieft.",
-      "Issue #5 Content Pilot: attention Schritt ergänzt."
+      "Issue #5 Content Pilot: attention Schritt ergänzt.",
+      "Issue #5 Content Pilot: decoding Schritt ergänzt, Guide-Links konsolidiert."
     ]
   },
   "steps": {
@@ -140,16 +141,20 @@
       "coreRef": "v1.steps.decoding.core",
       "expand": [
         {
-          "blockId": "blk.decoding.detail_choice",
+          "blockId": "blk.decoding.misconception_random",
           "priority": 10
         },
         {
-          "blockId": "blk.decoding.misconception_random",
+          "blockId": "blk.decoding.detail_choice",
           "priority": 20
         },
         {
-          "blockId": "blk.decoding.example_temperature",
+          "blockId": "blk.decoding.why_variation",
           "priority": 30
+        },
+        {
+          "blockId": "blk.decoding.example_temperature",
+          "priority": 40
         }
       ],
       "links": [
@@ -250,18 +255,18 @@
     },
     "blk.decoding.detail_choice": {
       "type": "detail",
-      "title": "Auswahl des nächsten Tokens",
-      "body": "Beim Decoding wird entschieden, welches Token als nächstes ausgegeben wird. Je nach Strategie (z. B. greedy oder sampling) kann die Ausgabe stabil oder variabler sein."
+      "title": "Wie das nächste Token gewählt wird",
+      "body": "Beim Decoding entscheidet das Modell, welches Token als nächstes ausgegeben wird. Diese Entscheidung basiert auf den zuvor berechneten Scores und der gewählten Strategie."
     },
     "blk.decoding.misconception_random": {
       "type": "misconception",
-      "title": "Missverständnis: KI ist nur Zufall",
-      "body": "Auch bei sampling ist es nicht „reiner Zufall“. Die Auswahl folgt den Scores – manche Tokens sind viel wahrscheinlicher als andere."
+      "title": "Missverständnis: Die Ausgabe ist reiner Zufall",
+      "body": "Auch beim Sampling ist die Ausgabe nicht beliebig. Tokens mit höherer Wahrscheinlichkeit werden bevorzugt ausgewählt. Zufälligkeit steuert nur die Variation, nicht den Inhalt selbst."
     },
     "blk.decoding.example_temperature": {
       "type": "example",
       "title": "Beispiel: Temperature",
-      "body": "Eine niedrigere Temperature macht die Auswahl konservativer, eine höhere macht sie kreativer/variabler. In der Simulation ist das ein Regler für Variation, nicht für „Intelligenz“."
+      "body": "Eine niedrige Temperature führt zu stabileren, vorhersehbaren Antworten. Eine höhere Temperature erhöht die Vielfalt der möglichen Ausgaben."
     },
     "blk.summary.detail_recap": {
       "type": "detail",
@@ -292,6 +297,11 @@
       "type": "boundary",
       "title": "Was Attention nicht leistet",
       "body": "Attention speichert kein Wissen und trifft keine bewussten Entscheidungen. Sie ist ein Teil der Rechenpipeline – nicht die \"Intelligenz\" des Modells."
+    },
+    "blk.decoding.why_variation": {
+      "type": "why",
+      "title": "Warum Variation überhaupt sinnvoll ist",
+      "body": "Ohne Variation würden Antworten oft sehr ähnlich oder monoton ausfallen. Eine kontrollierte Variation ermöglicht flexiblere und natürlichere Ausgaben."
     }
   },
   "links": {
@@ -325,4 +335,5 @@
       "url": "https://github.com/hrmnns/cher-llm-simulator/blob/main/docs/guide/04-parameters-logits-decoding.md",
       "target": "external"
     }
-  }}
+  }
+}
