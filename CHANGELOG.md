@@ -1,5 +1,32 @@
 # Changelog – cher-llm-simulator
 
+## v1.4.2 – UI Feinschliff & konsistente Expand-Logik
+
+### Added
+- Dezente Typ-Labels für erweiterte Erklärungen (*Hinweis*, *Missverständnis*, *Beispiel*, *Abgrenzung*, *Warum?*)
+- Visuelle Leseführung in Expand-Blöcken (Einrückung & dezente Trennlinie)
+- Klarer Interaktionshinweis für aufklappbare Inhalte (▸ / ▾), mobile-tauglich
+
+### Changed
+- Konsistente Sortierung von Expand-Blöcken:
+  - Primär nach `priority`
+  - Bei gleicher Priorität:
+    1. `misconception`
+    2. `detail`
+    3. `example`
+    4. `boundary`
+    5. `why`
+  - Titel als letzter Tie-Breaker
+- Versionsnummer auf **1.4.2** erhöht
+
+### Fixed
+- Keine funktionalen Änderungen am Core: v1.0-Verhalten bleibt vollständig erhalten
+- Erweiterte Erklärungen bleiben optional und non-blocking
+
+### Notes
+- Das globale Erklärungsschema und der Loader sind unverändert
+- Fokus dieses Releases liegt ausschließlich auf UI-Feinschliff und deterministischem Verhalten
+
 ## v1.0 – Didaktische Referenzversion
 
 ### Zielsetzung
