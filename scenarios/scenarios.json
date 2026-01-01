@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "project": "cher-llm-simulator",
-    "description": "Guided scenarios for explaining LLM core mechanics",
+    "description": "Offizielle Referenzszenarien + Basisbeispiele (v1.0)",
     "defaultScenarioId": "baseline-hund"
   },
   "scenarios": [
@@ -10,9 +10,9 @@
       "id": "baseline-hund",
       "title": "Baseline: Was ist ein Hund?",
       "learningGoals": [
-        "Grundlegender LLM-Verarbeitungsweg",
-        "Tokenisierung als Vorbereitung",
-        "Iterative Token-Generierung"
+        "Grundprinzipien",
+        "Tokenisierung",
+        "Next-Token-Loop"
       ],
       "mode": "simulated",
       "promptStack": {
@@ -24,23 +24,23 @@
         "tokens": [
           {
             "text": "Was",
-            "id": 101
+            "id": 1001
           },
           {
             "text": " ist",
-            "id": 102
+            "id": 1002
           },
           {
             "text": " ein",
-            "id": 103
+            "id": 1003
           },
           {
             "text": " Hund",
-            "id": 104
+            "id": 1004
           },
           {
             "text": "?",
-            "id": 105
+            "id": 1005
           }
         ]
       },
@@ -50,22 +50,27 @@
       "highlights": {
         "explain": [
           {
-            "at": "input",
-            "text": "Der Prompt besteht ausschließlich aus Text – auch Instruktionen werden nicht anders behandelt."
+            "at": "tokenizer",
+            "text": "Token sind nicht immer identisch mit Wörtern. Häufig werden Subwords bzw. Teilstücke genutzt (z. B. bei Komposita)."
           },
           {
             "at": "decoding",
-            "text": "Die Ausgabe entsteht Token für Token und nicht in einem einzigen Schritt."
+            "text": "Die Ausgabe entsteht schrittweise: Das Modell wählt jeweils das nächste Token (Next-Token-Prinzip)."
           }
-        ]
+        ],
+        "focusByStep": {
+          "tokenizer": "Subword-Tokenisierung · Warum Token nicht immer Wörter sind",
+          "decoding": "Token-für-Token · Auswahl der nächsten Einheit"
+        }
       }
     },
     {
       "id": "kompositum-hundeleine",
-      "title": "Komposita & Subwords: Hundeleine",
+      "title": "Komposita: Hundeleine",
       "learningGoals": [
-        "Subword-Tokenisierung",
-        "Warum Komposita zerlegt werden"
+        "Tokenisierung",
+        "Subwords",
+        "Komposita"
       ],
       "mode": "simulated",
       "promptStack": {
@@ -77,27 +82,27 @@
         "tokens": [
           {
             "text": "Was",
-            "id": 101
+            "id": 1101
           },
           {
             "text": " ist",
-            "id": 102
+            "id": 1102
           },
           {
             "text": " eine",
-            "id": 106
+            "id": 1103
           },
           {
             "text": " Hund",
-            "id": 104
+            "id": 1104
           },
           {
             "text": "eleine",
-            "id": 207
+            "id": 1105
           },
           {
             "text": "?",
-            "id": 105
+            "id": 1106
           }
         ]
       },
@@ -112,220 +117,334 @@
         "explain": [
           {
             "at": "tokenizer",
-            "text": "Zusammengesetzte Wörter werden in bekannte Teilstücke zerlegt, um mit einem begrenzten Vokabular auszukommen."
+            "text": "Komposita werden in bekannte Teilstücke (Subwords) zerlegt, damit ein endliches Vokabular ausreicht."
           }
-        ]
-      }
-    },
-    {
-      "id": "ambiguitaet-bank",
-      "title": "Mehrdeutigkeit ohne Kontext: Bank",
-      "learningGoals": [
-        "Ambiguität von Tokens",
-        "Rolle von Kontext für Bedeutung"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Antworte knapp.",
-        "user": "Was ist eine Bank?"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Was",
-            "id": 101
-          },
-          {
-            "text": " ist",
-            "id": 102
-          },
-          {
-            "text": " eine",
-            "id": 106
-          },
-          {
-            "text": " Bank",
-            "id": 305
-          },
-          {
-            "text": "?",
-            "id": 105
-          }
-        ]
-      },
-      "generation": {
-        "outputText": "Eine Bank kann ein Finanzinstitut oder eine Sitzgelegenheit sein."
-      },
-      "highlights": {
-        "tokenFocus": [
-          "Bank"
         ],
-        "explain": [
-          {
-            "at": "attention",
-            "text": "Ohne zusätzlichen Kontext bleibt die Bedeutung mehrdeutig."
-          }
-        ]
+        "focusByStep": {
+          "tokenizer": "Komposita zerlegen · Subword-Splitting"
+        }
       }
     },
     {
-      "id": "wiederholung-hund",
-      "title": "Wiederholung & Gewichtung: Hund Hund Hund",
+      "id": "posenc-hund-hund-hund",
+      "title": "Positionsinformation: Hund Hund Hund",
       "learningGoals": [
-        "Einfluss von Wiederholung auf Attention",
-        "Token-Gewichtung"
+        "Embeddings",
+        "Positional Encoding",
+        "Reihenfolge"
       ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Beobachte die Eingabe.",
+        "instruction": "Beobachte die Verarbeitung, nicht die Textantwort.",
         "user": "Hund Hund Hund"
       },
       "tokenization": {
         "tokens": [
           {
             "text": "Hund",
-            "id": 104
+            "id": 1201
           },
           {
             "text": " Hund",
-            "id": 104
+            "id": 1202
           },
           {
             "text": " Hund",
-            "id": 104
+            "id": 1203
           }
         ]
       },
       "generation": {
-        "outputText": "Hund"
+        "outputText": "(Guided) Ausgabe bleibt stabil – beobachte Embeddings & Attention."
+      },
+      "highlights": {
+        "explain": [
+          {
+            "at": "embeddings",
+            "text": "Ohne Positionsinformation wären identische Tokens an allen Stellen gleich. Mit Positional Encoding werden sie unterscheidbar."
+          }
+        ],
+        "focusByStep": {
+          "embeddings": "Positional Encoding · Gleiche Tokens werden positionsabhängig"
+        }
+      }
+    },
+    {
+      "id": "attention-hund-beisst-mann",
+      "title": "Kontext: Der Hund beißt den Mann",
+      "learningGoals": [
+        "Attention",
+        "Kontext",
+        "MLP/FFN"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Fokus: Attention-Heatmap und MLP-Vergleich.",
+        "user": "Der Hund beißt den Mann"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Der",
+            "id": 1301
+          },
+          {
+            "text": " Hund",
+            "id": 1302
+          },
+          {
+            "text": " beißt",
+            "id": 1303
+          },
+          {
+            "text": " den",
+            "id": 1304
+          },
+          {
+            "text": " Mann",
+            "id": 1305
+          }
+        ]
+      },
+      "generation": {
+        "outputText": "(Guided) Beobachte Kontextbildung und FFN-Weiterverarbeitung."
       },
       "highlights": {
         "explain": [
           {
             "at": "attention",
-            "text": "Wiederholte Tokens können stärker gewichtet werden und dominieren den Kontext."
+            "text": "Attention zeigt, welche Tokens für andere Tokens gerade relevant sind (Kontextgewichtung)."
+          },
+          {
+            "at": "mlp",
+            "text": "MLP (FFN) verarbeitet die kontextualisierten Token-Vektoren weiter. Der Vergleich „ohne vs. mit Attention“ macht den Effekt sichtbar."
           }
-        ]
+        ],
+        "focusByStep": {
+          "attention": "Attention · Kontextgewichtung als Heatmap",
+          "mlp": "MLP/FFN · Weiterverarbeitung mit/ohne Kontext"
+        }
       }
     },
     {
-      "id": "stil-instruktion",
-      "title": "Instruktionen beeinflussen Stil",
+      "id": "decoding-der-hund-ist-ein",
+      "title": "Auswahl: Der Hund ist ein …",
       "learningGoals": [
-        "Einfluss von Instruktionen",
-        "Form vs. Inhalt"
+        "Logits",
+        "Decoding",
+        "Temperature/Top-K/Top-P/Seed"
       ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Antworte in genau fünf Wörtern.",
-        "user": "Was ist ein Hund?"
+        "instruction": "Experimentiere mit Decoding-Parametern.",
+        "user": "Der Hund ist ein"
       },
       "tokenization": {
         "tokens": [
           {
-            "text": "Was",
-            "id": 101
-          },
-          {
-            "text": " ist",
-            "id": 102
-          },
-          {
-            "text": " ein",
-            "id": 103
+            "text": "Der",
+            "id": 1401
           },
           {
             "text": " Hund",
-            "id": 104
+            "id": 1402
           },
           {
-            "text": "?",
-            "id": 105
+            "text": " ist",
+            "id": 1403
+          },
+          {
+            "text": " ein",
+            "id": 1404
           }
         ]
       },
       "generation": {
-        "outputText": "Ein Hund ist ein Haustier."
+        "outputText": "Der Hund ist ein Säugetier."
       },
       "highlights": {
         "explain": [
           {
-            "at": "input",
-            "text": "Instruktionen beeinflussen die Form der Ausgabe, nicht das Weltwissen des Modells."
-          }
-        ]
-      }
-    },
-    {
-      "id": "laenge-kontext",
-      "title": "Länge & Kontext",
-      "learningGoals": [
-        "Längere Kontexte",
-        "Iterative Generierung"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Erkläre ausführlich.",
-        "user": "Was ist ein Hund und warum halten Menschen Hunde?"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Was",
-            "id": 101
+            "at": "logits",
+            "text": "Logits sind Rohwerte: mehrere nächste Tokens können plausibel sein. Noch ist nichts entschieden."
           },
-          {
-            "text": " ist",
-            "id": 102
-          },
-          {
-            "text": " ein",
-            "id": 103
-          },
-          {
-            "text": " Hund",
-            "id": 104
-          },
-          {
-            "text": " und",
-            "id": 110
-          },
-          {
-            "text": " warum",
-            "id": 111
-          },
-          {
-            "text": " halten",
-            "id": 112
-          },
-          {
-            "text": " Menschen",
-            "id": 113
-          },
-          {
-            "text": " Hunde",
-            "id": 114
-          },
-          {
-            "text": "?",
-            "id": 105
-          }
-        ]
-      },
-      "generation": {
-        "outputText": "Ein Hund ist ein domestiziertes Tier, das Menschen aus verschiedenen praktischen und sozialen Gründen halten."
-      },
-      "highlights": {
-        "explain": [
           {
             "at": "decoding",
-            "text": "Längere Antworten entstehen durch viele aufeinanderfolgende Generationsschritte."
+            "text": "Decoding wählt aus Kandidaten aus. Temperature, Top-K/Top-P und Seed steuern Variation und Reproduzierbarkeit."
+          }
+        ],
+        "focusByStep": {
+          "logits": "Logits · Kandidaten-Bewertungen",
+          "decoding": "Decoding · Auswahlregeln & Variation"
+        }
+      }
+    },
+    {
+      "id": "roles-mann-sieht-hund",
+      "title": "Reihenfolge: Der Mann sieht den Hund",
+      "learningGoals": [
+        "Positional Encoding",
+        "Attention",
+        "Rollen durch Reihenfolge"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Vergleiche mit dem Szenario „Der Hund sieht den Mann“.",
+        "user": "Der Mann sieht den Hund"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Der",
+            "id": 1501
+          },
+          {
+            "text": " Mann",
+            "id": 1502
+          },
+          {
+            "text": " sieht",
+            "id": 1503
+          },
+          {
+            "text": " den",
+            "id": 1504
+          },
+          {
+            "text": " Hund",
+            "id": 1505
           }
         ]
+      },
+      "generation": {
+        "outputText": "(Guided) Vergleiche Embeddings/Attention mit dem invertierten Satz."
+      },
+      "highlights": {
+        "explain": [
+          {
+            "at": "embeddings",
+            "text": "Gleiche Token-Menge, andere Reihenfolge: mit Positional Encoding entstehen andere Eingabe-Vektoren."
+          },
+          {
+            "at": "attention",
+            "text": "Die Attention-Muster verändern sich, wenn sich Reihenfolge und damit Beziehungen ändern."
+          }
+        ],
+        "focusByStep": {
+          "embeddings": "Positionsinformation · Gleiche Tokens, andere Ordnung",
+          "attention": "Attention · Beziehungen kippen mit der Reihenfolge"
+        }
+      }
+    },
+    {
+      "id": "roles-hund-sieht-mann",
+      "title": "Reihenfolge: Der Hund sieht den Mann",
+      "learningGoals": [
+        "Positional Encoding",
+        "Attention",
+        "Rollen durch Reihenfolge"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Vergleiche mit dem Szenario „Der Mann sieht den Hund“.",
+        "user": "Der Hund sieht den Mann"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Der",
+            "id": 1601
+          },
+          {
+            "text": " Hund",
+            "id": 1602
+          },
+          {
+            "text": " sieht",
+            "id": 1603
+          },
+          {
+            "text": " den",
+            "id": 1604
+          },
+          {
+            "text": " Mann",
+            "id": 1605
+          }
+        ]
+      },
+      "generation": {
+        "outputText": "(Guided) Vergleiche Embeddings/Attention mit dem invertierten Satz."
+      },
+      "highlights": {
+        "explain": [
+          {
+            "at": "embeddings",
+            "text": "Gleiche Token-Menge, andere Reihenfolge: mit Positional Encoding entstehen andere Eingabe-Vektoren."
+          },
+          {
+            "at": "attention",
+            "text": "Die Attention-Muster verändern sich, wenn sich Reihenfolge und damit Beziehungen ändern."
+          }
+        ],
+        "focusByStep": {
+          "embeddings": "Positionsinformation · Gleiche Tokens, andere Ordnung",
+          "attention": "Attention · Beziehungen kippen mit der Reihenfolge"
+        }
+      }
+    },
+    {
+      "id": "limits-bank-geschlossen",
+      "title": "Grenzen: Die Bank ist geschlossen",
+      "learningGoals": [
+        "Mehrdeutigkeit",
+        "Kontextgrenzen",
+        "Erwartungsmanagement"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Beachte: Mehrdeutigkeit kann ohne Weltwissen bestehen bleiben.",
+        "user": "Die Bank ist geschlossen"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Die",
+            "id": 1701
+          },
+          {
+            "text": " Bank",
+            "id": 1702
+          },
+          {
+            "text": " ist",
+            "id": 1703
+          },
+          {
+            "text": " geschlossen",
+            "id": 1704
+          }
+        ]
+      },
+      "generation": {
+        "outputText": "(Guided) Mehrdeutigkeit bleibt möglich – beobachte, was die Pipeline leisten kann und was nicht."
+      },
+      "highlights": {
+        "explain": [
+          {
+            "at": "attention",
+            "text": "Attention gewichtet nur vorhandene Tokens. Sie löst Mehrdeutigkeit nicht automatisch auf, wenn dafür externes Wissen nötig wäre."
+          }
+        ],
+        "focusByStep": {
+          "attention": "Grenzen · Kontextgewichtung ist kein Weltwissen"
+        }
       }
     }
   ]
