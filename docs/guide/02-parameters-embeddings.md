@@ -75,10 +75,6 @@ Eingabe-Vektor = Token-Embedding + Positions-Vektor
 - Der Positions-Vektor hängt **nur von der Token-Position** ab, nicht vom Token-Inhalt.
 - Gleiche Tokens an unterschiedlichen Positionen erhalten dadurch **unterschiedliche Eingabe-Vektoren**.
 
-> Das Token sagt dem Modell, was dort steht. Die Positionsinformation sagt dem Modell, wo es steht. Erst zusammen ergibt das eine unterscheidbare Eingabe.
-
-Beispielhaft wird das an dem Prompt "Hund Hund Hund" deutlich. Ohne *Positional Encoding* sind alle Eingabevektoren identisch. Das ändert sich mit aktiviertem *Positional Encoding*.
-
 In der App wird dieser Mechanismus **vereinfacht simuliert**:
 - additiv
 - deterministisch (reproduzierbar)
@@ -92,18 +88,82 @@ Wichtig dabei:
 - Benachbarte Positionen erzeugen **ähnliche**, weiter entfernte **unterschiedlichere** Muster
 - Ziel ist eine **stabile numerische Positionsmarkierung**, keine exakte mathematische Nachbildung
 
+### Mini-Grafik: Token + Position → Eingabe-Vektor
+
+```text
+┌───────────────┐     ┌──────────────────┐
+│ Token         │  +  │ Position         │
+│ "Hund"        │     │ pos = 0          │
+└───────────────┘     └──────────────────┘
+          │
+          ▼
+┌──────────────────────────┐
+│ Eingabe-Vektor            │
+│ ("Hund" @ pos 0)          │
+└──────────────────────────┘
+
+
+┌───────────────┐     ┌──────────────────┐
+│ Token         │  +  │ Position         │
+│ "Hund"        │     │ pos = 2          │
+└───────────────┘     └──────────────────┘
+          │
+          ▼
+┌──────────────────────────┐
+│ Eingabe-Vektor            │
+│ ("Hund" @ pos 2)          │
+└──────────────────────────┘
+```
+
+**Merksatz:**  
+Gleiche Tokens erhalten unterschiedliche Eingabe-Vektoren,
+weil die Positionsinformation **additiv** hinzukommt.
+
+### Beispiel: „Hund Hund Hund“
+
+Dieses Beispiel zeigt besonders deutlich,
+warum Positionsinformation notwendig ist.
+
+#### Ohne Positional Encoding
+
+Prompt:
+```
+Hund Hund Hund
+```
+
+- Alle drei Tokens sind **inhaltlich identisch**
+- Es gibt **keine Positionsinformation**
+- Alle Eingabe-Vektoren sind identisch
+
+**Beobachtung in der App:**
+- Alle Embedding-Barcodes sind gleich
+- Attention sieht drei nicht unterscheidbare Tokens
+
+#### Mit aktiviertem Positional Encoding
+
+Prompt:
+```
+Hund Hund Hund
+```
+
+- Das Token-Embedding ist identisch
+- Der Positions-Vektor unterscheidet sich je Position
+- Die Eingabe-Vektoren sind unterschiedlich
+
+**Beobachtung in der App:**
+- Die Embedding-Barcodes unterscheiden sich sichtbar
+- Benachbarte Tokens sind sich ähnlicher als weiter entfernte
+
+**Kernaussage:**  
+„Hund Hund Hund“ ist ohne Positionsinformation dreimal dasselbe –  
+mit Positionsinformation dreimal verschieden.
+
 ### Warum ist Positional Encoding notwendig?
 
 Ohne Positionsinformation kennt das Modell:
 
 - **welche Tokens** vorhanden sind,
 - aber nicht, **in welcher Reihenfolge** sie stehen.
-
-Beispiel:
-> „Der Hund beißt den Mann.“  
-> „Der Mann beißt den Hund.“
-
-Ohne Positionsinformation sind beide Sätze für das Modell **nahezu identisch**, da sie aus denselben Tokens bestehen.
 
 Positional Encoding liefert daher **keine Bedeutung**, sondern eine **numerische Orientierung**,
 die es nachgelagerten Schritten (insbesondere Attention) erlaubt,
@@ -119,28 +179,17 @@ ob Positionsinformation überhaupt in die Pipeline eingebracht wird.
 - Token-Embeddings enthalten zusätzlich Positionsinformation
 - gleiche Tokens unterscheiden sich je nach Position
 - Attention kann Reihenfolge berücksichtigen
-- Rollen (z. B. handelnd / betroffen) werden numerisch unterscheidbar
 
 #### Positional Encoding **deaktiviert**
 
 - **keine Positionsinformation vorhanden**
 - gleiche Tokens haben überall identische Vektoren
 - Reihenfolge geht vollständig verloren
-- unterschiedliche Interpretationen wären theoretisch gleich plausibel
 
 > Hinweis:  
 > In v1 bleibt die Textausgabe im Guided Mode bewusst stabil.
 > Die mögliche Mehrdeutigkeit ohne Positionsinformation wird im Verarbeitungsweg sichtbar gemacht,
 > nicht durch unterschiedliche Textausgaben.
-
-### Was siehst du konkret in der App?
-
-- **Embeddings-Ansicht (Barcode):**
-  - mit Positional Encoding: gleiche Tokens → unterschiedliche Muster
-  - ohne Positional Encoding: gleiche Tokens → identische Muster
-- **Attention-Heatmap:**
-  - mit Positional Encoding: stabilere Diagonalen, positionsabhängige Struktur
-  - ohne Positional Encoding: symmetrischere, weniger gerichtete Muster
 
 ### Typische Fehlinterpretationen
 
