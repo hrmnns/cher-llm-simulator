@@ -287,32 +287,32 @@
   "links": {
     "lnk.wiki.tokenizer": {
       "label": "Mehr zur Tokenisierung (Wiki)",
-      "url": "https://example.com/wiki/tokenizer",
+      "url": "https://github.com/hrmnns/cher-llm-simulator/blob/main/docs/guide/01-pipeline.md",
       "target": "external"
     },
     "lnk.wiki.embedding": {
       "label": "Mehr zu Embeddings (Wiki)",
-      "url": "https://example.com/wiki/embedding",
+      "url": "https://github.com/hrmnns/cher-llm-simulator/blob/main/docs/guide/02-parameters-embeddings.md",
       "target": "external"
     },
     "lnk.wiki.attention": {
       "label": "Mehr zu Attention (Wiki)",
-      "url": "https://example.com/wiki/attention",
+      "url": "https://github.com/hrmnns/cher-llm-simulator/blob/main/docs/guide/03-parameters-attention-mlp.md",
       "target": "external"
     },
     "lnk.wiki.mlp": {
       "label": "Mehr zur MLP‑Stufe (Wiki)",
-      "url": "https://example.com/wiki/mlp",
+      "url": "https://github.com/hrmnns/cher-llm-simulator/blob/main/docs/guide/03-parameters-attention-mlp.md",
       "target": "external"
     },
     "lnk.wiki.logits": {
       "label": "Mehr zu Logits (Wiki)",
-      "url": "https://example.com/wiki/logits",
+      "url": "https://github.com/hrmnns/cher-llm-simulator/blob/main/docs/guide/04-parameters-logits-decoding.md",
       "target": "external"
     },
     "lnk.wiki.decoding": {
       "label": "Mehr zu Decoding (Wiki)",
-      "url": "https://example.com/wiki/decoding",
+      "url": "https://github.com/hrmnns/cher-llm-simulator/blob/main/docs/guide/04-parameters-logits-decoding.md",
       "target": "external"
     }
   }
