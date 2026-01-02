@@ -717,7 +717,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.11";
+  const APP_VERSION = "v1.4.12";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1875,14 +1875,13 @@ const embSpec = getScenarioEmbeddingSpec(scenario);
         const refTok = stripLeadingSpace(toks[refIdx]?.text || "");
         const refVec = useVecs[refIdx] || [];
 
+        // Keep a stable, intuitive order: same order as in the sentence (token order).
         const rows = [];
         for(let i=0;i<toks.length;i++){
-          if(i === refIdx) continue;
           const v = useVecs[i] || [];
-          const sim = cosineSimilarity(refVec, v);
-          rows.push({ idx:i, tok: stripLeadingSpace(toks[i].text), sim });
+          const sim = (i === refIdx) ? 1 : cosineSimilarity(refVec, v);
+          rows.push({ idx:i, tok: stripLeadingSpace(toks[i].text), sim, isSelf: i === refIdx });
         }
-        rows.sort((a,b) => b.sim - a.sim);
 
         simBox.innerHTML = `<div class="small muted">Ähnlichkeit relativ zu <span class="mono">${escapeHtml(refTok)}</span> (Cosine Similarity)</div>`;
 
@@ -1898,9 +1897,13 @@ const embSpec = getScenarioEmbeddingSpec(scenario);
           const simVal = (Math.round(r.sim * 1000) / 1000).toFixed(3);
           // map [-1,1] -> [0,100] for bar width; keep some minimum visibility
           const w = Math.max(1, Math.round(((r.sim + 1) / 2) * 100));
+
+          // Self row should not dominate visually: darker, but subtle
+          const barColor = r.isSelf ? "#1b5e20" : "#81c784";
+
           left.innerHTML =
             `<div class="small"><span class="mono">${escapeHtml(r.tok)}</span> <span class="muted small">sim=${simVal}</span></div>` +
-            `<div class="dist-bar"><div style="width:${w}%;"></div></div>`;
+            `<div class="dist-bar"><div style="width:${w}%; background:${barColor};"></div></div>`;
 
           const right = document.createElement("div");
           right.className = "mono small";
@@ -1914,8 +1917,7 @@ const embSpec = getScenarioEmbeddingSpec(scenario);
 
         simBox.appendChild(dist);
       }
-
-      refSel.addEventListener("change", () => { renderSimilarity(); });
+refSel.addEventListener("change", () => { renderSimilarity(); });
       modeSel.addEventListener("change", () => { renderSimilarity(); });
 
       renderSimilarity();
