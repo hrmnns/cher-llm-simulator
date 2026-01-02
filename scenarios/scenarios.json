@@ -1,550 +1,3714 @@
-{
-  "meta": {
-    "version": "v1.1",
-    "project": "cher-llm-simulator",
-    "description": "LLM Simulator – Referenzszenarien v1.1 (kuratiert)",
-    "defaultScenarioId": "posenc-hund-hund-hund"
-  },
-  "scenarios": [
-    {
-      "id": "posenc-hund-hund-hund",
-      "title": "Ref 01 · Positionsinformation — Positionsinformation: Hund Hund Hund",
-      "learningGoals": [
-        "Embeddings",
-        "Positional Encoding",
-        "Reihenfolge"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Beobachte die Verarbeitung, nicht die Textantwort.",
-        "user": "Hund Hund Hund"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Hund",
-            "id": 1201
-          },
-          {
-            "text": " Hund",
-            "id": 1201
-          },
-          {
-            "text": " Hund",
-            "id": 1201
-          }
-        ]
-      },
-      "generation": {
-        "outputText": "(Guided) Ausgabe bleibt stabil – beobachte Embeddings & Attention."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "embedding",
-            "text": "Ohne Positionsinformation wären identische Tokens an allen Stellen gleich. Mit Positional Encoding werden sie unterscheidbar."
-          }
-        ],
-        "focusByStep": {
-          "embedding": "Positional Encoding · Gleiche Tokens werden positionsabhängig"
-        }
-      },
-      "tags": [
-        "referenz"
-      ]
-    },
-    {
-      "id": "attention-hund-beisst-mann",
-      "title": "Ref 02 · Kontext (Attention/MLP) — Kontext: Der Hund beißt den Mann",
-      "learningGoals": [
-        "Attention",
-        "Kontext",
-        "MLP/FFN"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Fokus: Attention-Heatmap und MLP-Vergleich.",
-        "user": "Der Hund beißt den Mann"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Der",
-            "id": 1301
-          },
-          {
-            "text": " Hund",
-            "id": 1302
-          },
-          {
-            "text": " beißt",
-            "id": 1303
-          },
-          {
-            "text": " den",
-            "id": 1304
-          },
-          {
-            "text": " Mann",
-            "id": 1305
-          }
-        ]
-      },
-      "generation": {
-        "outputText": "(Guided) Beobachte Kontextbildung und FFN-Weiterverarbeitung."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "attention",
-            "text": "Attention zeigt, welche Tokens für andere Tokens gerade relevant sind (Kontextgewichtung)."
-          },
-          {
-            "at": "mlp",
-            "text": "MLP (FFN) verarbeitet die kontextualisierten Token-Vektoren weiter. Der Vergleich „ohne vs. mit Attention“ macht den Effekt sichtbar."
-          }
-        ],
-        "focusByStep": {
-          "attention": "Attention · Kontextgewichtung als Heatmap",
-          "mlp": "MLP/FFN · Weiterverarbeitung mit/ohne Kontext"
-        }
-      },
-      "tags": [
-        "referenz"
-      ]
-    },
-    {
-      "id": "decoding-der-hund-ist-ein",
-      "title": "Ref 03 · Auswahl (Logits/Decoding) — Auswahl: Der Hund ist ein …",
-      "learningGoals": [
-        "Logits",
-        "Decoding",
-        "Temperature/Top-K/Top-P/Seed"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Experimentiere mit Decoding-Parametern.",
-        "user": "Der Hund ist ein"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Der",
-            "id": 1401
-          },
-          {
-            "text": " Hund",
-            "id": 1402
-          },
-          {
-            "text": " ist",
-            "id": 1403
-          },
-          {
-            "text": " ein",
-            "id": 1404
-          }
-        ]
-      },
-      "generation": {
-        "outputText": "Der Hund ist ein Säugetier."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "logits",
-            "text": "Logits sind Rohwerte: mehrere nächste Tokens können plausibel sein. Noch ist nichts entschieden."
-          },
-          {
-            "at": "decoding",
-            "text": "Decoding wählt aus Kandidaten aus. Temperature, Top-K/Top-P und Seed steuern Variation und Reproduzierbarkeit."
-          }
-        ],
-        "focusByStep": {
-          "logits": "Logits · Kandidaten-Bewertungen",
-          "decoding": "Decoding · Auswahlregeln & Variation"
-        }
-      },
-      "tags": [
-        "referenz"
-      ]
-    },
-    {
-      "id": "roles-mann-sieht-hund",
-      "title": "Ref 04a · Reihenfolge & Rollen — Reihenfolge: Der Mann sieht den Hund",
-      "learningGoals": [
-        "Positional Encoding",
-        "Attention",
-        "Rollen durch Reihenfolge"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Vergleiche mit dem Szenario „Der Hund sieht den Mann“.",
-        "user": "Der Mann sieht den Hund"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Der",
-            "id": 1501
-          },
-          {
-            "text": " Mann",
-            "id": 1502
-          },
-          {
-            "text": " sieht",
-            "id": 1503
-          },
-          {
-            "text": " den",
-            "id": 1504
-          },
-          {
-            "text": " Hund",
-            "id": 1505
-          }
-        ]
-      },
-      "generation": {
-        "outputText": "(Guided) Vergleiche Embeddings/Attention mit dem invertierten Satz."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "embedding",
-            "text": "Gleiche Token-Menge, andere Reihenfolge: mit Positional Encoding entstehen andere Eingabe-Vektoren."
-          },
-          {
-            "at": "attention",
-            "text": "Die Attention-Muster verändern sich, wenn sich Reihenfolge und damit Beziehungen ändern."
-          }
-        ],
-        "focusByStep": {
-          "embedding": "Positionsinformation · Gleiche Tokens, andere Ordnung",
-          "attention": "Attention · Beziehungen kippen mit der Reihenfolge"
-        }
-      },
-      "tags": [
-        "referenz"
-      ]
-    },
-    {
-      "id": "roles-hund-sieht-mann",
-      "title": "Ref 04b · Reihenfolge & Rollen — Reihenfolge: Der Hund sieht den Mann",
-      "learningGoals": [
-        "Positional Encoding",
-        "Attention",
-        "Rollen durch Reihenfolge"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Vergleiche mit dem Szenario „Der Mann sieht den Hund“.",
-        "user": "Der Hund sieht den Mann"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Der",
-            "id": 1501
-          },
-          {
-            "text": " Hund",
-            "id": 1505
-          },
-          {
-            "text": " sieht",
-            "id": 1503
-          },
-          {
-            "text": " den",
-            "id": 1504
-          },
-          {
-            "text": " Mann",
-            "id": 1502
-          }
-        ]
-      },
-      "generation": {
-        "outputText": "(Guided) Vergleiche Embeddings/Attention mit dem invertierten Satz."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "embedding",
-            "text": "Gleiche Token-Menge, andere Reihenfolge: mit Positional Encoding entstehen andere Eingabe-Vektoren."
-          },
-          {
-            "at": "attention",
-            "text": "Die Attention-Muster verändern sich, wenn sich Reihenfolge und damit Beziehungen ändern."
-          }
-        ],
-        "focusByStep": {
-          "embedding": "Positionsinformation · Gleiche Tokens, andere Ordnung",
-          "attention": "Attention · Beziehungen kippen mit der Reihenfolge"
-        }
-      },
-      "tags": [
-        "referenz"
-      ]
-    },
-    {
-      "id": "limits-bank-geschlossen",
-      "title": "Ref 05 · Grenzen & Mehrdeutigkeit — Grenzen: Die Bank ist geschlossen",
-      "learningGoals": [
-        "Mehrdeutigkeit",
-        "Kontextgrenzen",
-        "Erwartungsmanagement"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Beachte: Mehrdeutigkeit kann ohne Weltwissen bestehen bleiben.",
-        "user": "Die Bank ist geschlossen"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Die",
-            "id": 1701
-          },
-          {
-            "text": " Bank",
-            "id": 1702
-          },
-          {
-            "text": " ist",
-            "id": 1703
-          },
-          {
-            "text": " geschlossen",
-            "id": 1704
-          }
-        ]
-      },
-      "generation": {
-        "outputText": "(Guided) Mehrdeutigkeit bleibt möglich – beobachte, was die Pipeline leisten kann und was nicht."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "attention",
-            "text": "Attention gewichtet nur vorhandene Tokens. Sie löst Mehrdeutigkeit nicht automatisch auf, wenn dafür externes Wissen nötig wäre."
-          }
-        ],
-        "focusByStep": {
-          "attention": "Grenzen · Kontextgewichtung ist kein Weltwissen"
-        }
-      },
-      "tags": [
-        "referenz"
-      ]
-    },
-    {
-      "id": "baseline-hund",
-      "title": "Basic · Baseline — Baseline: Was ist ein Hund?",
-      "learningGoals": [
-        "Grundprinzipien",
-        "Tokenisierung",
-        "Next-Token-Loop"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Antworte in einem Satz.",
-        "user": "Was ist ein Hund?"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Was",
-            "id": 1001
-          },
-          {
-            "text": " ist",
-            "id": 1002
-          },
-          {
-            "text": " ein",
-            "id": 1003
-          },
-          {
-            "text": " Hund",
-            "id": 1004
-          },
-          {
-            "text": "?",
-            "id": 1005
-          }
-        ]
-      },
-      "generation": {
-        "outputText": "Ein Hund ist ein Säugetier."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "tokenization",
-            "text": "Token sind nicht immer identisch mit Wörtern. Häufig werden Subwords bzw. Teilstücke genutzt (z. B. bei Komposita)."
-          },
-          {
-            "at": "decoding",
-            "text": "Die Ausgabe entsteht schrittweise: Das Modell wählt jeweils das nächste Token (Next-Token-Prinzip)."
-          }
-        ],
-        "focusByStep": {
-          "decoding": "Token-für-Token · Auswahl der nächsten Einheit",
-          "tokenization": "Subword-Tokenisierung · Warum Token nicht immer Wörter sind"
-        }
-      },
-      "tags": [
-        "basic"
-      ]
-    },
-    {
-      "id": "kompositum-hundeleine",
-      "title": "Basic · Tokenisierung (Komposita) — Komposita: Hundeleine",
-      "learningGoals": [
-        "Tokenisierung",
-        "Subwords",
-        "Komposita"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Antworte kurz.",
-        "user": "Was ist eine Hundeleine?"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Was",
-            "id": 1101
-          },
-          {
-            "text": " ist",
-            "id": 1102
-          },
-          {
-            "text": " eine",
-            "id": 1103
-          },
-          {
-            "text": " Hund",
-            "id": 1104
-          },
-          {
-            "text": "eleine",
-            "id": 1105
-          },
-          {
-            "text": "?",
-            "id": 1106
-          }
-        ]
-      },
-      "generation": {
-        "outputText": "Eine Hundeleine ist eine Leine zum Führen eines Hundes."
-      },
-      "highlights": {
-        "tokenFocus": [
-          "Hund",
-          "eleine"
-        ],
-        "explain": [
-          {
-            "at": "tokenization",
-            "text": "Komposita werden in bekannte Teilstücke (Subwords) zerlegt, damit ein endliches Vokabular ausreicht."
-          }
-        ],
-        "focusByStep": {
-          "tokenization": "Komposita zerlegen · Subword-Splitting"
-        }
-      },
-      "tags": [
-        "basic"
-      ]
-    },
-    {
-      "id": "embeddings-semantic-clusters",
-      "title": "Ref 06 · Embeddings — Semantische Nähe: Zwei Cluster im Raum",
-      "learningGoals": [
-        "Embeddings",
-        "Semantische Nähe",
-        "Ähnlichkeit/Distanz",
-        "Cluster"
-      ],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Beobachte die Verarbeitung, nicht die Textantwort.",
-        "user": "Mann Mensch Radio Auto"
-      },
-      "tokenization": {
-        "tokens": [
-          {
-            "text": "Mann",
-            "id": 2001
-          },
-          {
-            "text": " Mensch",
-            "id": 2002
-          },
-          {
-            "text": " Radio",
-            "id": 2003
-          },
-          {
-            "text": " Auto",
-            "id": 2004
-          }
-        ]
-      },
-      "embeddings": {
-        "mode": "groups",
-        "groups": {
-          "human": [
-            "Mann",
-            "Mensch"
-          ],
-          "tech": [
-            "Radio",
-            "Auto"
-          ]
-        },
-        "params": {
-          "jitter": 0.1,
-          "groupSeparationHint": "high"
-        },
-        "notes": "Didaktische Beispiel-Embeddings: Gruppen erzeugen Nähe im Raum (synthetisch, nicht aus einem trainierten Modell)."
-      },
-      "generation": {
-        "outputText": "(Guided) Fokus: Embeddings. Beobachte die Nähe innerhalb der Cluster (human/tech)."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "embedding",
-            "text": "In diesem Szenario werden Embeddings synthetisch so erzeugt, dass Tokens innerhalb eines Clusters (z. B. Mann/Mensch) näher beieinander liegen als Tokens aus verschiedenen Clustern (z. B. Mann/Radio)."
-          },
-          {
-            "at": "embedding",
-            "text": "Falls die App eine Ähnlichkeitsanzeige bietet, ist sie nur aktiv, wenn im Szenario ein embeddings-Block vorhanden ist."
-          }
-        ],
-        "focusByStep": {
-          "embedding": "Semantische Nähe · Zwei Cluster im Embedding-Raum"
-        }
-      },
-      "tags": [
-        "referenz"
-      ]
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LLM Simulator by cherware.de</title>
+  <meta name="description" content="Erklärbare Simulation von LLM-Grundprinzipien für IT-affine Nutzer." />
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#111826;
+      --panel2:#0f1623;
+      --text:#e6edf3;
+      --muted:#9fb0c0;
+      --border:#223044;
+      --accent:#66d9ef;
+      --warn:#f7c948;
+      --danger:#ff6b6b;
+      --ok:#6ee7b7;
+      --shadow: 0 10px 25px rgba(0,0,0,.35);
+      --radius: 14px;
+      --radius2: 18px;
+      --gap: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --tap: 44px;
     }
-  ]
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 600px at 20% 0%, rgba(102,217,239,.12), transparent 55%),
+                  radial-gradient(900px 500px at 80% 10%, rgba(110,231,183,.10), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    code, pre{font-family:var(--mono)}
+    .app{
+      min-height:100vh;
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: rgba(11,15,20,.75);
+      border-bottom:1px solid var(--border);
+    }
+    .header-inner{
+      max-width:1280px;
+      margin:0 auto;
+      padding: 12px 14px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .brand{
+      display:flex; gap:10px; align-items:center;
+      min-width: 220px;
+    }
+    .logo{
+      width:34px; height:34px; border-radius:10px;
+      background: linear-gradient(135deg, rgba(102,217,239,.9), rgba(110,231,183,.9));
+      box-shadow: var(--shadow);
+    }
+    .brand h1{
+      font-size:15px; margin:0; line-height:1.1;
+      letter-spacing:.2px;
+    }
+    .brand .sub{
+      font-size:12px; color:var(--muted);
+    }
+    .toolbar{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      display:flex; align-items:center; gap:10px;
+      background: rgba(17,24,38,.75);
+      border:1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+    }
+    .pill label{font-size:12px; color:var(--muted)}
+    select, button, input[type="file"]{
+      font-family:var(--sans);
+    }
+    select{
+      background: transparent;
+      color: var(--text);
+      border:1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 10px;
+      min-height: var(--tap);
+      outline:none;
+    }
+    button{
+      background: rgba(102,217,239,.14);
+      color: var(--text);
+      border:1px solid rgba(102,217,239,.35);
+      border-radius: 999px;
+      padding: 8px 12px;
+      min-height: var(--tap);
+      cursor:pointer;
+    }
+    button:hover{background: rgba(102,217,239,.20)}
+    button.secondary{
+      background: rgba(159,176,192,.10);
+      border-color: var(--border);
+    }
+    button.secondary:hover{background: rgba(159,176,192,.16)}
+    button.danger{
+      background: rgba(255,107,107,.12);
+      border-color: rgba(255,107,107,.35);
+    }
+    button.danger:hover{background: rgba(255,107,107,.18)}
+    .mode-switch{
+      display:flex; gap:6px;
+      padding: 4px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(17,24,38,.55);
+    }
+    .mode-switch button{
+      min-height: 38px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid transparent;
+      background: transparent;
+    }
+    .mode-switch button.active{
+      background: rgba(110,231,183,.14);
+      border-color: rgba(110,231,183,.35);
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:11px; color:var(--muted);
+      padding: 4px 8px; border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(17,24,38,.55);
+    }
+    .badge.warn{
+      color: #ffdf7e;
+      border-color: rgba(247,201,72,.35);
+      background: rgba(247,201,72,.10);
+    }
+    .badge.ok{
+      color: #b7f7df;
+      border-color: rgba(110,231,183,.40);
+      background: rgba(110,231,183,.10);
+    }
+    .badge.danger{
+      color: #ffd0d0;
+      border-color: rgba(255,107,107,.45);
+      background: rgba(255,107,107,.12);
+    }
+
+    main{
+      max-width:1280px;
+      margin:0 auto;
+      width:100%;
+      padding: 14px;
+      display:grid;
+      grid-template-columns: 260px 1fr 340px;
+      gap: var(--gap);
+    }
+    .card{
+      border:1px solid var(--border);
+      background: rgba(17,24,38,.55);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .card-h{
+      padding: 12px 12px 10px;
+      border-bottom:1px solid rgba(34,48,68,.7);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .card .card-h h2{
+      font-size:13px; margin:0;
+      color: var(--text);
+      letter-spacing:.2px;
+    }
+    .card .card-b{
+      padding: 12px;
+    }
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+    .mono{font-family:var(--mono)}
+    .kvs{display:grid; gap:8px}
+    .kv{
+      display:grid; grid-template-columns: 110px 1fr;
+      gap:10px;
+      align-items:start;
+    }
+    .kv .k{color:var(--muted); font-size:12px}
+    .kv .v{font-size:13px}
+    .steps{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .step-btn{
+      width:100%;
+      text-align:left;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(15,22,35,.75);
+      padding: 10px 10px;
+      min-height: var(--tap);
+      color: var(--text);
+      cursor:pointer;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .step-btn:hover{background: rgba(15,22,35,.95)}
+    .step-btn.active{
+      border-color: rgba(102,217,239,.5);
+      background: rgba(102,217,239,.10);
+    }
+
+    .content{
+      display:grid;
+      gap: var(--gap);
+    }
+    .notice{
+      border:1px dashed rgba(159,176,192,.35);
+      background: rgba(15,22,35,.6);
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .notice strong{color:var(--text)}
+    .notice.warn{
+      border-color: rgba(247,201,72,.45);
+      background: rgba(247,201,72,.08);
+      color: #ffdf7e;
+    }
+
+    .token-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      padding: 6px 0 2px;
+    }
+    .token{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid rgba(34,48,68,.85);
+      background: rgba(15,22,35,.8);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size:13px;
+      min-height: 38px;
+      cursor: default;
+    }
+    .token .id{
+      font-size:11px;
+      color: var(--muted);
+      border:1px solid rgba(34,48,68,.8);
+      border-radius:999px;
+      padding: 2px 6px;
+      font-family: var(--mono);
+    }
+    .token.focus{
+      border-color: rgba(102,217,239,.55);
+      background: rgba(102,217,239,.10);
+    }
+
+    .tabs{
+      display:none;
+      gap:8px;
+      overflow:auto;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(34,48,68,.7);
+      background: rgba(17,24,38,.35);
+    }
+    .tab{
+      border:1px solid var(--border);
+      background: rgba(15,22,35,.75);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 10px;
+      min-height: 38px;
+      white-space:nowrap;
+      cursor:pointer;
+    }
+    .tab.active{
+      border-color: rgba(102,217,239,.5);
+      background: rgba(102,217,239,.10);
+    }
+
+    footer{
+      border-top:1px solid var(--border);
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size:12px;
+      background: rgba(11,15,20,.75);
+    }
+    .footer-inner{
+      max-width:1280px; margin:0 auto;
+      display:flex; gap:12px; align-items:flex-start; justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    /* Responsive */
+    @media (max-width: 1023px){
+      main{grid-template-columns: 240px 1fr;}
+      .rightbar{display:none;}
+    }
+    @media (max-width: 767px){
+      .brand{min-width:unset}
+      main{grid-template-columns: 1fr;}
+      .leftbar{display:none;}
+      .rightbar{display:none;}
+      .tabs{display:flex;}
+      .header-inner{flex-wrap:wrap}
+      .brand{width:100%; justify-content:space-between}
+      .toolbar{width:100%; justify-content:flex-start}
+      select{width:100%}
+    }
+
+    /* Simple modal/bottom sheet */
+    .sheet-backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:flex-end;
+      z-index:50;
+    }
+    .sheet{
+      width:100%;
+      max-height: 80vh;
+      border-radius: 16px 16px 0 0;
+      border:1px solid var(--border);
+      background: rgba(17,24,38,.92);
+      box-shadow: var(--shadow);
+      overflow:auto;
+    }
+    .sheet .card-h{border-bottom:1px solid rgba(34,48,68,.7)}
+    .sheet-backdrop.show{display:flex;}
+    .sheet-tabs{
+      display:flex; gap:8px; padding:10px 12px;
+      border-bottom:1px solid rgba(34,48,68,.7);
+    }
+    .sheet-tabs button{
+      min-height: 38px;
+      padding: 6px 10px;
+    }
+    .sheet-tabs button.active{
+      background: rgba(102,217,239,.18);
+      border-color: rgba(102,217,239,.45);
+    }
+  
+    .heatmap-wrap{
+      overflow:auto;
+      border:1px solid rgba(34,48,68,.85);
+      background: rgba(15,22,35,.75);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .heatmap-grid{
+      display:grid;
+      gap: 3px;
+      align-items:stretch;
+      justify-items:stretch;
+      user-select:none;
+      touch-action: manipulation;
+    }
+    .heatmap-cell{
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid rgba(34,48,68,.35);
+      background: rgba(102,217,239,.10);
+    }
+    .heatmap-axes{
+      display:grid;
+      gap:8px;
+      margin-top:10px;
+      color: var(--muted);
+      font-size:12px;
+    }
+    .heatmap-legend{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .legend-swatch{
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(34,48,68,.35);
+      background: rgba(102,217,239,.50);
+    }
+
+  
+    .modal-backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 14px;
+      z-index:60;
+    }
+    .modal-backdrop.show{display:flex;}
+    .modal{
+      width: min(720px, 100%);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(17,24,38,.96);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modal .body{
+      padding: 12px;
+      display:grid;
+      gap:10px;
+    }
+    .modal pre{
+      margin:0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(34,48,68,.85);
+      background: rgba(15,22,35,.75);
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+  
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 80;
+      max-width: min(720px, calc(100% - 28px));
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(17,24,38,.96);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      display:none;
+    }
+    .toast.show{display:block;}
+    .toast .small{color: var(--muted);}
+
+  
+    .compare-grid{display:grid; gap:12px; grid-template-columns: 1fr 1fr;}
+    @media (max-width: 720px){ .compare-grid{grid-template-columns: 1fr;} }
+    .compare-card{border:1px solid rgba(34,48,68,.85); background: rgba(15,22,35,.45); border-radius: 16px; padding: 10px;}
+    .compare-title{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px;}
+    .compare-title strong{font-size:14px;}
+    
+    .dist{display:grid; gap:8px;}
+    .dist-row{display:grid; grid-template-columns: 1fr 68px; gap:10px; align-items:center;}
+    .dist-bar{height: 10px; border-radius: 999px; border:1px solid rgba(34,48,68,.85); background: rgba(15,22,35,.65); overflow:hidden;}
+    .dist-bar > div{height:100%; border-radius:999px; background: rgba(102,217,239,.70); width:0%;}
+    .pill{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid var(--border); background: rgba(15,22,35,.50);}
+    
+    /* v1.3.37 UI polish: improve select/option readability (esp. iOS/Android) */
+    select.input, .input select{
+      background: rgba(15,22,35,.92);
+      color: rgba(240,245,255,.92);
+      border: 1px solid rgba(34,48,68,.85);
+      -webkit-text-fill-color: rgba(240,245,255,.92);
+    }
+    select.input:focus{
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(102,217,239,.18);
+    }
+    select.input option{
+      background: rgba(10,15,24,.98);
+      color: rgba(240,245,255,.92);
+    }
+    
+
+    /* v1.3.38 UI polish: force dark selects everywhere (scenario selector + all browsers) */
+    select{
+      background: rgba(15,22,35,.92) !important;
+      color: rgba(240,245,255,.92) !important;
+      border: 1px solid rgba(34,48,68,.85) !important;
+      -webkit-text-fill-color: rgba(240,245,255,.92) !important;
+    }
+    select:focus{
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(102,217,239,.18);
+    }
+    select option{
+      background: rgba(10,15,24,.98) !important;
+      color: rgba(240,245,255,.92) !important;
+    }
+    select optgroup{
+      background: rgba(10,15,24,.98) !important;
+      color: rgba(240,245,255,.92) !important;
+    }
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <h1>LLM Simulator by cherware.de</h1>
+            <div class="sub">Erklärbare Simulation zentraler LLM-Grundprinzipien</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span class="badge" id="loadStatus">Szenarien: —</span><span class="badge warn" id="jsStatus" title="Wenn hier nicht ‚ready‘ steht, läuft JavaScript nicht.">JS: …</span></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="pill" style="min-width: 320px;">
+          <label for="scenarioSelect">Szenario (Guided)</label>
+          <select id="scenarioSelect" aria-label="Szenario auswählen"></select>
+        </div>
+
+        <div class="mode-switch" role="tablist" aria-label="Modus wählen">
+          <button id="modeGuided" class="active" type="button" title="Geführte, kuratierte Szenarien">Guided</button>
+          <button id="modeSandbox" type="button" title="Freie Eingabe · keine semantische oder inhaltliche Garantie">Sandbox ⚠️</button>
+        </div>
+
+        <button id="resetBtn" class="secondary" type="button" title="Setzt den Ablauf auf den ersten Schritt zurück">Reset</button>
+        <button id="mobileToolsBtn" class="secondary" type="button" style="display:none;" onclick="window.cherSim && window.cherSim.openTools()">Tools</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left: Steps -->
+    <section class="leftbar card" aria-label="Pipeline">
+      <div class="card-h">
+        <h2>Pipeline</h2>
+        <span class="badge small mono" id="stepBadge">—</span>
+      </div>
+      <div class="card-b">
+        <div class="steps" id="steps"></div>
+        <div style="margin-top:12px" class="notice small">
+          <strong>Hinweis:</strong> Guided-Szenarien sind kuratiert. Tokenisierung und Ausgabe sind vorgegeben, damit Effekte reproduzierbar erklärbar bleiben.
+        </div>
+      </div>
+    </section>
+
+    <!-- Center: Main content -->
+    <section class="card" aria-label="Ansicht">
+      <div class="card-h">
+        <h2 id="viewTitle">—</h2>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="prevBtn" class="secondary" type="button">Zurück</button>
+          <button id="nextBtn" type="button">Weiter</button>
+        </div>
+      </div>
+
+      <div class="tabs" id="mobileTabs" aria-label="Pipeline Tabs (Mobile)"></div>
+
+      <div class="card-b content">
+        <div id="warningBox" class="notice warn" style="display:none;">
+          <strong>Sandbox:</strong> Die Ausgabe ist <strong>keine inhaltliche Antwort</strong>. Sie zeigt nur den technischen Ablauf (Tokenisierung, Gewichte, Sampling) – ohne semantische Garantie.
+        </div>
+
+        <div class="card" style="background: rgba(15,22,35,.55); border-radius: var(--radius2); border:1px solid rgba(34,48,68,.7); box-shadow:none;">
+          <div class="card-h">
+            <h2>Aktueller Schritt</h2>
+            <span class="badge small" id="scenarioGoals">—</span>
+          </div>
+          <div class="card-b" id="view"></div>
+        </div>
+
+        <div class="card" style="background: rgba(15,22,35,.55); border-radius: var(--radius2); border:1px solid rgba(34,48,68,.7); box-shadow:none;">
+          <div class="card-h" id="explainHeader" role="button" tabindex="0" aria-controls="explain" aria-expanded="false" style="cursor:pointer;">
+            <h2 style="display:flex; align-items:center; gap:8px; margin:0;">
+              <span id="explainChevron" class="small muted" aria-hidden="true">▸</span>
+              <span>Erklärung</span>
+            </h2>
+            <span class="badge small mono" id="explainAt">—</span>
+          </div>
+          <div class="card-b" id="explain"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Inspector -->
+    <aside class="rightbar card" aria-label="Inspector">
+      <div class="card-h">
+        <h2>Inspector</h2>
+        <span class="badge small">v1</span>
+      </div>
+      <div class="card-b">
+        <div class="kvs" id="inspector"></div>
+        <div style="margin-top:12px" class="notice small">
+          <strong>Vereinfachung:</strong> d_model, Heads und Layer sind in v1 bewusst klein gehalten, damit die Visualisierung übersichtlich bleibt.
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div>
+        <div><strong>Disclaimer:</strong> Vereinfachte Simulation zur Veranschaulichung – <strong>kein echtes LLM</strong>.</div>
+        <div><strong>Hinweis:</strong> Guided Mode basiert auf didaktisch eingefrorenen Referenzszenarien (v1).</div>
+        <div class="small">Projekt: <span class="mono">cher-llm-simulator</span> · Daten: <span class="mono">scenarios/scenarios.json</span></div>
+      </div>
+      <div class="small">
+        Tipp: Für lokale Nutzung funktioniert das Laden von JSON am zuverlässigsten über einen kleinen HTTP-Server (z. B. GitHub Pages oder <span class="mono">python -m http.server</span>).
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- Mobile bottom sheet -->
+<div class="sheet-backdrop" id="sheetBackdrop" aria-hidden="true">
+  <div class="sheet card" role="dialog" aria-label="Tools">
+    <div class="card-h">
+      <h2>Tools</h2>
+      <button id="closeSheetBtn" class="secondary" type="button" onclick="window.cherSim && window.cherSim.closeTools()">Schließen</button>
+    </div>
+    <div class="sheet-tabs" id="sheetTabs">
+      <button class="secondary active" data-tab="controls" type="button">Controls</button>
+      <button class="secondary" data-tab="inspector" type="button">Inspector</button>
+      <button class="secondary" data-tab="explain" type="button">Erklärung</button>
+    </div>
+    <div class="card-b" id="sheetBody"></div>
+  </div>
+
+<!-- Diagnose modal -->
+<div class="modal-backdrop" id="diagBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-label="Szenario-Diagnose">
+    <div class="card-h">
+      <h2>Szenario-Diagnose</h2>
+      <button id="diagCloseBtn" class="secondary" type="button" onclick="window.cherSim && window.cherSim.closeDiag()">Schließen</button>
+    </div>
+    <div class="body">
+      <div class="notice" id="diagSummary">—</div>
+      <div class="notice">
+        <div class="small muted">Details</div>
+        <pre id="diagDetails">—</pre>
+      </div>
+      <div class="notice">
+        <div class="small muted">Hinweise</div>
+        <div class="small" id="diagHints"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+
+// =========================================================
+// cher-llm-simulator — v1.3.34 (structure-only refactor)
+// Goal: improve maintainability WITHOUT changing behavior.
+// =========================================================
+
+// -----------------------------
+// 1) Constants & DOM references
+// -----------------------------
+// Early boot diagnostics (v1.3.6)
+(function(){
+  const set = (kind, text, title) => {
+    const el = document.getElementById("jsStatus");
+    if(!el) return;
+    el.classList.remove("ok","warn","danger");
+    if(kind) el.classList.add(kind);
+    el.textContent = text;
+    if(title) el.title = title;
+  };
+  set("warn","JS: boot","JavaScript wird initialisiert …");
+  window.__cherBoot = { set };
+
+  const showFatal = (msg) => {
+    // Always visible fallback, even if main app fails
+    let t = document.getElementById("toast");
+    if(!t){
+      t = document.createElement("div");
+      t.id = "toast";
+      t.className = "toast show";
+      t.innerHTML = '<div style="font-weight:600;" id="toastTitle">Fehler</div><div class="small" id="toastBody"></div>';
+      document.body.appendChild(t);
+    }
+    const b = document.getElementById("toastBody");
+    if(b) b.textContent = msg;
+  };
+
+  window.addEventListener("error", (e) => {
+    set("danger","JS: error","Ein JavaScript-Fehler verhindert die App-Ausführung. Öffne die Konsole für Details.");
+    const msg = (e && e.message) ? e.message : "Unbekannter JavaScript-Fehler";
+    showFatal("JavaScript error: " + msg);
+  });
+
+  window.addEventListener("unhandledrejection", (e) => {
+    set("danger","JS: error","Ein Promise-Fehler verhindert die App-Ausführung. Öffne die Konsole für Details.");
+    const msg = (e && e.reason) ? String(e.reason) : "Unhandled promise rejection";
+    showFatal("Promise rejection: " + msg);
+  });
+})();
+</script>
+
+<script>
+(() => {
+  const APP_VERSION = "v1.4.11";
+  // -----------------------------
+  // Constants
+  // -----------------------------
+  const PIPELINE = [
+    { id: "input", label: "Eingabe" },
+    { id: "tokenizer", label: "Tokenisierung" },
+    { id: "embedding", label: "Embeddings" },
+    { id: "attention", label: "Attention" },
+    { id: "mlp", label: "MLP" },
+    { id: "logits", label: "Logits" },
+    { id: "decoding", label: "Decoding" },
+    { id: "summary", label: "Zusammenfassung" },
+  ];
+
+  // -----------------------------
+  // State
+  // -----------------------------
+  
+// -----------------------------
+// 2) State (single source of truth)
+// -----------------------------
+const state = {
+    mode: "guided",                // guided | sandbox
+    scenariosDoc: null,            // full JSON document
+    explanationsDoc: null,         // optional: global explanations (vNext)
+    explanationsStatus: { kind: '', text: 'Explanations: —', details: '' },
+    status: { kind: '', text: 'Szenarien: —', details: '' },
+    scenarioId: null,              // selected scenario id
+    step: "input",                 // current pipeline step
+    sandboxInput: "Was ist ein Hund?",
+    params: { 
+      
+      
+      
+      
+      // Embedding similarity visualization (v1.4.5)
+      simVizMode: "base",   // base | withPos
+      simRefIdx: 0,
+      simDetailsOpen: false, // remember open/closed state of similarity details
+      explainOpen: false, // remember open/closed state of the Explanation panel (default: collapsed)
+      
+      decodeTopP: 1.0,
+decodeTopK: 0,
+decodeTemp: 1.0,
+decodeSeed: 1337,
+decodeMode: "greedy",
+temperature: 0.8, topP: 0.9, topK: 10, dModel: 16, posEnc: true, attnLayer: 1, attnHead: 1, causalMask: true, logitStep: 1 },
+    cache: { embeddings: null, embeddingKey: null, decodingSteps: null, decodingKey: null },
+  };
+
+  // -----------------------------
+  // DOM
+  // -----------------------------
+  const el = {
+    verBadge: $("#verBadge"),
+    loadStatus: $("#loadStatus"),
+    diagBtn: $("#diagBtn"),
+    diagBackdrop: $("#diagBackdrop"),
+    diagCloseBtn: $("#diagCloseBtn"),
+    diagSummary: $("#diagSummary"),
+    diagDetails: $("#diagDetails"),
+    diagHints: $("#diagHints"),
+    toast: $("#toast"),
+    toastTitle: $("#toastTitle"),
+    toastBody: $("#toastBody"),
+    scenarioSelect: $("#scenarioSelect"),
+    modeGuided: $("#modeGuided"),
+    modeSandbox: $("#modeSandbox"),
+    resetBtn: $("#resetBtn"),
+    steps: $("#steps"),
+    stepBadge: $("#stepBadge"),
+    viewTitle: $("#viewTitle"),
+    view: $("#view"),
+    explain: $("#explain"),
+    explainAt: $("#explainAt"),
+    explainHeader: $("#explainHeader"),
+    explainChevron: $("#explainChevron"),
+    scenarioGoals: $("#scenarioGoals"),
+    warningBox: $("#warningBox"),
+    inspector: $("#inspector"),
+    prevBtn: $("#prevBtn"),
+    nextBtn: $("#nextBtn"),
+    mobileTabs: $("#mobileTabs"),
+    mobileToolsBtn: $("#mobileToolsBtn"),
+    sheetBackdrop: $("#sheetBackdrop"),
+    closeSheetBtn: $("#closeSheetBtn"),
+    sheetTabs: $("#sheetTabs"),
+    sheetBody: $("#sheetBody")
+  };
+
+  // -----------------------------
+  // Status helpers
+  // -----------------------------
+  function setLoadStatus(kind, text, details=""){
+    // kind: ok | warn | danger
+    el.loadStatus.classList.remove("ok","warn","danger");
+    if(kind) el.loadStatus.classList.add(kind);
+    el.loadStatus.textContent = text;
+    el.loadStatus.title = details || text;
+    state.status = { kind: kind || "", text: text || "", details: details || "" };
+  }
+
+  function showToast(title, body, ms=2500){
+    if(!el.toast) return;
+    el.toastTitle.textContent = title || "";
+    el.toastBody.textContent = body || "";
+    el.toast.classList.add("show");
+    window.clearTimeout(showToast._t);
+    showToast._t = window.setTimeout(() => {
+      el.toast.classList.remove("show");
+    }, ms);
+  }
+
+
+  // -----------------------------
+  // Boot
+  // -----------------------------
+  init();
+
+  
+// -----------------------------
+// 10) Boot
+// -----------------------------
+async function init(){
+    if(el.verBadge) el.verBadge.textContent = APP_VERSION;
+    try{ window.__cherBoot && window.__cherBoot.set("ok","JS: ready","JavaScript läuft."); }catch(e){}
+    bindUI();
+    // Robust: event delegation for Diagnose button (works even if element is injected later)
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest && e.target.closest("#diagBtn");
+      if(btn){ openDiag(); }
+    });
+    buildSteps();
+    buildMobileTabs();
+    updateResponsiveControls();
+    // Try to load scenarios from canonical repo path
+    setLoadStatus("", "Szenarien: lade …", "Versuche scenarios/scenarios.json zu laden.");
+    const loaded = await loadScenarios("scenarios/scenarios.json");
+
+    // optional: load global explanations (non-blocking)
+    loadExplanationsOptional("scenarios/explanations.vNext.json")
+      .then(() => { render();
+  applyExplainOpenState(); });
+    if(!loaded){
+      // Fallback to embedded minimal scenarios (keeps app usable on file://)
+      state.scenariosDoc = embeddedScenarios();
+      const proto = (location && location.protocol) ? location.protocol : "";
+      const hint = proto === "file:"
+        ? "Fallback aktiv, weil Browser fetch() unter file:// häufig blockiert (CORS). Starte die App über einen lokalen Server oder GitHub Pages."
+        : "Fallback aktiv. Szenario-Datei konnte nicht geladen oder validiert werden.";
+      setLoadStatus("warn", "Szenarien: Fallback aktiv", hint);
+    }
+    populateScenarioSelect();
+    selectDefaultScenario();
+    render();
+    window.addEventListener("resize", updateResponsiveControls);
+  }
+
+  // -----------------------------
+  // Scenario loading
+  // -----------------------------
+  
+// -----------------------------
+// 5) Scenario loading
+// -----------------------------
+async function loadScenarios(url){
+    try{
+      const res = await fetch(url, { cache: "no-store" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+
+      let json;
+      try{
+        json = await res.json();
+      }catch(parseErr){
+        throw new Error("ParseError: scenarios.json ist kein gültiges JSON.");
+      }
+
+      if(!json || !Array.isArray(json.scenarios)){
+        throw new Error("SchemaError: scenarios.json hat nicht die erwartete Struktur (meta + scenarios[]).");
+      }
+      if(json.scenarios.length === 0){
+        throw new Error("SchemaError: scenarios.json enthält keine Szenarien.");
+      }
+      // minimal per-scenario validation
+      const bad = json.scenarios.find(s => !s || !s.id || !s.title || !s.promptStack || !s.tokenization || !s.generation);
+      if(bad){
+        throw new Error(`SchemaError: Szenario unvollständig (id=${bad?.id ?? "?"}). Erwartet: id,title,promptStack,tokenization,generation.`);
+      }
+
+      state.scenariosDoc = json;
+      setLoadStatus("ok", "Szenarien: geladen", `Quelle: ${url} · ${json.scenarios.length} Szenario(s)`);
+      return true;
+    }catch(err){
+      console.warn("Scenario load failed:", err);
+      const proto = (location && location.protocol) ? location.protocol : "";
+      const common = proto === "file:"
+        ? "Browser blockiert fetch() unter file:// oft. Nutze einen lokalen Server (z. B. python -m http.server) oder GitHub Pages."
+        : "Prüfe Pfad/Dateiname und JSON-Struktur.";
+
+      // Differentiate by message
+      const msg = String(err?.message || err);
+      if(msg.startsWith("ParseError")){
+        setLoadStatus("danger", "Szenarien: JSON-Fehler", msg + " " + common);
+      } else if(msg.startsWith("SchemaError")){
+        setLoadStatus("danger", "Szenarien: Schema-Fehler", msg + " " + common);
+      } else if(msg.startsWith("HTTP")){
+        setLoadStatus("danger", "Szenarien: HTTP-Fehler", msg + " " + common);
+      } else {
+        setLoadStatus("danger", "Szenarien: Fehler", msg + " " + common);
+      }
+      return false;
+    }
+  }
+
+  // -----------------------------
+  // Optional explanations loading (vNext)
+  // -----------------------------
+  async function loadExplanationsOptional(url){
+    try{
+      const res = await fetch(url, { cache: "no-store" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+
+      let json;
+      try{
+        json = await res.json();
+      }catch(_){
+        throw new Error("ParseError: explanations JSON ist kein gültiges JSON.");
+      }
+
+      // minimal sanity checks (defensiv, nicht „hart“)
+      if(!json || typeof json !== "object") throw new Error("SchemaError: explanations ist kein Objekt.");
+      if(!json.steps || typeof json.steps !== "object") throw new Error("SchemaError: explanations.steps fehlt/ungültig.");
+
+      state.explanationsDoc = json;
+      state.explanationsStatus = { kind: "ok", text: "Explanations: geladen", details: `Quelle: ${url}` };
+      return true;
+    }catch(err){
+      // Optional means: never fail the app
+      console.warn("Explanations load skipped:", err);
+      state.explanationsDoc = null;
+      state.explanationsStatus = { kind: "warn", text: "Explanations: nicht geladen", details: String(err?.message || err) };
+      return false;
+    }
+  }
+
+
+  function embeddedScenarios(){
+    return {
+      meta: {
+        version: "1.0",
+        project: "cher-llm-simulator",
+        description: "Embedded fallback scenarios",
+        defaultScenarioId: "baseline-hund"
+      },
+      scenarios: [
+        {
+          id: "baseline-hund",
+          title: "Baseline: Was ist ein Hund?",
+          learningGoals: ["Grundprinzipien", "Tokenisierung", "Next-Token-Loop"],
+          mode: "simulated",
+          promptStack: {
+            system: "Du bist ein sachlicher Assistent.",
+            instruction: "Antworte in einem Satz.",
+            user: "Was ist ein Hund?"
+          },
+          tokenization: {
+            tokens: [
+              {text:"Was", id:101},
+              {text:" ist", id:102},
+              {text:" ein", id:103},
+              {text:" Hund", id:104},
+              {text:"?", id:105}
+            ]
+          },
+          generation: { outputText: "Ein Hund ist ein Säugetier." },
+          highlights: {
+            explain: [
+              { at:"tokenizer", text:"Token sind nicht immer identisch mit Wörtern – häufig werden Subwords bzw. Teilstücke genutzt (z. B. bei Komposita)." },
+              { at:"decoding", text:"Die Ausgabe entsteht schrittweise: Das Modell wählt jeweils das nächste Token (Next-Token-Prinzip)." }
+            ],
+            focusByStep: {
+              tokenizer: "Subword-Tokenisierung",
+              decoding: "Token-für-Token"
+            }
+          }
+        },
+        {
+          id: "kompositum-hundeleine",
+          title: "Komposita: Hundeleine",
+          learningGoals: ["Subword-Tokenisierung", "Komposita zerlegen"],
+          mode: "simulated",
+          promptStack: {
+            system: "Du bist ein sachlicher Assistent.",
+            instruction: "Antworte kurz.",
+            user: "Was ist eine Hundeleine?"
+          },
+          tokenization: {
+            tokens: [
+              {text:"Was", id:101},
+              {text:" ist", id:102},
+              {text:" eine", id:106},
+              {text:" Hund", id:104},
+              {text:"eleine", id:207},
+              {text:"?", id:105}
+            ]
+          },
+          generation: { outputText: "Eine Hundeleine ist eine Leine zum Führen eines Hundes." },
+          highlights: {
+            tokenFocus: ["Hund","eleine"],
+            explain: [
+              { at:"tokenizer", text:"Komposita werden in bekannte Teilstücke (Subwords) zerlegt, damit ein endliches Vokabular ausreicht." }
+            ],
+            focusByStep: {
+              tokenizer: "Komposita zerlegen"
+            }
+          }
+        }
+      ]
+    };
+  }
+
+  // -----------------------------
+  // UI bindings
+  // -----------------------------
+  function bindUI(){
+    el.modeGuided.addEventListener("click", () => setMode("guided"));
+    el.modeSandbox.addEventListener("click", () => setMode("sandbox"));
+    el.resetBtn.addEventListener("click", () => reset());
+
+  // Explanation panel toggle (v1.4.8)
+  function toggleExplain(){
+    state.params.explainOpen = !state.params.explainOpen;
+    applyExplainOpenState();
+  }
+  if(el.explainHeader){
+    el.explainHeader.addEventListener("click", toggleExplain);
+    el.explainHeader.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        toggleExplain();
+      }
+    });
+  }
+  if(el.explainToggle){
+    el.explainToggle.addEventListener("click", () => {
+      state.params.explainOpen = !state.params.explainOpen;
+      applyExplainOpenState();
+    });
+  }
+
+    // Extra: pointer/touch handlers (iOS Safari sometimes misses click on overlays)
+    el.closeSheetBtn?.addEventListener("pointerup", (e) => { e.preventDefault(); closeSheet(); });
+    el.diagBtn?.addEventListener("pointerup", (e) => { e.preventDefault(); openDiag(); });
+    el.diagCloseBtn?.addEventListener("pointerup", (e) => { e.preventDefault(); closeDiag(); });
+
+
+
+    // Diagnose modal
+    el.diagBtn?.addEventListener("click", () => openDiag());
+
+    el.scenarioSelect.addEventListener("change", (e) => {
+      state.scenarioId = e.target.value;
+      state.step = "input";
+      invalidateDecodingCache();
+      render();
+    });
+    el.prevBtn.addEventListener("click", () => goStep(-1));
+    el.nextBtn.addEventListener("click", () => goStep(+1));
+
+    el.mobileToolsBtn.addEventListener("click", () => openSheet("controls"));
+    el.closeSheetBtn.addEventListener("click", closeSheet);
+    el.sheetBackdrop.addEventListener("click", (e) => {
+      if(e.target === el.sheetBackdrop) closeSheet();
+    });
+
+    el.sheetTabs.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-tab]");
+      if(!btn) return;
+      [...el.sheetTabs.querySelectorAll("button[data-tab]")].forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderSheet(btn.dataset.tab);
+    });
+  }
+
+  function setMode(mode){
+    state.mode = mode;
+    el.modeGuided.classList.toggle("active", mode === "guided");
+    el.modeSandbox.classList.toggle("active", mode === "sandbox");
+    el.warningBox.style.display = mode === "sandbox" ? "" : "none";
+    invalidateDecodingCache();
+    // In sandbox we keep scenario selection visible but it only drives "guided" content;
+    // user input is free. In v1, sandbox is a placeholder with clear warning.
+    render();
+  }
+
+  function reset(){
+    state.step = "input";
+    state.sandboxInput = "Was ist ein Hund?";
+    invalidateEmbeddingCache();
+    invalidateDecodingCache();
+    // keep mode and selected scenario
+    render();
+  }
+
+  // -----------------------------
+  // Navigation
+  // -----------------------------
+  function buildSteps(){
+    el.steps.innerHTML = "";
+    for(const s of PIPELINE){
+      const b = document.createElement("button");
+      b.className = "step-btn";
+      b.type = "button";
+      b.dataset.step = s.id;
+      b.innerHTML = `<span>${escapeHtml(s.label)}</span><span class="badge small mono">${escapeHtml(s.id)}</span>`;
+      b.addEventListener("click", () => { state.step = s.id; render(); });
+      el.steps.appendChild(b);
+    }
+  }
+  function buildMobileTabs(){
+    el.mobileTabs.innerHTML = "";
+    for(const s of PIPELINE){
+      const t = document.createElement("button");
+      t.className = "tab";
+      t.type = "button";
+      t.dataset.step = s.id;
+      t.textContent = s.label;
+      t.addEventListener("click", () => { state.step = s.id; render(); });
+      el.mobileTabs.appendChild(t);
+    }
+  }
+  function goStep(delta){
+    const i = PIPELINE.findIndex(x => x.id === state.step);
+    if(i < 0) return;
+    const j = clamp(i + delta, 0, PIPELINE.length - 1);
+    state.step = PIPELINE[j].id;
+    render();
+  }
+
+  // -----------------------------
+  // Rendering
+  // -----------------------------
+  function render(){
+    // highlight navigation
+    const stepLabel = PIPELINE.find(s => s.id === state.step)?.label ?? state.step;
+    el.stepBadge.textContent = state.step;
+    el.viewTitle.textContent = stepLabel;
+
+    [...el.steps.querySelectorAll(".step-btn")].forEach(b => b.classList.toggle("active", b.dataset.step === state.step));
+    [...el.mobileTabs.querySelectorAll(".tab")].forEach(b => b.classList.toggle("active", b.dataset.step === state.step));
+
+    const scenario = getScenario();
+    renderGoals(scenario);
+    renderView(state.step, scenario);
+    renderExplain(state.step, scenario);
+    applyExplainOpenState();
+    renderInspector(state.step, scenario);
+    renderButtons();
+
+    // If mobile sheet is open, refresh its content to match state.
+    if(el.sheetBackdrop.classList.contains("show")){
+      const activeTab = el.sheetTabs.querySelector("button.active")?.dataset.tab ?? "controls";
+      renderSheet(activeTab);
+    }
+    if(el.diagBackdrop && el.diagBackdrop.classList.contains("show")){
+      renderDiag();
+    }
+  }
+
+  function renderGoals(scenario){
+    // Badge neben „Aktueller Schritt“: didaktischer Fokus (schritt-sensitiv),
+    // ohne den aktuellen Pipeline-Schritt zu wiederholen.
+    if(state.mode === "sandbox"){
+      el.scenarioGoals.textContent = "Sandbox";
+      return;
+    }
+    if(!scenario){
+      el.scenarioGoals.textContent = "—";
+      return;
+    }
+
+    const stepId = String(state.step || "").toLowerCase();
+
+    const norm = (s) => String(s || "").trim();
+    const eq = (a,b) => norm(a).toLowerCase() === norm(b).toLowerCase();
+
+    // UI-Step-Labels (DE) – dienen nur zum Filtern redundanter Begriffe.
+    const STEP_LABEL_DE = {
+      input: "Eingabe",
+      tokenizer: "Tokenisierung",
+      embedding: "Embeddings",
+      attention: "Attention",
+      mlp: "MLP",
+      logits: "Logits",
+      decoding: "Decoding",
+      summary: "Zusammenfassung"
+    };
+
+    // Konsistente, kurze Fokus-Begriffe (nur wenn der Schritt im Szenario erklärt wird)
+    const DEFAULT_STEP_FOCUS = {
+      input: "Prompt-Kontext",
+      tokenizer: "Subword-Tokenisierung",
+      embedding: "Vektorrepräsentation",
+      attention: "Kontextgewichtung",
+      mlp: "Nichtlineare Transformation",
+      logits: "Token-Scores",
+      decoding: "Next-Token-Auswahl",
+      summary: "Kurzüberblick"
+    };
+
+    const hasExplainForStep = (scenario?.highlights?.explain || []).some(x =>
+      String(x?.at || "").toLowerCase() === stepId
+    );
+
+    // ---------- 1) Explizite Overrides pro Schritt ----------
+    // Szenario kann optional setzen:
+    // highlights: { focusByStep: { tokenizer: "Komposita zerlegen", decoding: ["Sampling", "Seed"] } }
+    const override = scenario?.highlights?.focusByStep?.[stepId];
+    if(override){
+      const parts = [];
+      if(Array.isArray(override)){
+        for(const x of override){
+          const n = norm(x);
+          if(n && !parts.some(p => eq(p,n))) parts.push(n);
+          if(parts.length >= 2) break;
+        }
+      }else{
+        const n = norm(override);
+        if(n) parts.push(n);
+      }
+
+      // Optional 2. Teil: ein Szenario-Ziel (falls sinnvoll)
+      const goals = Array.isArray(scenario?.learningGoals) ? scenario.learningGoals : [];
+      const stepLabel = STEP_LABEL_DE[stepId] || "";
+      const candidate = goals.map(norm).find(g =>
+        g &&
+        !parts.some(p => eq(p,g)) &&
+        (!stepLabel || !eq(g, stepLabel)) &&
+        (!DEFAULT_STEP_FOCUS[stepId] || !eq(g, DEFAULT_STEP_FOCUS[stepId]))
+      );
+      if(candidate && parts.length < 2) parts.push(candidate);
+
+      el.scenarioGoals.textContent = parts.length ? parts.join(" · ") : "—";
+      return;
+    }
+
+    // ---------- 2) Default: Schritt-Fokus (nur wenn erklärt) + optional 1 Szenario-Ziel ----------
+    const goals = Array.isArray(scenario?.learningGoals) ? scenario.learningGoals : [];
+    const stepLabel = STEP_LABEL_DE[stepId] || "";
+
+    const stepFocus = (hasExplainForStep && DEFAULT_STEP_FOCUS[stepId]) ? DEFAULT_STEP_FOCUS[stepId] : "";
+
+    const secondary = goals.map(norm).find(g =>
+      g &&
+      (!stepFocus || !eq(g, stepFocus)) &&
+      (!stepLabel || !eq(g, stepLabel)) &&
+      (!DEFAULT_STEP_FOCUS[stepId] || !eq(g, DEFAULT_STEP_FOCUS[stepId]))
+    ) || "";
+
+    const parts = [];
+    if(stepFocus) parts.push(stepFocus);
+    if(secondary && parts.length < 2) parts.push(secondary);
+
+    if(!parts.length){
+      const first = goals.map(norm).find(Boolean);
+      el.scenarioGoals.textContent = first || "—";
+      return;
+    }
+    el.scenarioGoals.textContent = parts.join(" · ");
+  }
+
+  function renderButtons(){
+    const i = PIPELINE.findIndex(x => x.id === state.step);
+    el.prevBtn.disabled = i <= 0;
+    el.nextBtn.disabled = i >= PIPELINE.length - 1;
+  }
+
+  function renderView(step, scenario){
+    el.view.innerHTML = "";
+    if(state.mode === "sandbox"){
+      renderSandbox(step);
+      return;
+    }
+    if(!scenario){
+      el.view.appendChild(pNotice("Kein Szenario ausgewählt.", true));
+      return;
+    }
+
+    switch(step){
+      case "input": return el.view.appendChild(viewInput(scenario));
+      case "tokenizer": return el.view.appendChild(viewTokenizer(scenario));
+      case "embedding": return el.view.appendChild(viewEmbedding(scenario));
+      case "attention": return el.view.appendChild(viewAttention(scenario));
+      case "mlp": return el.view.appendChild(viewMLP(scenario));
+      case "logits": return el.view.appendChild(viewLogits(scenario));
+      case "decoding": return el.view.appendChild(viewOutput(scenario));
+      case "summary": return el.view.appendChild(viewSummary(scenario));
+      default: return el.view.appendChild(viewPlaceholder(step, "Noch nicht implementiert."));
+    }
+  }
+
+  function renderSandbox(step){
+    const wrap = document.createElement("div");
+    wrap.className = "kvs";
+
+    // Input
+    const inputCard = document.createElement("div");
+    inputCard.className = "notice";
+    inputCard.innerHTML = `<strong>Sandbox (v1):</strong> In v1 dient die Sandbox als UI-Gerüst. In v2 kann hier eine seeded Simulation (Tokenizer → Sampling) ergänzt werden.`;
+    wrap.appendChild(inputCard);
+
+    const ta = document.createElement("textarea");
+    ta.value = state.sandboxInput;
+    ta.rows = 3;
+    ta.style.width = "100%";
+    ta.style.padding = "10px";
+    ta.style.borderRadius = "12px";
+    ta.style.border = "1px solid var(--border)";
+    ta.style.background = "rgba(15,22,35,.65)";
+    ta.style.color = "var(--text)";
+    ta.style.fontFamily = "var(--sans)";
+    ta.addEventListener("input", (e) => { state.sandboxInput = e.target.value; });
+    wrap.appendChild(ta);
+
+    // Token display (simple whitespace split placeholder)
+    const toks = (state.sandboxInput || "").trim().length
+      ? state.sandboxInput.trim().split(/\s+/).map((t,i)=>({text:t, id: 1000+i}))
+      : [];
+    wrap.appendChild(h3("Tokenisierung (Platzhalter)"));
+    wrap.appendChild(tokenRow(toks, []));
+
+    // Output placeholder
+    wrap.appendChild(h3("Ausgabe (Platzhalter)"));
+    wrap.appendChild(pNotice("In v2: Next-Token-Sampling (seeded). In v1 zeigen wir bewusst keine inhaltlich „sinnvolle“ Antwort."));
+
+    el.view.appendChild(wrap);
+  }
+
+  function resolveCoreExplainHTML(step, scenario){
+    if(state.mode === "sandbox"){
+      return `
+        <p><strong>Sandbox-Modus:</strong> Du kannst frei Text eingeben. Die App visualisiert den Ablauf (Tokenisierung → Rechnen → Next-Token-Auswahl), aber erzeugt dabei <strong>keine verlässliche inhaltliche Antwort</strong>.</p>
+        <p class="muted">Hinweis: In v1 sind einige Teile im Sandbox-Modus noch Platzhalter. Guided-Szenarien sind für reproduzierbare Erklärungen gedacht.</p>
+      `;
+    }
+
+    const explains = (scenario?.highlights?.explain ?? []).filter(x => x.at === step);
+    if(explains.length){
+      return explains.map(x => `<p>• ${escapeHtml(x.text)}</p>`).join("");
+    }
+    return genericExplain(step);
+  }
+
+  function resolveExplanationVM(step, scenario){
+    const coreHtml = resolveCoreExplainHTML(step, scenario);
+
+    const doc = state.explanationsDoc;
+    if(!doc) return { coreHtml, blocks: [], links: [] };
+
+    const stepNode = doc.steps?.[step];
+    if(!stepNode) return { coreHtml, blocks: [], links: [] };
+
+    const blocks = [];
+    const refs = Array.isArray(stepNode.expand) ? stepNode.expand : [];
+    for(const ref of refs){
+      const id = ref?.blockId;
+      if(!id) continue;
+      const b = doc.blocks?.[id];
+      if(!b) continue;
+      if(!b.type || !b.title || !b.body) continue;
+
+      blocks.push({
+        type: String(b.type),
+        title: String(b.title),
+        body: Array.isArray(b.body) ? b.body.map(String) : [String(b.body)],
+        priority: Number.isFinite(ref?.priority) ? Number(ref.priority) : 100
+      });
+    }
+    const typeRank = (t) => ({
+      misconception: 0,
+      detail: 1,
+      example: 2,
+      boundary: 3,
+      why: 4
+    })[t] ?? 9;
+
+    blocks.sort((a,b) => (a.priority - b.priority) || (typeRank(a.type) - typeRank(b.type)) || String(a.title).localeCompare(String(b.title)));
+    if(blocks.length > 6) blocks.length = 6;
+
+    const links = [];
+    const lrefs = Array.isArray(stepNode.links) ? stepNode.links : [];
+    for(const ref of lrefs){
+      const id = ref?.linkId;
+      if(!id) continue;
+      const l = doc.links?.[id];
+      if(!l) continue;
+      if(!l.label || !l.url) continue;
+      links.push({
+        label: String(l.label),
+        url: String(l.url),
+        target: String(l.target || "external")
+      });
+    }
+    if(links.length > 2) links.length = 2;
+
+    return { coreHtml, blocks, links };
+  }
+
+  
+  function applyExplainOpenState(){
+    const open = !!state.params.explainOpen;
+    // Toggle body visibility
+    el.explain.style.display = open ? "" : "none";
+    // Header state + chevron
+    if(el.explainHeader){
+      el.explainHeader.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+    if(el.explainChevron){
+      el.explainChevron.textContent = open ? "▾" : "▸";
+    }
+  }
+
+  function renderExplain(step, scenario){
+    el.explainAt.textContent = step;
+
+    const box = document.createElement("div");
+    box.className = "small";
+    box.style.lineHeight = "1.45";
+
+    const vm = resolveExplanationVM(step, scenario);
+
+    // Core always
+    box.innerHTML = vm.coreHtml;
+
+    // Expanded blocks (optional)
+    if(vm.blocks.length){
+      const hr = document.createElement("div");
+      hr.style.margin = "10px 0";
+      hr.style.borderTop = "1px solid rgba(34,48,68,.7)";
+      box.appendChild(hr);
+
+      for(const b of vm.blocks){
+        const d = document.createElement("details");
+        d.style.margin = "8px 0";
+        d.style.border = "1px solid rgba(34,48,68,.7)";
+        d.style.borderRadius = "12px";
+        d.style.background = "rgba(15,22,35,.55)";
+        d.style.padding = "8px 10px";
+
+        const s = document.createElement("summary");
+        s.style.cursor = "pointer";
+        s.style.fontWeight = "600";
+        // subtle "clickable control" feel (mobile-safe)
+        s.style.listStyle = "none";
+        s.style.outline = "none";
+        s.style.userSelect = "none";
+
+        // arrow + title + type badge (very subtle)
+        const arrow = document.createElement("span");
+        arrow.textContent = "▸ ";
+        arrow.style.opacity = "0.75";
+
+        const title = document.createElement("span");
+        title.textContent = String(b.title || "");
+
+        const typeLabel = ({
+          detail: "Hinweis",
+          misconception: "Missverständnis",
+          example: "Beispiel",
+          boundary: "Abgrenzung",
+          why: "Warum?"
+        })[b.type] || "Info";
+
+        const badge = document.createElement("span");
+        badge.textContent = typeLabel;
+        badge.style.fontSize = "0.75em";
+        badge.style.opacity = "0.75";
+        badge.style.marginLeft = "8px";
+        badge.style.padding = "2px 6px";
+        badge.style.borderRadius = "999px";
+        badge.style.border = "1px solid rgba(120,130,160,.5)";
+        badge.style.whiteSpace = "nowrap";
+
+        s.appendChild(arrow);
+        s.appendChild(title);
+        s.appendChild(badge);
+
+        // toggle arrow indicator
+        d.addEventListener("toggle", () => {
+          arrow.textContent = d.open ? "▾ " : "▸ ";
+        });
+
+        const body = document.createElement("div");
+        body.style.marginTop = "8px";
+        // subtle separation for readability
+        body.style.paddingLeft = "6px";
+        body.style.borderLeft = "2px solid rgba(120,130,160,.35)";
+        body.innerHTML = b.body.map(line => `<p class="small" style="margin:6px 0;">${escapeHtml(line)}</p>`).join("");
+
+        d.appendChild(s);
+        d.appendChild(body);
+        box.appendChild(d);
+      }
+    }
+
+    // Links (optional)
+    if(vm.links.length){
+      const wrap = document.createElement("div");
+      wrap.style.marginTop = "10px";
+      wrap.innerHTML = `<div class="small muted" style="margin-bottom:6px;">Weiterführend</div>`;
+      const ul = document.createElement("ul");
+      ul.style.margin = "0";
+      ul.style.paddingLeft = "18px";
+
+      for(const l of vm.links){
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.textContent = l.label;
+        a.href = l.url;
+        a.target = (l.target === "external") ? "_blank" : "_self";
+        a.rel = "noopener noreferrer";
+        li.appendChild(a);
+        ul.appendChild(li);
+      }
+      wrap.appendChild(ul);
+      box.appendChild(wrap);
+    }
+
+    el.explain.replaceChildren(box);
+    applyExplainOpenState();
+  }
+
+  function genericExplain(step){
+    switch(step){
+      case "input":
+        return `<p><strong>Prompt-Stack:</strong> System, Instruktion und User-Text bilden gemeinsam den Eingabekontext. Technisch ist alles nur Text, der später tokenisiert wird.</p>`;
+      case "tokenizer":
+        return `<p><strong>Tokenisierung:</strong> Der Text wird in Token zerlegt, also Einheiten aus dem Modellvokabular (Wörter, Subwords, Satzzeichen).</p>
+                <p class="muted">Guided: Die Token sind bewusst vorgegeben, damit Subwords/Komposita und IDs reproduzierbar sichtbar werden.</p>`;
+      case "embedding":
+        return `<p><strong>Embeddings:</strong> Jedes Token wird auf einen Zahlenvektor abgebildet. Erst dadurch werden die folgenden Schritte zu Matrixoperationen.</p>
+                <p class="muted">In dieser v1 werden Embeddings seeded simuliert (reproduzierbar) – kein echtes Modell.</p>`;
+      case "attention":
+        return `<p><strong>Attention:</strong> Für jedes Token wird gewichtet, auf welche anderen Tokens es „schaut“. Das ist eine Kontextmischung, kein logisches Schlussfolgern.</p>
+                <p class="muted">Mit <strong>Causal Mask</strong> darf ein Token nur auf sich selbst und frühere Tokens achten (Decoder-typisch).</p>`;
+      case "mlp":
+        return `<p><strong>MLP/FFN:</strong> Nichtlineare Transformation pro Token. Attention liefert Kontext, der MLP transformiert die Repräsentation weiter.</p>`;
+      case "logits":
+        return `<p><strong>Logits:</strong> Rohscores für mögliche nächste Token. Nach <strong>Softmax</strong> werden daraus Wahrscheinlichkeiten (Verteilung).</p>`;
+      case "decoding":
+        return `<p><strong>Decoding:</strong> Aus der Verteilung wird iterativ das nächste Token gewählt (z. B. greedy oder sampling). So entsteht der Text Token für Token.</p>`;
+      case "summary":
+        return `<p><strong>Zusammenfassung:</strong> Kurzüberblick über Prompt, Pipeline und die wichtigsten Beobachtungen im Szenario.</p>`;
+      default:
+        return `<p class="muted">Keine Erklärung hinterlegt.</p>`;
+    }
+  }
+
+  function renderInspector(step, scenario){
+    el.inspector.innerHTML = "";
+    const items = [];
+
+    // --- App / Data versions (v1.4.3) ---
+    items.push({ k: "App", v: APP_VERSION });
+
+    const sMeta = state.scenariosDoc?.meta || {};
+    const sVer = sMeta.version || sMeta.contentVersion || "—";
+    const sUpd = sMeta.updatedAt || sMeta.updated || "";
+    const sLabel = sUpd ? `${sVer} · ${sUpd}` : String(sVer);
+    items.push({ k: "Szenarien", v: sLabel });
+
+    const eStatus = state.explanationsStatus?.text || "Explanations: —";
+    const eMeta = state.explanationsDoc?.meta || {};
+    const eSchema = eMeta.schemaVersion || "—";
+    const eContent = eMeta.contentVersion || eMeta.version || "—";
+    const eUpd = eMeta.updatedAt || eMeta.updated || "";
+    const eLabelParts = [];
+    if(eContent && eContent !== "—") eLabelParts.push(String(eContent));
+    if(eSchema && eSchema !== "—") eLabelParts.push(`schema ${eSchema}`);
+    if(eUpd) eLabelParts.push(String(eUpd));
+    const eLabel = eLabelParts.length ? eLabelParts.join(" · ") : "—";
+    items.push({ k: "Erklärungen", v: `${eStatus.replace("Explanations:","").trim() || eStatus} · ${eLabel}` });
+
+    // --- Runtime ---
+    items.push({ k: "Modus", v: state.mode });
+    items.push({ k: "Schritt", v: state.step });
+
+    if(state.mode === "guided"){
+      items.push({ k: "Szenario-ID", v: scenario ? scenario.id : "—" });
+      items.push({ k: "Titel", v: scenario ? scenario.title : "—" });
+      items.push({ k: "Token-Anzahl", v: scenario?.tokenization?.tokens?.length ?? 0 });
+      // Embeddings in scenario (v1.4.5)
+      const embSpec = scenario?.embeddings;
+      const embMode = embSpec?.mode ? String(embSpec.mode) : "";
+      const embPresent = !!(embSpec && embMode);
+      items.push({ k: "Embeddings (Szenario)", v: embPresent ? `Ja (${embMode})` : "Nein" });
+    } else {
+      items.push({ k: "Input-Länge", v: (state.sandboxInput || "").length });
+      items.push({ k: "Tokenizer", v: "Platzhalter" });
+    }
+
+    items.push({ k: "temperature", v: String(state.params.temperature) });
+    items.push({ k: "topP", v: String(state.params.topP) });
+    items.push({ k: "topK", v: String(state.params.topK) });
+
+    items.push({ k: "d_model", v: String(state.params.dModel) });
+    items.push({ k: "posEnc", v: String(!!state.params.posEnc) });
+
+    items.push({ k: "attnLayer", v: String(state.params.attnLayer) });
+    items.push({ k: "attnHead", v: String(state.params.attnHead) });
+    items.push({ k: "causalMask", v: String(!!state.params.causalMask) });
+
+    items.push({ k: "logitStep", v: String(state.params.logitStep) });
+
+    for(const it of items){
+      el.inspector.appendChild(kv(it.k, it.v));
+    }
+  }
+
+  // -----------------------------
+  // Views (Guided)
+  // -----------------------------
+  function viewInput(scenario){
+    const wrap = document.createElement("div");
+
+    wrap.appendChild(pNotice("Guided: Prompt, Tokenisierung und Ausgabe sind kuratiert, damit Effekte reproduzierbar und erklärbar bleiben."));
+
+    const ps = scenario.promptStack || {};
+    const grid = document.createElement("div");
+    grid.className = "kvs";
+    grid.appendChild(section("Prompt-Stack", [
+      kv("System", ps.system || "—"),
+      kv("Instruktion", ps.instruction || "—"),
+      kv("User", ps.user || "—"),
+    ]));
+    wrap.appendChild(grid);
+    return wrap;
+  }
+
+  function viewTokenizer(scenario){
+    const wrap = document.createElement("div");
+    const toks = scenario.tokenization?.tokens ?? [];
+    const focus = scenario.highlights?.tokenFocus ?? [];
+
+    wrap.appendChild(pNotice("Im Guided-Modus ist die Tokenisierung vorgegeben. So werden Subwords/Komposita und Token-IDs sichtbar."));
+    wrap.appendChild(h3("Token"));
+    wrap.appendChild(tokenRow(toks, focus));
+
+    // raw tokens string
+    const raw = toks.map(t => t.text).join("");
+    wrap.appendChild(h3("Rekonstruktion (Kontrolle)"));
+    const pre = document.createElement("pre");
+    pre.style.margin = "0";
+    pre.style.padding = "10px 12px";
+    pre.style.borderRadius = "12px";
+    pre.style.border = "1px solid rgba(34,48,68,.85)";
+    pre.style.background = "rgba(15,22,35,.75)";
+    pre.textContent = raw;
+    wrap.appendChild(pre);
+
+    return wrap;
+  }
+
+
+  function viewEmbedding(scenario){
+    const wrap = document.createElement("div");
+    const toks = scenario.tokenization?.tokens ?? [];
+    const focus = scenario.highlights?.tokenFocus ?? [];
+
+    wrap.appendChild(pNotice("Embeddings sind Vektorrepräsentationen von Token. In dieser Simulation werden sie deterministisch (seeded) erzeugt, damit der Schritt reproduzierbar bleibt."));
+
+    // Controls (v1.1): d_model + positional encoding toggle
+    const controls = document.createElement("div");
+    controls.className = "notice";
+    controls.style.display = "grid";
+    controls.style.gap = "10px";
+
+    const dm = document.createElement("div");
+    dm.className = "kv";
+    dm.innerHTML = `
+      <div class="k">d_model</div>
+      <div class="v">
+        <select id="dModelSelect" aria-label="d_model auswählen">
+          <option value="8">8</option>
+          <option value="16">16</option>
+          <option value="32">32</option>
+        </select>
+      </div>
+    `;
+    controls.appendChild(dm);
+
+    const pe = document.createElement("div");
+    pe.className = "kv";
+    pe.innerHTML = `
+      <div class="k">Positional Encoding</div>
+      <div class="v">
+        <label style="display:flex; align-items:center; gap:10px;">
+          <input id="posEncToggle" type="checkbox" />
+          <span class="small muted">additiv (vereinfacht: sin/cos)</span>
+        </label>
+      </div>
+    `;
+    controls.appendChild(pe);
+
+    wrap.appendChild(controls);
+
+    // Apply current state to controls
+    const dModelSelect = controls.querySelector("#dModelSelect");
+    dModelSelect.value = String(state.params.dModel);
+    dModelSelect.addEventListener("change", (e) => {
+      state.params.dModel = Number(e.target.value);
+      invalidateEmbeddingCache();
+      render();
+    });
+
+    const posEncToggle = controls.querySelector("#posEncToggle");
+    posEncToggle.checked = !!state.params.posEnc;
+    posEncToggle.addEventListener("change", (e) => {
+      state.params.posEnc = !!e.target.checked;
+      invalidateEmbeddingCache();
+      render();
+    });
+
+    // Compute embeddings (cached)
+    const emb = getEmbeddingsForScenario(scenario, toks);
+
+    // --- Optional: scenario-defined semantic proximity (v1.4.5) ---
+    wrap.appendChild(h3("Token → Vektor (Barcode-Ansicht)"));
+    const grid = document.createElement("div");
+    grid.style.display = "grid";
+    grid.style.gap = "10px";
+
+    toks.forEach((t, i) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gridTemplateColumns = "auto 1fr";
+      row.style.gap = "10px";
+      row.style.alignItems = "center";
+
+      const chip = document.createElement("span");
+      chip.className = "token" + (focus.includes(stripLeadingSpace(t.text)) ? " focus" : "");
+      chip.innerHTML = `<span class="mono">${escapeHtml(t.text)}</span><span class="id">${escapeHtml(String(t.id))}</span>`;
+
+      const bars = vectorBars(emb[i] || []);
+      row.appendChild(chip);
+      row.appendChild(bars);
+      grid.appendChild(row);
+    });
+
+    if(!toks.length){
+      grid.appendChild(pNotice("Keine Tokens.", true));
+    }
+
+    wrap.appendChild(grid);
+
+    
+
+    // Explanation block
+    wrap.appendChild(h3("Interpretation (wichtig)"));
+    wrap.appendChild(pNotice("Die Dimensionen haben keine direkte, menschenlesbare Bedeutung. Entscheidend ist: Tokens werden als Zahlenvektoren dargestellt, damit Matrixoperationen (z. B. Attention) möglich sind."));
+
+    // --- Semantische Nähe (optional & aufklappbar) ---
+const embSpec = getScenarioEmbeddingSpec(scenario);
+    const hasScenarioEmbeddings = !!embSpec;
+
+    if(hasScenarioEmbeddings){
+      const details = document.createElement("details");
+      details.open = false;
+      details.style.marginTop = "10px";
+      const summary = document.createElement("summary");
+      summary.innerHTML = `Semantische Nähe (optional) <span class="small muted">nur wenn Embeddings im Szenario</span>`;
+      details.appendChild(summary);
+      const inner = document.createElement("div");
+      inner.style.marginTop = "8px";
+
+
+      const note = document.createElement("div");
+      note.className = "notice";
+      note.innerHTML = `
+        <div class="small"><strong>Hinweis:</strong> Diese Nähe basiert auf <strong>synthetischen Beispiel-Embeddings</strong>, die im Szenario konstruiert wurden (keine echten Modellgewichte).</div>
+        <div class="small muted" style="margin-top:6px;">Optional kannst du vergleichen: Basis-Embedding vs. (Basis + Positional Encoding).</div>
+      `;
+      inner.appendChild(note);
+
+      const simControls = document.createElement("div");
+      simControls.className = "notice";
+      simControls.style.display = "grid";
+      simControls.style.gap = "10px";
+
+      // Reference token selector
+      const refSel = document.createElement("select");
+      refSel.id = "simRefSel";
+      refSel.setAttribute("aria-label", "Referenz-Token auswählen");
+      toks.forEach((t, i) => {
+        const opt = document.createElement("option");
+        opt.value = String(i);
+        opt.textContent = stripLeadingSpace(t.text);
+        refSel.appendChild(opt);
+      });
+
+      // Mode selector: base vs withPos (only meaningful if posEnc is enabled)
+      const modeSel = document.createElement("select");
+      modeSel.id = "simModeSel";
+      modeSel.setAttribute("aria-label", "Ähnlichkeitsmodus auswählen");
+      const optBase = document.createElement("option");
+      optBase.value = "base";
+      optBase.textContent = "Base Embedding (Semantik)";
+      modeSel.appendChild(optBase);
+
+      const optPos = document.createElement("option");
+      optPos.value = "withPos";
+      optPos.textContent = "Base + Positional Encoding";
+      modeSel.appendChild(optPos);
+
+      simControls.innerHTML = `
+        <div class="kv">
+          <div class="k">Referenz</div>
+          <div class="v" id="simRefMount"></div>
+        </div>
+        <div class="kv">
+          <div class="k">Modus</div>
+          <div class="v" id="simModeMount"></div>
+        </div>
+      `;
+      simControls.querySelector("#simRefMount").appendChild(refSel);
+      simControls.querySelector("#simModeMount").appendChild(modeSel);
+      inner.appendChild(simControls);
+
+      // Apply state
+      state.params.simRefIdx = clamp(Number(state.params.simRefIdx) || 0, 0, Math.max(0, toks.length-1));
+      refSel.value = String(state.params.simRefIdx);
+      modeSel.value = String(state.params.simVizMode || "base");
+
+      // If posEnc is disabled, "withPos" is not meaningful → force base
+      if(!state.params.posEnc){
+        modeSel.value = "base";
+        modeSel.disabled = true;
+        modeSel.title = "Aktiviere Positional Encoding, um diesen Vergleich zu sehen.";
+      }
+
+      const simBox = document.createElement("div");
+      simBox.className = "notice";
+      inner.appendChild(simBox);
+
+      function renderSimilarity(){
+        state.params.simRefIdx = clamp(Number(refSel.value) || 0, 0, Math.max(0, toks.length-1));
+        state.params.simVizMode = String(modeSel.value || "base");
+
+        const baseEmb = getBaseEmbeddingsForScenario(scenario, toks);
+        const useVecs = (state.params.simVizMode === "withPos")
+          ? getEmbeddingsForScenario(scenario, toks) // includes posEnc toggle
+          : baseEmb;
+
+        const refIdx = state.params.simRefIdx;
+        const refTok = stripLeadingSpace(toks[refIdx]?.text || "");
+        const refVec = useVecs[refIdx] || [];
+
+        const rows = [];
+        for(let i=0;i<toks.length;i++){
+          if(i === refIdx) continue;
+          const v = useVecs[i] || [];
+          const sim = cosineSimilarity(refVec, v);
+          rows.push({ idx:i, tok: stripLeadingSpace(toks[i].text), sim });
+        }
+        rows.sort((a,b) => b.sim - a.sim);
+
+        simBox.innerHTML = `<div class="small muted">Ähnlichkeit relativ zu <span class="mono">${escapeHtml(refTok)}</span> (Cosine Similarity)</div>`;
+
+        const dist = document.createElement("div");
+        dist.className = "dist";
+        dist.style.marginTop = "10px";
+
+        for(const r of rows){
+          const row = document.createElement("div");
+          row.className = "dist-row";
+
+          const left = document.createElement("div");
+          const simVal = (Math.round(r.sim * 1000) / 1000).toFixed(3);
+          // map [-1,1] -> [0,100] for bar width; keep some minimum visibility
+          const w = Math.max(1, Math.round(((r.sim + 1) / 2) * 100));
+          left.innerHTML =
+            `<div class="small"><span class="mono">${escapeHtml(r.tok)}</span> <span class="muted small">sim=${simVal}</span></div>` +
+            `<div class="dist-bar"><div style="width:${w}%;"></div></div>`;
+
+          const right = document.createElement("div");
+          right.className = "mono small";
+          right.style.textAlign = "right";
+          right.textContent = simVal;
+
+          row.appendChild(left);
+          row.appendChild(right);
+          dist.appendChild(row);
+        }
+
+        simBox.appendChild(dist);
+      }
+
+      refSel.addEventListener("change", () => { renderSimilarity(); });
+      modeSel.addEventListener("change", () => { renderSimilarity(); });
+
+      renderSimilarity();
+
+      details.appendChild(inner);
+      wrap.appendChild(details);
+    }
+
+
+    return wrap;
+  }
+
+  function viewAttention(scenario){
+    const wrap = document.createElement("div");
+    const toks = scenario.tokenization?.tokens ?? [];
+    const focus = scenario.highlights?.tokenFocus ?? [];
+
+    wrap.appendChild(pNotice("Attention gewichtet, welche Token beim nächsten Rechenschritt stärker berücksichtigt werden. Hier zeigen wir eine vereinfachte Attention-Heatmap (Zeile i gewichtet Spalte j)."));
+
+    // Controls
+    const controls = document.createElement("div");
+    controls.className = "notice";
+    controls.style.display = "grid";
+    controls.style.gap = "10px";
+
+    controls.innerHTML = `
+      <div class="kv">
+        <div class="k">Layer</div>
+        <div class="v">
+          <select id="attnLayerSel" aria-label="Layer auswählen">
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
+        </div>
+      </div>
+      <div class="kv">
+        <div class="k">Head</div>
+        <div class="v">
+          <select id="attnHeadSel" aria-label="Head auswählen">
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
+        </div>
+      </div>
+      <div class="kv">
+        <div class="k">Causal Mask</div>
+        <div class="v">
+          <label style="display:flex; align-items:center; gap:10px;">
+            <input id="causalToggle" type="checkbox" />
+            <span class="small muted">nur auf aktuelle und vorherige Token</span>
+          </label>
+        </div>
+      </div>
+    `;
+    wrap.appendChild(controls);
+
+    const layerSel = controls.querySelector("#attnLayerSel");
+    const headSel  = controls.querySelector("#attnHeadSel");
+    const causalToggle = controls.querySelector("#causalToggle");
+
+    layerSel.value = String(state.params.attnLayer);
+    headSel.value  = String(state.params.attnHead);
+    causalToggle.checked = !!state.params.causalMask;
+
+    layerSel.addEventListener("change", (e) => {
+      state.params.attnLayer = Number(e.target.value);
+      render();
+    });
+    headSel.addEventListener("change", (e) => {
+      state.params.attnHead = Number(e.target.value);
+      render();
+    });
+    causalToggle.addEventListener("change", (e) => {
+      state.params.causalMask = !!e.target.checked;
+      render();
+    });
+
+    if(!toks.length){
+      wrap.appendChild(pNotice("Keine Tokens – keine Heatmap.", true));
+      return wrap;
+    }
+
+    // Build matrix
+    const M = buildAttentionMatrix(scenario, toks);
+    const T = toks.length;
+
+    // Render heatmap grid
+    wrap.appendChild(h3("Heatmap"));
+    const hmWrap = document.createElement("div");
+    hmWrap.className = "heatmap-wrap";
+
+    const grid = document.createElement("div");
+    grid.className = "heatmap-grid";
+    grid.style.gridTemplateColumns = `repeat(${T}, 18px)`;
+
+    // Determine scaling: use max in matrix for opacity mapping
+    let maxVal = 0;
+    for(let i=0;i<T;i++) for(let j=0;j<T;j++) maxVal = Math.max(maxVal, M[i][j] || 0);
+    maxVal = Math.max(1e-9, maxVal);
+
+    for(let i=0;i<T;i++){
+      for(let j=0;j<T;j++){
+        const cell = document.createElement("div");
+        cell.className = "heatmap-cell";
+        const v = M[i][j] || 0;
+        const a = clamp01(v / maxVal); // 0..1
+        cell.style.background = `rgba(102,217,239, ${0.08 + a*0.72})`;
+
+        const fromTok = stripLeadingSpace(toks[i].text);
+        const toTok   = stripLeadingSpace(toks[j].text);
+        const masked  = (state.params.causalMask && j > i);
+        cell.title = masked
+          ? `i=${i} (${fromTok}) → j=${j} (${toTok}): masked`
+          : `i=${i} (${fromTok}) → j=${j} (${toTok}): ${(v*100).toFixed(1)}%`;
+
+        // Optional highlight: if either token is in focus list, add border
+        if(focus.includes(fromTok) || focus.includes(toTok)){
+          cell.style.borderColor = "rgba(110,231,183,.45)";
+        }
+
+        grid.appendChild(cell);
+      }
+    }
+
+    const container = document.createElement("div");
+    container.style.display = "inline-block";
+    container.appendChild(grid);
+    hmWrap.appendChild(container);
+
+    wrap.appendChild(hmWrap);
+
+    // Legend / axis help
+    const axes = document.createElement("div");
+    axes.className = "heatmap-axes";
+    axes.innerHTML = `
+      <div class="heatmap-legend">
+        <span class="legend-swatch"></span>
+        <span><strong>Heller</strong> = höhere Gewichtung. Zeile <span class="mono">i</span> „achtet auf“ Spalte <span class="mono">j</span>.</span>
+      </div>
+      <div class="muted small">
+        Tipp: Mit <strong>Causal Mask</strong> kann ein Token nur auf sich selbst und vorherige Tokens achten (typisch für Decoder-LLMs).
+      </div>
+    `;
+    wrap.appendChild(axes);
+
+    return wrap;
+  }
+
+
+  function viewOutput(scenario){
+    const wrap = document.createElement("div");
+    wrap.appendChild(pNotice("Im Guided-Modus ist die Ausgabe vorgegeben. In v2 können zusätzlich Sampling-Schritte (Top‑k/Top‑p) visualisiert werden."));
+    wrap.appendChild(h3("Output"));
+    const pre = document.createElement("pre");
+    pre.style.margin = "0";
+    pre.style.padding = "10px 12px";
+    pre.style.borderRadius = "12px";
+    pre.style.border = "1px solid rgba(34,48,68,.85)";
+    pre.style.background = "rgba(15,22,35,.75)";
+    pre.textContent = scenario.generation?.outputText ?? "—";
+    wrap.appendChild(pre);
+
+    const steps = getDecodingSteps(scenario);
+    if(Array.isArray(steps) && steps.length){
+      wrap.appendChild(h3("Decoding (Top-K pro Schritt)"));
+      const note = document.createElement("div");
+      note.className = "notice";
+      note.textContent = "In der Logits-Ansicht kannst du jeden Schritt einzeln ansehen. Hier siehst du eine kompakte Übersicht.";
+      wrap.appendChild(note);
+
+      // Show first 3 steps as preview (keeps view compact)
+      const previewCount = Math.min(3, steps.length);
+      for(let i=0;i<previewCount;i++){
+        const s = steps[i];
+        const box = document.createElement("div");
+        box.className = "notice";
+        box.innerHTML = `<div class="small muted">Step ${s.step} · chosen: <span class="mono" style="color: var(--ok);">${escapeHtml(s.chosenToken)}</span></div>`;
+        box.appendChild(barsTopK(s.topK.slice(0, Math.min(5, s.topK.length)), s.chosenToken));
+        wrap.appendChild(box);
+      }
+      if(steps.length > previewCount){
+        wrap.appendChild(pNotice(`Weitere Schritte findest du unter „Logits“ (insgesamt ${steps.length}).`));
+      }
+    }
+    
+    // --- Decoding (Greedy / Sampling) — local toy simulation ---
+    // NOTE: This block is self-contained to avoid side effects in other steps.
+    wrap.appendChild(h3("Decoding (Greedy / Sampling)"));
+
+    const dec = document.createElement("div");
+    dec.className = "notice";
+    dec.style.display = "grid";
+    dec.style.gap = "10px";
+    dec.innerHTML =
+      '<div class="small muted">Was passiert hier?</div>'
+      + '<div class="small">Aus den Kandidaten (Top-K-Liste) wird genau <strong>ein</strong> Token gewählt. Greedy nimmt das Token mit der höchsten Wahrscheinlichkeit. Sampling zieht zufällig gemäß Verteilung.</div>'
+      + '<div class="kv"><div class="k">Modus</div><div class="v">'
+      + '  <select id="decModeSel" class="input" style="width:220px;">'
+      + '    <option value="greedy">Greedy (max p)</option>'
+      + '    <option value="sample">Sampling (zufällig)</option>'
+      + '  </select>'
+      + '</div></div>'
+      + '<div class="kv"><div class="k">Temperature</div><div class="v" style="display:flex; gap:10px; align-items:center;">'
+      + '  <input id="decTemp" type="range" min="0.2" max="2.0" step="0.1" />'
+      + '  <span class="mono" id="decTempVal"></span>'
+      + '</div></div>'
+      + '<div class="kv"><div class="k">Top-K</div><div class="v" style="display:flex; gap:10px; align-items:center;">'
+      + '  <input id="decTopK" type="range" min="0" max="20" step="1" />'
+      + '  <span class="mono" id="decTopKVal"></span>'
+      + '  <span class="small muted">(0 = aus)</span>'
+      + '</div></div>'
+      + '<div class="kv"><div class="k">Top-P</div><div class="v" style="display:flex; gap:10px; align-items:center;">'
+      + '  <input id="decTopP" type="range" min="0.1" max="1.0" step="0.05" />'
+      + '  <span class="mono" id="decTopPVal"></span>'
+      + '</div></div>'
+      + '<div class="kv"><div class="k">Seed</div><div class="v" style="display:flex; gap:10px; align-items:center;">'
+      + '  <input id="decSeed" class="input" style="width:140px;" inputmode="numeric" />'
+      + '  <button id="decReseed" class="secondary" type="button">+1</button>'
+      + '</div></div>'
+      + '<div class="small muted">Ablauf: (optional Temperature) → Softmax → (Top-K/Top-P) → Renormalisierung → Auswahl.</div>';
+    wrap.appendChild(dec);
+
+    const out = document.createElement("div");
+    out.className = "notice";
+    out.innerHTML =
+      '<div class="small muted">Ergebnis</div>'
+      + '<div class="pill"><span class="small muted">chosen token</span><span class="mono" id="decChosen">—</span></div>'
+      + '<div class="small muted" style="margin-top:10px;">Verteilung (nach Filter, renormalisiert)</div>'
+      + '<div id="decDist" class="dist"></div>';
+    wrap.appendChild(out);
+
+    // ---- Local helpers (no dependencies on global decoding helpers) ----
+    function _softmax(logits){
+      let maxL = -1e9;
+      for(let i=0;i<logits.length;i++){ if(logits[i] > maxL) maxL = logits[i]; }
+      const exps = new Array(logits.length);
+      let sum = 0;
+      for(let i=0;i<logits.length;i++){
+        const e = Math.exp(logits[i] - maxL);
+        exps[i] = e;
+        sum += e;
+      }
+      if(sum < 1e-12) sum = 1e-12;
+      const probs = new Array(logits.length);
+      for(let i=0;i<logits.length;i++){ probs[i] = exps[i] / sum; }
+      return probs;
+    }
+    function _applyTemperature(logits, temp){
+      const t = (temp && temp > 1e-6) ? temp : 1e-6;
+      const out = new Array(logits.length);
+      for(let i=0;i<logits.length;i++){ out[i] = logits[i] / t; }
+      return out;
+    }
+    function _sort(cands){
+      cands.sort(function(a,b){ return (b.p - a.p); });
+      return cands;
+    }
+    function _filterTopK(cands, k){
+      if(!k || k <= 0) return cands;
+      return cands.slice(0, Math.min(k, cands.length));
+    }
+    function _filterTopP(cands, p){
+      if(p == null) return cands;
+      let pp = p;
+      if(pp <= 0) return cands.slice(0,1);
+      if(pp >= 1) return cands;
+      let acc = 0;
+      const out = [];
+      for(let i=0;i<cands.length;i++){
+        out.push(cands[i]);
+        acc += cands[i].p;
+        if(acc >= pp) break;
+      }
+      return out;
+    }
+    function _normalize(cands){
+      let s = 0;
+      for(let i=0;i<cands.length;i++){ s += cands[i].p; }
+      if(s < 1e-12) s = 1e-12;
+      for(let i=0;i<cands.length;i++){ cands[i].p = cands[i].p / s; }
+      return cands;
+    }
+    function _lcg(seed){
+      let x = (seed >>> 0) || 1;
+      return function(){
+        x = (1664525 * x + 1013904223) >>> 0;
+        return (x >>> 0) / 4294967296;
+      };
+    }
+    function _sample(cands, seed){
+      const rnd = _lcg(seed);
+      const r = rnd();
+      let acc = 0;
+      for(let i=0;i<cands.length;i++){
+        acc += cands[i].p;
+        if(r <= acc) return cands[i].token;
+      }
+      return cands.length ? cands[cands.length-1].token : "—";
+    }
+    function _greedy(cands){
+      return cands.length ? cands[0].token : "—";
+    }
+    function _build(tokens, logits){
+      const probs = _softmax(logits);
+      const cands = [];
+      for(let i=0;i<tokens.length;i++){
+        cands.push({ token: tokens[i], logit: logits[i], p: probs[i] });
+      }
+      return _sort(cands);
+    }
+
+    function getCandidatesFromScenario(){
+      // Prefer decoding steps topK list (token + p or logit)
+      const steps = getDecodingSteps(scenario);
+      if(Array.isArray(steps) && steps.length){
+        const st = steps[0];
+        if(st && Array.isArray(st.topK) && st.topK.length){
+          const tokens = [];
+          const logits = [];
+          for(let i=0;i<st.topK.length;i++){
+            const it = st.topK[i] || {};
+            tokens.push(it.token != null ? it.token : "—");
+            if(typeof it.logit === "number") logits.push(it.logit);
+            else if(typeof it.p === "number" && it.p > 0) logits.push(Math.log(it.p));
+            else logits.push(-10);
+          }
+          return { tokens: tokens, logits: logits };
+        }
+      }
+      // Fallback: fixed tiny example
+      return { tokens:[" ein"," der"," Hund"," Katze","."," ist"], logits:[1.2,0.9,1.8,0.7,0.6,1.1] };
+    }
+
+    const modeSel = dec.querySelector("#decModeSel");
+    const tempR = dec.querySelector("#decTemp");
+    const tempVal = dec.querySelector("#decTempVal");
+    const topKR = dec.querySelector("#decTopK");
+    const topKVal = dec.querySelector("#decTopKVal");
+    const topPR = dec.querySelector("#decTopP");
+    const topPVal = dec.querySelector("#decTopPVal");
+    const seedI = dec.querySelector("#decSeed");
+    const reseedB = dec.querySelector("#decReseed");
+
+    const chosenEl = out.querySelector("#decChosen");
+    const distEl = out.querySelector("#decDist");
+
+    // init from state (local params, do not affect other views)
+    modeSel.value = state.params.decodeMode;
+    tempR.value = String(state.params.decodeTemp);
+    topKR.value = String(state.params.decodeTopK);
+    topPR.value = String(state.params.decodeTopP);
+    seedI.value = String(state.params.decodeSeed);
+
+    function fmt1(x){ return (Math.round(x*10)/10).toFixed(1); }
+    function fmt2(x){ return (Math.round(x*100)/100).toFixed(2); }
+
+    function renderDecodingToy(){
+      state.params.decodeMode = modeSel.value;
+      state.params.decodeTemp = parseFloat(tempR.value);
+      state.params.decodeTopK = parseInt(topKR.value, 10);
+      state.params.decodeTopP = parseFloat(topPR.value);
+      state.params.decodeSeed = parseInt(seedI.value, 10) || 1;
+
+      tempVal.textContent = fmt1(state.params.decodeTemp);
+      topKVal.textContent = String(state.params.decodeTopK);
+      topPVal.textContent = fmt2(state.params.decodeTopP);
+
+      const step = getCandidatesFromScenario();
+      const scaled = _applyTemperature(step.logits, state.params.decodeTemp);
+      let cands = _build(step.tokens, scaled);
+      cands = _filterTopK(cands, state.params.decodeTopK);
+      cands = _filterTopP(cands, state.params.decodeTopP);
+      cands = _normalize(cands);
+
+      const chosen = (state.params.decodeMode === "sample")
+        ? _sample(cands, state.params.decodeSeed)
+        : _greedy(cands);
+
+      chosenEl.textContent = stripLeadingSpace(String(chosen));
+
+      distEl.innerHTML = "";
+      const shown = Math.min(12, cands.length);
+      for(let i=0;i<shown;i++){
+        const row = document.createElement("div");
+        row.className = "dist-row";
+
+        const left = document.createElement("div");
+        const tok = stripLeadingSpace(String(cands[i].token));
+        const pct = (cands[i].p * 100);
+        left.innerHTML =
+          '<div class="small"><span class="mono">' + escapeHtml(tok) + '</span> <span class="muted small">p=' + pct.toFixed(1) + '%</span></div>'
+          + '<div class="dist-bar"><div style="width:' + Math.max(1, Math.round(pct)) + '%;"></div></div>';
+
+        const right = document.createElement("div");
+        right.className = "mono small";
+        right.style.textAlign = "right";
+        right.textContent = (cands[i].logit >= 0 ? "+" : "") + (Math.round(cands[i].logit*100)/100).toFixed(2);
+
+        row.appendChild(left);
+        row.appendChild(right);
+        distEl.appendChild(row);
+      }
+    }
+
+    modeSel.addEventListener("change", renderDecodingToy);
+    tempR.addEventListener("input", renderDecodingToy);
+    topKR.addEventListener("input", renderDecodingToy);
+    topPR.addEventListener("input", renderDecodingToy);
+    seedI.addEventListener("input", renderDecodingToy);
+    reseedB.addEventListener("click", function(){
+      seedI.value = String((parseInt(seedI.value, 10) || 1) + 1);
+      renderDecodingToy();
+    });
+
+    renderDecodingToy();
+
+    return wrap;
+  }
+
+  
+  function viewLogits(scenario){
+    const wrap = document.createElement("div");
+    const toks = scenario.tokenization?.tokens ?? [];
+    wrap.appendChild(pNotice("Logits sind Rohwerte für mögliche nächste Tokens. Per Softmax werden daraus Wahrscheinlichkeiten. Hier zeigen wir eine didaktische Top-K-Ansicht pro Generationsschritt."));
+
+    // Ensure we have steps
+    const steps = getDecodingSteps(scenario);
+    if(!steps.length){
+      wrap.appendChild(pNotice("Keine Generationsdaten vorhanden.", true));
+      return wrap;
+    }
+
+    // Step selector
+    const controls = document.createElement("div");
+    controls.className = "notice";
+    controls.style.display = "grid";
+    controls.style.gap = "10px";
+    controls.innerHTML = `
+      <div class="kv">
+        <div class="k">Schritt</div>
+        <div class="v" style="display:flex; gap:10px; align-items:center;">
+          <input id="logitStepRange" type="range" min="1" max="${steps.length}" step="1" />
+          <span class="mono" id="logitStepVal"></span>
+        </div>
+      </div>
+      <div class="small muted">Tipp: Ändere <span class="mono">temperature</span>, <span class="mono">topP</span> und <span class="mono">topK</span> unter Tools, um die Verteilung zu verändern.</div>
+    `;
+    wrap.appendChild(controls);
+
+    const deltaToggle = document.createElement("div");
+    deltaToggle.className = "notice";
+    deltaToggle.innerHTML =
+      '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
+      + '<input id="mlpShowDelta" type="checkbox" checked />'
+      + '<span><strong>Delta anzeigen</strong> (Kontext − Embedding)</span>'
+      + '</label>'
+      + '<div class="small muted" style="margin-top:6px;">Ohne Attention bleibt nur das Embedding. Mit Attention entsteht ein Kontextvektor. Das Delta macht sichtbar, was der Kontext ergänzt.</div>';
+    wrap.appendChild(deltaToggle);
+
+    const r = controls.querySelector("#logitStepRange");
+    const v = controls.querySelector("#logitStepVal");
+    r.value = String(clamp(Number(state.params.logitStep) || 1, 1, steps.length));
+    v.textContent = `#${r.value} / ${steps.length}`;
+    r.addEventListener("input", (e) => {
+      state.params.logitStep = Number(e.target.value);
+      v.textContent = `#${e.target.value} / ${steps.length}`;
+      render();
+    });
+
+    const idx = clamp((Number(state.params.logitStep) || 1) - 1, 0, steps.length - 1);
+    const step = steps[idx];
+
+    // Chosen token highlight
+    const chosenBox = document.createElement("div");
+    chosenBox.className = "notice";
+    chosenBox.innerHTML = `
+      <div class="small muted">Gewähltes Token</div>
+      <div class="mono" style="font-size:16px; color: var(--ok);">${escapeHtml(step.chosenToken)}</div>
+    `;
+    wrap.appendChild(chosenBox);
+
+    wrap.appendChild(h3("Top-K Wahrscheinlichkeiten"));
+    wrap.appendChild(barsTopK(step.topK, step.chosenToken));
+
+    wrap.appendChild(h3("Hinweis"));
+    wrap.appendChild(pNotice("Die konkreten Werte sind in v1.3 eine seeded Simulation (oder aus Szenario-Replay). Entscheidend ist der Ablauf: Logits → Softmax → Auswahl des nächsten Tokens."));
+
+    return wrap;
+  }
+
+
+  // -----------------------------
+  // MLP / FFN view (v1.3.15)
+  // -----------------------------
+  function relu(x){ return Math.max(0, x); }
+
+  function matVec(W, v, b){
+    const out = new Array(W.length);
+    for(let i=0;i<W.length;i++){
+      let s = b ? (b[i] || 0) : 0;
+      const row = W[i];
+      for(let j=0;j<row.length;j++) s += row[j] * v[j];
+      out[i] = s;
+    }
+    return out;
+  }
+
+  function buildToyFFN(seed, dModel){
+    const dHidden = dModel * 2;
+    let x = stableHash("ffn|" + seed + "|d" + dModel) >>> 0;
+    const rand = function(){
+      x = xorshift32(x);
+      return ((x >>> 0) / 4294967296) * 2 - 1;
+    };
+
+    const W1 = [], b1 = [], W2 = [], b2 = [];
+    for(let i=0;i<dHidden;i++){
+      const row = [];
+      for(let j=0;j<dModel;j++) row.push(rand() * 0.35);
+      W1.push(row);
+      b1.push(rand() * 0.05);
+    }
+    for(let i=0;i<dModel;i++){
+      const row = [];
+      for(let j=0;j<dHidden;j++) row.push(rand() * 0.35);
+      W2.push(row);
+      b2.push(rand() * 0.05);
+    }
+    return { W1: W1, b1: b1, W2: W2, b2: b2 };
+  }
+
+  function renderDeltaBars(aVec, bVec, label){
+    const dModel = Math.min(aVec.length, bVec.length);
+    const delta = new Array(dModel);
+    for(let i=0;i<dModel;i++) delta[i] = aVec[i] - bVec[i];
+    return renderVectorBars(delta, label);
+  }
+
+  function renderVectorBars(vec, label){
+    const box = document.createElement("div");
+    box.className = "notice";
+    const title = document.createElement("div");
+    title.className = "small muted";
+    title.textContent = label;
+    box.appendChild(title);
+
+    let maxAbs = 1e-6;
+    for(let i=0;i<vec.length;i++) maxAbs = Math.max(maxAbs, Math.abs(vec[i]));
+
+    const list = document.createElement("div");
+    list.style.display = "grid";
+    list.style.gap = "6px";
+    list.style.marginTop = "8px";
+
+    const shown = Math.min(vec.length, 16);
+    for(let i=0;i<shown;i++){
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gridTemplateColumns = "40px 1fr 64px";
+      row.style.gap = "10px";
+      row.style.alignItems = "center";
+
+      const k = document.createElement("span");
+      k.className = "mono small";
+      k.textContent = "d" + i;
+
+      const barOuter = document.createElement("div");
+      barOuter.style.height = "10px";
+      barOuter.style.borderRadius = "999px";
+      barOuter.style.border = "1px solid rgba(34,48,68,.85)";
+      barOuter.style.background = "rgba(15,22,35,.65)";
+      barOuter.style.overflow = "hidden";
+
+      const barInner = document.createElement("div");
+      barInner.style.height = "100%";
+      const w = Math.max(2, Math.round((Math.abs(vec[i]) / maxAbs) * 100));
+      barInner.style.width = w + "%";
+      barInner.style.borderRadius = "999px";
+      barInner.style.background = (vec[i] >= 0) ? "rgba(110,231,183,.70)" : "rgba(255,107,107,.55)";
+      barOuter.appendChild(barInner);
+
+      const val = document.createElement("span");
+      val.className = "mono small";
+      val.textContent = (Math.round(vec[i]*1000)/1000).toFixed(3);
+
+      row.appendChild(k);
+      row.appendChild(barOuter);
+      row.appendChild(val);
+      list.appendChild(row);
+    }
+
+    const hint = document.createElement("div");
+    hint.className = "small muted";
+    hint.style.marginTop = "8px";
+    hint.textContent = "Anzeige: erste " + shown + " Dimensionen (didaktisch).";
+    box.appendChild(list);
+    box.appendChild(hint);
+    return box;
+  }
+
+  function attentionHeatmapCompact(scenario){
+    const toks = (scenario && scenario.tokenization && scenario.tokenization.tokens) ? scenario.tokenization.tokens : [];
+    if(!toks.length) return pNotice("Keine Tokens – keine Heatmap.", true);
+
+    const M = buildAttentionMatrix(scenario, toks);
+    const T = toks.length;
+
+    const hmWrap = document.createElement("div");
+    hmWrap.className = "heatmap-wrap";
+    hmWrap.style.padding = "8px";
+
+    const grid = document.createElement("div");
+    grid.className = "heatmap-grid";
+    grid.style.gridTemplateColumns = "repeat(" + T + ", 18px)";
+
+    let maxVal = 0;
+    for(let i=0;i<T;i++) for(let j=0;j<T;j++) maxVal = Math.max(maxVal, M[i][j] || 0);
+    if(maxVal < 1e-9) maxVal = 1e-9;
+
+    for(let i=0;i<T;i++){
+      for(let j=0;j<T;j++){
+        const cell = document.createElement("div");
+        cell.className = "heatmap-cell";
+        const v = M[i][j] || 0;
+        const a = clamp01(v / maxVal);
+        cell.style.background = "rgba(102,217,239," + (0.08 + a*0.72).toFixed(3) + ")";
+        cell.title = "i=" + i + " → j=" + j + ": " + (v*100).toFixed(1) + "%";
+        grid.appendChild(cell);
+      }
+    }
+    hmWrap.appendChild(grid);
+    return hmWrap;
+  }
+
+  
+  
+  function viewMLP(scenario){
+    const wrap = document.createElement("div");
+    wrap.appendChild(pNotice("MLP/FFN ergänzt die Attention: Attention mischt Information über Tokens (Kontext), MLP transformiert pro Token nichtlinear. In diesem Schritt kannst du direkt vergleichen: (A) FFN ohne Kontext (nur Embedding) vs. (B) FFN mit Kontext (nach Attention)."));
+
+    // Context reminder: compact heatmap
+    wrap.appendChild(h3("Attention-Heatmap (Kontextgrundlage)"));
+    wrap.appendChild(attentionHeatmapCompact(scenario));
+
+    const toks = (scenario && scenario.tokenization && scenario.tokenization.tokens) ? scenario.tokenization.tokens : [];
+    if(!toks.length){
+      wrap.appendChild(pNotice("Keine Tokens – MLP kann nicht visualisiert werden.", true));
+      return wrap;
+    }
+
+    // Controls: token selector
+    const controls = document.createElement("div");
+    controls.className = "notice";
+    controls.style.display = "grid";
+    controls.style.gap = "10px";
+    controls.innerHTML =
+      '<div class="kv">'
+      + '<div class="k">Token i</div>'
+      + '<div class="v" style="display:flex; gap:10px; align-items:center;">'
+      + '<input id="mlpTokRange" type="range" min="0" max="' + (toks.length-1) + '" step="1" />'
+      + '<span class="mono" id="mlpTokVal"></span>'
+      + '</div></div>'
+      + '<div class="small muted">Zeige toy-FFN Input/Output für Token i.</div>';
+    wrap.appendChild(controls);
+
+    // Toggles (persist in state)
+    if(typeof state.params.showDelta !== "boolean") state.params.showDelta = true;
+    if(typeof state.params.mlpCompare !== "boolean") state.params.mlpCompare = true;
+
+    const toggles = document.createElement("div");
+    toggles.className = "notice";
+    toggles.innerHTML =
+      '<div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center;">'
+      + '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
+      + '  <input id="mlpCompare" type="checkbox" />'
+      + '  <span><strong>Vergleich anzeigen</strong> (ohne vs. mit Attention)</span>'
+      + '</label>'
+      + '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
+      + '  <input id="mlpShowDelta" type="checkbox" />'
+      + '  <span><strong>Delta anzeigen</strong> (Kontext − Embedding)</span>'
+      + '</label>'
+      + '</div>'
+      + '<div class="small muted" style="margin-top:8px;">Tipp: Der Vergleich ist der Aha-Punkt. Ohne Attention bleibt die Repräsentation lokal (Embedding). Mit Attention entsteht ein Kontextvektor, der die FFN-Eingabe sichtbar verschiebt.</div>';
+    wrap.appendChild(toggles);
+
+    const r = controls.querySelector("#mlpTokRange");
+    const v = controls.querySelector("#mlpTokVal");
+    const chkCompare = toggles.querySelector("#mlpCompare");
+    const chkDelta = toggles.querySelector("#mlpShowDelta");
+
+    const defaultIdx = Math.max(0, toks.length - 1);
+    r.value = String(defaultIdx);
+    v.textContent = defaultIdx + ": " + stripLeadingSpace(toks[defaultIdx].text);
+
+    chkCompare.checked = !!state.params.mlpCompare;
+    chkDelta.checked = !!state.params.showDelta;
+
+    // Build representations
+    const E = getEmbeddingsForScenario(scenario, toks); // [T][d]
+    const A = buildAttentionMatrix(scenario, toks);     // [T][T]
+    const dModel = state.params.dModel;
+    const ffn = buildToyFFN((scenario && scenario.id) ? scenario.id : "x", dModel);
+
+    const outBox = document.createElement("div");
+    wrap.appendChild(h3("MLP Vorher/Nachher (toy-FFN)"));
+    wrap.appendChild(outBox);
+
+    function ctxWithAttention(i){
+      const ctx = new Array(dModel);
+      for(let k=0;k<dModel;k++) ctx[k] = 0;
+
+      for(let j=0;j<toks.length;j++){
+        const a = (A[i] && typeof A[i][j] === "number") ? A[i][j] : 0;
+        for(let k=0;k<dModel;k++){
+          ctx[k] += a * E[j][k];
+        }
+      }
+      return ctx;
+    }
+
+    function ffnForward(vec){
+      const h1 = matVec(ffn.W1, vec, ffn.b1);
+      for(let t=0;t<h1.length;t++) h1[t] = relu(h1[t]);
+      return matVec(ffn.W2, h1, ffn.b2);
+    }
+
+    function renderSingle(i){
+      const emb = E[i];
+      const ctx = ctxWithAttention(i);
+      const out = ffnForward(ctx);
+
+      outBox.innerHTML = "";
+      outBox.appendChild(renderVectorBars(emb, "Embedding (ohne Kontext)"));
+      outBox.appendChild(renderVectorBars(ctx, "Kontext nach Attention (Input in FFN)"));
+      if(!!state.params.showDelta){
+        outBox.appendChild(renderDeltaBars(ctx, emb, "Delta: Kontext − Embedding"));
+      }
+      outBox.appendChild(renderVectorBars(out, "FFN-Output (nach MLP/FFN)"));
+    }
+
+    function renderCompare(i){
+      const emb = E[i];
+      const ctx = ctxWithAttention(i);
+
+      const outNo = ffnForward(emb); // "ohne Attention" = FFN direkt auf Embedding
+      const outYes = ffnForward(ctx);
+
+      outBox.innerHTML = "";
+
+      const grid = document.createElement("div");
+      grid.className = "compare-grid";
+
+      const left = document.createElement("div");
+      left.className = "compare-card";
+      left.innerHTML = '<div class="compare-title"><strong>A) Ohne Attention</strong><span class="small muted">FFN(Embedding)</span></div>';
+      left.appendChild(renderVectorBars(emb, "Input: Embedding"));
+      left.appendChild(renderVectorBars(outNo, "Output: FFN(Embedding)"));
+
+      const right = document.createElement("div");
+      right.className = "compare-card";
+      right.innerHTML = '<div class="compare-title"><strong>B) Mit Attention</strong><span class="small muted">FFN(Kontext)</span></div>';
+      right.appendChild(renderVectorBars(ctx, "Input: Kontext nach Attention"));
+      if(!!state.params.showDelta){
+        right.appendChild(renderDeltaBars(ctx, emb, "Delta: Kontext − Embedding"));
+      }
+      right.appendChild(renderVectorBars(outYes, "Output: FFN(Kontext)"));
+
+      grid.appendChild(left);
+      grid.appendChild(right);
+
+      outBox.appendChild(grid);
+
+      const note = document.createElement("div");
+      note.className = "notice";
+      note.innerHTML =
+        '<div class="small muted">Interpretation</div>'
+        + '<div class="small">Wenn sich <span class="mono">Input</span> (Embedding vs. Kontext) sichtbar unterscheidet, wird auch das FFN-Output anders. So trennt man sauber: <strong>Kontextbildung</strong> (Attention) vs. <strong>nichtlineare Transformation</strong> (MLP).</div>';
+      outBox.appendChild(note);
+    }
+
+    function render(i){
+      v.textContent = i + ": " + stripLeadingSpace(toks[i].text);
+      if(!!state.params.mlpCompare) renderCompare(i);
+      else renderSingle(i);
+    }
+
+    r.addEventListener("input", function(e){
+      render(Number(e.target.value));
+    });
+
+    chkCompare.addEventListener("change", function(){
+      state.params.mlpCompare = !!chkCompare.checked;
+      render(Number(r.value));
+    });
+
+    chkDelta.addEventListener("change", function(){
+      state.params.showDelta = !!chkDelta.checked;
+      render(Number(r.value));
+    });
+
+    render(defaultIdx);
+    return wrap;
+  }
+
+
+  
+function viewSummary(scenario){
+  const wrap = document.createElement("div");
+
+  // --- Ergebnis (Prompt / Output) ---
+  wrap.appendChild(h3("Ergebnis"));
+
+  const io = document.createElement("div");
+  io.className = "notice";
+  io.style.display = "grid";
+  io.style.gap = "10px";
+
+  const ps = scenario?.promptStack || {};
+  const outText = scenario?.generation?.outputText ?? scenario?.output ?? "—";
+
+  // Build a readable prompt stack (multi-line)
+  const lines = [];
+  const sys = ps.system || "";
+  const ins = ps.instruction || "";
+  const usr = ps.user || scenario?.prompt || "—";
+  if(sys) lines.push("SYSTEM: " + sys);
+  if(ins) lines.push("INSTRUKTION: " + ins);
+  lines.push("USER: " + usr);
+  const promptStackText = lines.join("\n");
+const promptBox = document.createElement("div");
+  promptBox.innerHTML =
+    '<div class="small muted">Prompt (Stack)</div>'
+    + '<pre class="mono small" style="margin:6px 0 0; padding:10px 12px; border-radius:12px; border:1px solid rgba(34,48,68,.85); background: rgba(15,22,35,.75); white-space:pre-wrap; word-break:break-word;">'
+    + escapeHtml(promptStackText)
+    + '</pre>';
+
+  const outBox = document.createElement("div");
+  outBox.innerHTML =
+    '<div class="small muted">Ausgabe</div>'
+    + '<pre class="mono small" style="margin:6px 0 0; padding:10px 12px; border-radius:12px; border:1px solid rgba(34,48,68,.85); background: rgba(15,22,35,.75); white-space:pre-wrap; word-break:break-word;">'
+    + escapeHtml(outText)
+    + '</pre>';
+
+  io.appendChild(promptBox);
+  io.appendChild(outBox);
+  wrap.appendChild(io);
+
+  // --- Pipeline Recap ---
+  wrap.appendChild(h3("Verarbeitungsweg (Kurzüberblick)"));
+  const recap = document.createElement("div");
+  recap.className = "notice";
+  recap.innerHTML =
+    '<ul class="small" style="margin:0; padding-left:18px;">'
+    + '<li><strong>Tokenisierung:</strong> Text → Token</li>'
+    + '<li><strong>Embedding:</strong> Token → Vektoren</li>'
+    + '<li><strong>Attention:</strong> Kontextgewichtung zwischen Token</li>'
+    + '<li><strong>MLP:</strong> Nichtlineare Transformation</li>'
+    + '<li><strong>Logits:</strong> Scores für mögliche nächste Token</li>'
+    + '<li><strong>Decoding:</strong> Auswahl eines Tokens (Greedy / Sampling)</li>'
+    + '<li><strong>Ausgabe:</strong> Tokenfolge → Text</li>'
+    + '</ul>';
+  wrap.appendChild(recap);
+
+  // --- Key Takeaways ---
+  wrap.appendChild(h3("Zentrale Erkenntnisse"));
+  const take = document.createElement("div");
+  take.className = "notice";
+  take.innerHTML =
+    '<ul class="small" style="margin:0; padding-left:18px;">'
+    + '<li>Ein LLM optimiert Wahrscheinlichkeiten – es „versteht“ nicht wie ein Mensch.</li>'
+    + '<li>Attention mischt Kontext; sie ist kein logisches Denken.</li>'
+    + '<li>Die Decoding-Strategie beeinflusst Varianz, Stil und Wiederholungen deutlich.</li>'
+    + '</ul>';
+  wrap.appendChild(take);
+
+  // --- Run Snapshot ---
+  wrap.appendChild(h3("Run-Snapshot"));
+  const snap = document.createElement("div");
+  snap.className = "notice";
+
+  const snapshot = {
+    scenario: scenario.id || scenario.title || "unknown",
+    decoding: {
+      mode: state.params.decodeMode,
+      temperature: state.params.decodeTemp,
+      topK: state.params.decodeTopK,
+      topP: state.params.decodeTopP,
+      seed: state.params.decodeSeed
+    },
+    timestamp: new Date().toISOString()
+  };
+
+  const pre = document.createElement("pre");
+  pre.className = "mono small";
+  pre.style.margin = "0 0 10px";
+  pre.style.padding = "10px 12px";
+  pre.style.borderRadius = "12px";
+  pre.style.border = "1px solid rgba(34,48,68,.85)";
+  pre.style.background = "rgba(15,22,35,.75)";
+  pre.style.whiteSpace = "pre-wrap";
+  pre.style.wordBreak = "break-word";
+  pre.textContent = JSON.stringify(snapshot, null, 2);
+
+  const btn = document.createElement("button");
+  btn.className = "secondary";
+  btn.type = "button";
+  btn.textContent = "Snapshot kopieren";
+  btn.onclick = function(){
+    try{
+      if(navigator && navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(pre.textContent);
+      }else{
+        const ta = document.createElement("textarea");
+        ta.value = pre.textContent;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      showToast("Snapshot kopiert", "JSON wurde in die Zwischenablage kopiert.", 1800);
+    }catch(e){
+      showToast("Kopieren fehlgeschlagen", "Zwischenablage nicht verfügbar.", 2400);
+    }
+  };
+
+  snap.appendChild(pre);
+  snap.appendChild(btn);
+  wrap.appendChild(snap);
+
+  return wrap;
 }
+
+
+
+  function viewPlaceholder(title, text){
+    const wrap = document.createElement("div");
+    wrap.appendChild(pNotice(text));
+    wrap.appendChild(h3("Nächster Schritt"));
+    wrap.appendChild(pNotice("Wenn du möchtest, implementieren wir als nächstes die Attention-Heatmap (SVG/Canvas) + optional Replay-Daten aus scenarios.json.", true));
+    return wrap;
+  }
+
+  // -----------------------------
+  // Mobile sheet rendering
+  // -----------------------------
+  function updateResponsiveControls(){
+    // Show Tools button whenever the right sidebar (Inspector/Erklärung) is hidden by responsive layout.
+    const isCompact = window.matchMedia("(max-width: 1023px)").matches;
+    el.mobileToolsBtn.style.display = isCompact ? "" : "none";
+    // If we leave compact layout while sheet is open, close it.
+    if(!isCompact) closeSheet();
+  }
+
+  function openSheet(tab){
+    el.sheetBackdrop.classList.add("show");
+    el.sheetBackdrop.setAttribute("aria-hidden", "false");
+    // activate tab
+    [...el.sheetTabs.querySelectorAll("button[data-tab]")].forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+    renderSheet(tab);
+  }
+  function closeSheet(){
+    el.sheetBackdrop.classList.remove("show");
+    el.sheetBackdrop.setAttribute("aria-hidden", "true");
+  }
+
+  function openDiag(){
+    // Always provide visible feedback, even if everything is OK.
+    const s = state.status || { kind:"", text:"Szenarien: —", details:"" };
+    const title = (s.kind === "danger") ? "Diagnose: Problem" : (s.kind === "warn") ? "Diagnose: Hinweis" : "Diagnose: Alles in Ordnung";
+    const body  = s.details || (s.kind === "ok" ? "Szenarien wurden erfolgreich geladen." : "Keine weiteren Details.");
+
+    // Try to open modal; if not possible, at least show toast.
+    try{
+      // Defensive: if DOM nodes are missing, inject minimal dialog.
+      if(!el.diagBackdrop || !document.getElementById("diagBackdrop")){
+        console.warn("diagBackdrop missing – injecting minimal diagnose modal.");
+        const div = document.createElement("div");
+        div.className = "modal-backdrop";
+        div.id = "diagBackdrop";
+        div.setAttribute("aria-hidden","true");
+        div.innerHTML = `
+          <div class="modal" role="dialog" aria-label="Szenario-Diagnose">
+            <div class="card-h">
+              <h2>Szenario-Diagnose</h2>
+              <button id="diagCloseBtn" class="secondary" type="button" onclick="window.cherSim && window.cherSim.closeDiag()">Schließen</button>
+            </div>
+            <div class="body">
+              <div class="notice" id="diagSummary">—</div>
+              <div class="notice"><div class="small muted">Details</div><pre id="diagDetails">—</pre></div>
+              <div class="notice"><div class="small muted">Hinweise</div><div class="small" id="diagHints"></div></div>
+            </div>
+          </div>`;
+        document.body.appendChild(div);
+        // refresh refs
+        el.diagBackdrop = document.getElementById("diagBackdrop");
+        el.diagCloseBtn = document.getElementById("diagCloseBtn");
+        el.diagSummary  = document.getElementById("diagSummary");
+        el.diagDetails  = document.getElementById("diagDetails");
+        el.diagHints    = document.getElementById("diagHints");
+        el.diagCloseBtn?.addEventListener("click", closeDiag);
+        el.diagBackdrop?.addEventListener("click", (e) => { if(e.target === el.diagBackdrop) closeDiag(); });
+      }
+      renderDiag();
+      el.diagBackdrop.classList.add("show");
+      el.diagBackdrop.setAttribute("aria-hidden", "false");
+      showToast(title, body, 1800);
+    }catch(err){
+      console.warn("openDiag failed:", err);
+      showToast(title, body, 3500);
+    }
+  }
+  function closeDiag(){
+    if(!el.diagBackdrop) return;
+    el.diagBackdrop.classList.remove("show");
+    el.diagBackdrop.setAttribute("aria-hidden", "true");
+  }
+  function renderDiag(){
+    const proto = (location && location.protocol) ? location.protocol : "";
+    const isFile = proto === "file:";
+    const s = state.status || { kind:"", text:"", details:"" };
+
+    const doc = state.scenariosDoc;
+    const count = Array.isArray(doc?.scenarios) ? doc.scenarios.length : 0;
+    const defId = doc?.meta?.defaultScenarioId || "—";
+    const selected = state.scenarioId || "—";
+
+    const okNote = (s.kind === "ok") ? "Alles in Ordnung. " : "";
+    el.diagSummary.textContent = `${okNote}${s.text} · ausgewählt: ${selected} · default: ${defId} · count: ${count}`;
+    el.diagDetails.textContent = s.details || "(keine Details)";
+    el.diagHints.innerHTML = `
+      <ul style="margin:0; padding-left:18px;">
+        <li>Pfad erwartet: <span class="mono">scenarios/scenarios.json</span></li>
+        <li>Wenn du lokal testest: <span class="mono">${isFile ? "file://" : proto}</span> ${isFile ? "→ fetch() wird oft blockiert. Starte einen lokalen Server." : ""}</li>
+        <li>JSON muss Struktur <span class="mono">{ meta, scenarios: [] }</span> haben.</li>
+      </ul>
+    `;
+  }
+
+  function renderSheet(tab){
+    el.sheetBody.innerHTML = "";
+    if(tab === "controls"){
+      el.sheetBody.appendChild(renderControls());
+    } else if(tab === "inspector"){
+      // clone current inspector
+      el.sheetBody.appendChild(el.inspector.cloneNode(true));
+    } else if(tab === "explain"){
+      // In Tools view we always show the explanation content, independent of the collapsed state in the main layout.
+      const c = el.explain.cloneNode(true);
+      c.style.display = "";
+      el.sheetBody.appendChild(c);
+    }
+  }
+
+  // Controls are minimal in v1 – placeholders for v2.
+  function renderControls(){
+    const box = document.createElement("div");
+    box.className = "kvs";
+
+    box.appendChild(pNotice("Tools: Embedding-Parameter sind aktiv. Weitere Regler beeinflussen Logits/Decoding."));
+
+    // d_model
+    const dm = document.createElement("div");
+    dm.className = "notice";
+    dm.innerHTML = `
+      <div class="small muted">Embedding</div>
+      <div class="kv"><div class="k">d_model</div>
+        <div class="v">
+          <select id="ctlDModel" aria-label="d_model auswählen">
+            <option value="8">8</option>
+            <option value="16">16</option>
+            <option value="32">32</option>
+          </select>
+        </div>
+      </div>
+      <div class="kv"><div class="k">Positional Encoding</div>
+        <div class="v">
+          <label style="display:flex; align-items:center; gap:10px;">
+            <input id="ctlPosEnc" type="checkbox" />
+            <span class="small muted">additiv sin/cos</span>
+          </label>
+        </div>
+      </div>
+    `;
+    box.appendChild(dm);
+
+    const sel = dm.querySelector("#ctlDModel");
+    sel.value = String(state.params.dModel);
+    sel.addEventListener("change", (e) => {
+      state.params.dModel = Number(e.target.value);
+      invalidateEmbeddingCache();
+      render();
+    });
+
+    const chk = dm.querySelector("#ctlPosEnc");
+    chk.checked = !!state.params.posEnc;
+    chk.addEventListener("change", (e) => {
+      state.params.posEnc = !!e.target.checked;
+      invalidateEmbeddingCache();
+      render();
+    });
+
+
+    // attention controls (v1.2)
+    const attn = document.createElement("div");
+    attn.className = "notice";
+    attn.innerHTML = `
+      <div class="small muted">Attention</div>
+      <div class="kv"><div class="k">Layer</div>
+        <div class="v">
+          <select id="ctlAttnLayer" aria-label="Attention Layer auswählen">
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
+        </div>
+      </div>
+      <div class="kv"><div class="k">Head</div>
+        <div class="v">
+          <select id="ctlAttnHead" aria-label="Attention Head auswählen">
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
+        </div>
+      </div>
+      <div class="kv"><div class="k">Causal Mask</div>
+        <div class="v">
+          <label style="display:flex; align-items:center; gap:10px;">
+            <input id="ctlCausal" type="checkbox" />
+            <span class="small muted">nur ≤ i</span>
+          </label>
+        </div>
+      </div>
+    `;
+    box.appendChild(attn);
+
+    const la = attn.querySelector("#ctlAttnLayer");
+    const ha = attn.querySelector("#ctlAttnHead");
+    const ca = attn.querySelector("#ctlCausal");
+    la.value = String(state.params.attnLayer);
+    ha.value = String(state.params.attnHead);
+    ca.checked = !!state.params.causalMask;
+
+    la.addEventListener("change", (e) => { state.params.attnLayer = Number(e.target.value); render(); });
+    ha.addEventListener("change", (e) => { state.params.attnHead = Number(e.target.value); render(); });
+    ca.addEventListener("change", (e) => { state.params.causalMask = !!e.target.checked; render(); });
+
+    // Decoding params (v1.3): active controls for Logits view (Guided) and future Sandbox sampling
+    const dec = document.createElement("div");
+    dec.className = "notice";
+    dec.innerHTML = `
+      <div class="small muted">Decoding</div>
+
+      <div class="kv">
+        <div class="k">temperature</div>
+        <div class="v" style="display:flex; gap:10px; align-items:center;">
+          <input id="ctlTemp" type="range" min="0.2" max="1.5" step="0.1" />
+          <span class="mono" id="ctlTempVal"></span>
+        </div>
+      </div>
+
+      <div class="kv">
+        <div class="k">topP</div>
+        <div class="v" style="display:flex; gap:10px; align-items:center;">
+          <input id="ctlTopP" type="range" min="0.5" max="1.0" step="0.05" />
+          <span class="mono" id="ctlTopPVal"></span>
+        </div>
+      </div>
+
+      <div class="kv">
+        <div class="k">topK</div>
+        <div class="v" style="display:flex; gap:10px; align-items:center;">
+          <input id="ctlTopK" type="range" min="1" max="20" step="1" />
+          <span class="mono" id="ctlTopKVal"></span>
+        </div>
+      </div>
+    `;
+    box.appendChild(dec);
+
+    const ctlTemp = dec.querySelector("#ctlTemp");
+    const ctlTopP = dec.querySelector("#ctlTopP");
+    const ctlTopK = dec.querySelector("#ctlTopK");
+    const ctlTempVal = dec.querySelector("#ctlTempVal");
+    const ctlTopPVal = dec.querySelector("#ctlTopPVal");
+    const ctlTopKVal = dec.querySelector("#ctlTopKVal");
+
+    ctlTemp.value = String(state.params.temperature);
+    ctlTopP.value = String(state.params.topP);
+    ctlTopK.value = String(state.params.topK);
+
+    const syncDecLabels = () => {
+      ctlTempVal.textContent = Number(state.params.temperature).toFixed(1);
+      ctlTopPVal.textContent = Number(state.params.topP).toFixed(2);
+      ctlTopKVal.textContent = String(state.params.topK);
+    };
+    syncDecLabels();
+
+    ctlTemp.addEventListener("input", (e) => {
+      state.params.temperature = Number(e.target.value);
+      invalidateDecodingCache();
+      syncDecLabels();
+      render();
+    });
+    ctlTopP.addEventListener("input", (e) => {
+      state.params.topP = Number(e.target.value);
+      invalidateDecodingCache();
+      syncDecLabels();
+      render();
+    });
+    ctlTopK.addEventListener("input", (e) => {
+      state.params.topK = Number(e.target.value);
+      invalidateDecodingCache();
+      syncDecLabels();
+      render();
+    });
+
+    return box;
+  }
+
+  // -----------------------------
+  // Helpers
+  // -----------------------------
+  
+
+  function invalidateEmbeddingCache(){
+    state.cache.embeddings = null;
+    state.cache.embeddingKey = null;
+    // v1.4.5: separate cache for base embeddings (without positional encoding)
+    state.cache.baseEmbeddings = null;
+    state.cache.baseEmbeddingKey = null;
+  }
+
+  // v1.4.5: read optional embedding spec from scenario
+  function getScenarioEmbeddingSpec(scenario){
+    const spec = scenario?.embeddings;
+    if(!spec || typeof spec !== "object") return null;
+    const mode = String(spec.mode || "").toLowerCase();
+    if(mode !== "groups") return null;
+    const groups = spec.groups;
+    if(!groups || typeof groups !== "object") return null;
+    return { mode, groups };
+  }
+
+  // v1.4.5: base embeddings (without positional encoding)
+  function getBaseEmbeddingsForScenario(scenario, tokens){
+    const d = state.params.dModel;
+
+    const spec = getScenarioEmbeddingSpec(scenario);
+    const specKey = spec
+      ? stableHash("spec|" + JSON.stringify(spec.groups) + "|d" + d)
+      : 0;
+
+    const key = [
+      scenario?.id ?? "no-scenario",
+      String(d),
+      String(tokens?.length ?? 0),
+      (tokens || []).map(t => String(t.id)).join(","),
+      String(specKey)
+    ].join("|");
+
+    if(state.cache.baseEmbeddingKey === key && Array.isArray(state.cache.baseEmbeddings)){
+      return state.cache.baseEmbeddings;
+    }
+
+    let out;
+    if(spec){
+      // Build membership map from token text (trim leading spaces)
+      const membership = new Map();
+      for(const [gName, arr] of Object.entries(spec.groups)){
+        if(!Array.isArray(arr)) continue;
+        for(const tok of arr){
+          const k = stripLeadingSpace(String(tok));
+          if(k) membership.set(k, String(gName));
+        }
+      }
+
+      // Group base vectors
+      const groupBase = {};
+      for(const gName of Object.keys(spec.groups)){
+        const baseSeed = stableHash(`grp|${scenario?.id ?? "x"}|${gName}|d${d}`);
+        groupBase[gName] = seededVector(baseSeed, d);
+      }
+
+      out = (tokens || []).map((t) => {
+        const name = stripLeadingSpace(t.text);
+        const g = membership.get(name);
+        if(g && groupBase[g]){
+          // Small deterministic jitter per token (keeps cluster tight but not identical)
+          const j = seededVector(stableHash(`jit|${scenario?.id ?? "x"}|${t.id}|d${d}`), d).map(x => x * 0.08);
+          return groupBase[g].map((v,i) => v + j[i]);
+        }
+        // Fallback: seeded per-token vector (same as before)
+        const base = seededVector(stableHash(`tok|${scenario?.id ?? "x"}|${t.id}|d${d}`), d);
+        return base;
+      });
+    } else {
+      // Original behavior: deterministic per token
+      const seed = stableHash(`${scenario?.id ?? "no-scenario"}|base|d${d}|${(tokens || []).map(t => String(t.id)).join(",")}`);
+      out = (tokens || []).map((t) => seededVector(seed ^ (t.id * 2654435761), d));
+    }
+
+    state.cache.baseEmbeddingKey = key;
+    state.cache.baseEmbeddings = out;
+    return out;
+  }
+
+
+  function getEmbeddingsForScenario(scenario, tokens){
+    const key = [
+      scenario?.id ?? "no-scenario",
+      String(state.params.dModel),
+      String(!!state.params.posEnc),
+      String(tokens?.length ?? 0),
+      (tokens || []).map(t => String(t.id)).join(","),
+      // include scenario embedding spec (if any) so cache invalidates correctly
+      String(stableHash("spec|" + JSON.stringify(getScenarioEmbeddingSpec(scenario)?.groups || {}) + "|d" + String(state.params.dModel)))
+    ].join("|");
+
+    if(state.cache.embeddingKey === key && Array.isArray(state.cache.embeddings)){
+      return state.cache.embeddings;
+    }
+
+    const d = state.params.dModel;
+    const base = getBaseEmbeddingsForScenario(scenario, tokens);
+
+    const out = (tokens || []).map((t, pos) => {
+      if(state.params.posEnc){
+        const pe = positionalEncoding(pos, d);
+        return base[pos].map((v, i) => v + pe[i]);
+      }
+      return base[pos];
+    });
+
+    state.cache.embeddingKey = key;
+    state.cache.embeddings = out;
+    return out;
+  }
+
+  // Seeded pseudo-random vector in [-1, 1]
+  function seededVector(seed, dim){
+    const v = new Array(dim);
+    let x = seed >>> 0;
+    for(let i=0;i<dim;i++){
+      x = xorshift32(x);
+      // map to [0,1)
+      const u = (x >>> 0) / 4294967296;
+      v[i] = (u * 2) - 1;
+    }
+    return v;
+  }
+
+  // Simple sin/cos positional encoding (not exact to any specific model, but consistent)
+  function positionalEncoding(pos, dim){
+    const pe = new Array(dim);
+    for(let i=0;i<dim;i++){
+      const denom = Math.pow(10000, (2 * Math.floor(i/2)) / dim);
+      const angle = pos / denom;
+      pe[i] = (i % 2 === 0) ? Math.sin(angle) : Math.cos(angle);
+    }
+    return pe;
+  }
+
+  // Small bar visualization for vectors (auto-scaled by absolute value)
+  function vectorBars(vec){
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gridTemplateColumns = `repeat(${Math.min(vec.length, 32)}, 1fr)`;
+    wrap.style.gap = "3px";
+    wrap.style.alignItems = "end";
+    wrap.style.padding = "8px 10px";
+    wrap.style.borderRadius = "12px";
+    wrap.style.border = "1px solid rgba(34,48,68,.85)";
+    wrap.style.background = "rgba(15,22,35,.75)";
+
+    const maxAbs = Math.max(0.0001, ...vec.map(x => Math.abs(x)));
+    for(let i=0;i<vec.length;i++){
+      const b = document.createElement("div");
+      const h = Math.max(2, Math.round((Math.abs(vec[i]) / maxAbs) * 36));
+      b.style.height = h + "px";
+      b.style.borderRadius = "4px";
+      // Use opacity to encode sign (positive brighter)
+      b.style.background = "rgba(102,217,239," + (vec[i] >= 0 ? "0.75" : "0.30") + ")";
+      wrap.appendChild(b);
+    }
+
+    return wrap;
+  }
+
+  // Deterministic hash for strings (32-bit)
+  function stableHash(str){
+    let h = 2166136261 >>> 0;
+    for(let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function xorshift32(x){
+    x ^= x << 13;
+    x ^= x >>> 17;
+    x ^= x << 5;
+    return x >>> 0;
+  }
+
+  // -----------------------------
+  // Attention helpers (v1.2)
+  // -----------------------------
+  function softmax(arr){
+    if(!arr.length) return [];
+    const m = Math.max(...arr);
+    const exps = arr.map(x => Math.exp(x - m));
+    const s = exps.reduce((a,b)=>a+b, 0) || 1;
+    return exps.map(e => e / s);
+  }
+
+
+  function cosineSimilarity(a,b){
+    const n = Math.min(a.length, b.length);
+    if(n === 0) return 0;
+    let da = 0, db = 0, dp = 0;
+    for(let i=0;i<n;i++){
+      const x = a[i], y = b[i];
+      dp += x*y;
+      da += x*x;
+      db += y*y;
+    }
+    const denom = Math.sqrt(Math.max(1e-12, da)) * Math.sqrt(Math.max(1e-12, db));
+    return dp / denom;
+  }
+
+  function dot(a,b){
+    let s = 0;
+    const n = Math.min(a.length, b.length);
+    for(let i=0;i<n;i++) s += a[i]*b[i];
+    return s;
+  }
+
+  
+// -----------------------------
+// 7) Attention (toy)
+// -----------------------------
+function buildAttentionMatrix(scenario, tokens){
+    // 1) If replay attention exists, prefer it.
+    const r = scenario?.replay?.layers;
+    if(Array.isArray(r) && r.length){
+      const layerObj = r.find(x => x.layer === state.params.attnLayer) || r[0];
+      const heads = layerObj?.heads;
+      if(Array.isArray(heads) && heads.length){
+        const headObj = heads.find(h => h.head === state.params.attnHead) || heads[0];
+        if(Array.isArray(headObj?.attention)) return headObj.attention;
+      }
+    }
+
+    // 2) Otherwise: seeded, explainable toy attention based on embedding similarity.
+    const E = getEmbeddingsForScenario(scenario, tokens); // [T][d]
+    const T = E.length;
+    const scale = 1 / Math.sqrt(Math.max(1, state.params.dModel));
+
+    // Head-specific seed perturbation to create different "patterns"
+    const headSeed = stableHash(`${scenario?.id}|L${state.params.attnLayer}|H${state.params.attnHead}|d${state.params.dModel}`);
+
+    // Create simple Q and K projections by mixing embedding dimensions deterministically
+    const Q = E.map((v, i) => mixVector(v, headSeed ^ (i*101), +1));
+    const K = E.map((v, i) => mixVector(v, headSeed ^ (i*131), -1));
+
+    const M = Array.from({length:T}, () => Array(T).fill(0));
+
+    for(let i=0;i<T;i++){
+      const scores = [];
+      for(let j=0;j<T;j++){
+        // causal mask: only attend to <= i
+        if(state.params.causalMask && j > i){
+          scores.push(-1e9);
+          continue;
+        }
+        scores.push(dot(Q[i], K[j]) * scale);
+      }
+      const probs = softmax(scores);
+      for(let j=0;j<T;j++) M[i][j] = probs[j];
+    }
+    return M;
+  }
+
+  function mixVector(v, seed, sign){
+    const dim = v.length;
+    const out = new Array(dim);
+    let x = seed >>> 0;
+    for(let i=0;i<dim;i++){
+      x = xorshift32(x);
+      const j = x % dim;
+      const noise = Math.sin((i+1) * 0.7) * 0.03 * sign;
+      out[i] = v[j] + noise;
+    }
+    return out;
+  }
+
+  function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+
+
+  // -----------------------------
+  // Decoding / Logits helpers (v1.3)
+  // -----------------------------
+  function invalidateDecodingCache(){
+    state.cache.decodingSteps = null;
+    state.cache.decodingKey = null;
+  }
+
+  function simpleOutputTokens(outputText){
+    const txt = (outputText || "").trim();
+    if(!txt) return [];
+    // Keep punctuation as separate tokens for didactic clarity.
+    // This is NOT real BPE; it's a readable approximation for the logits view.
+    const parts = txt
+      .replace(/([.,!?;:])/g, " $1 ")
+      .split(/\s+/)
+      .filter(Boolean);
+    return parts;
+  }
+
+  function getDecodingSteps(scenario){
+    const outputText = scenario?.generation?.outputText ?? "";
+    const outToks = simpleOutputTokens(outputText);
+    const key = [
+      scenario?.id ?? "no-scenario",
+      "steps",
+      String(state.params.temperature),
+      String(state.params.topP),
+      String(state.params.topK),
+      outToks.join("|")
+    ].join("|");
+
+    if(state.cache.decodingKey === key && Array.isArray(state.cache.decodingSteps)){
+      return state.cache.decodingSteps;
+    }
+
+    // If the scenario provides explicit steps, normalize to expected format.
+    const explicit = scenario?.generation?.steps;
+    if(Array.isArray(explicit) && explicit.length){
+      const norm = explicit.map((s, idx) => ({
+        step: s.step ?? (idx+1),
+        chosenToken: s.chosenToken ?? "",
+        topK: Array.isArray(s.topK) ? s.topK.map(x => ({ token: String(x.token), p: Number(x.p) })) : []
+      }));
+      state.cache.decodingKey = key;
+      state.cache.decodingSteps = norm;
+      return norm;
+    }
+
+    // Otherwise: build toy topK per output token (output fixed; probabilities simulated)
+    const steps = outToks.map((chosen, i) => {
+      const candidates = buildCandidateTokens(chosen);
+      const logits = toyLogitsForStep(scenario?.id ?? "x", i, candidates);
+      // Apply temperature (lower -> sharper)
+      const t = Math.max(0.2, Number(state.params.temperature) || 1);
+      const scaled = logits.map(x => x / t);
+      const probs = softmax(scaled);
+
+      // Pair + sort
+      let paired = candidates.map((tok, idx) => ({ token: tok, p: probs[idx] }))
+        .sort((a,b) => b.p - a.p);
+
+      // Apply topP (nucleus)
+      const topP = clamp01(Number(state.params.topP) || 1);
+      if(topP < 1){
+        let acc = 0;
+        const filtered = [];
+        for(const it of paired){
+          filtered.push(it);
+          acc += it.p;
+          if(acc >= topP) break;
+        }
+        paired = filtered;
+      }
+
+      // Apply topK
+      const topK = Math.max(1, Math.min(50, Number(state.params.topK) || 10));
+      paired = paired.slice(0, topK);
+
+      // Ensure chosen token is present (if it got filtered out, append it with tiny p)
+      if(!paired.some(x => x.token === chosen)){
+        paired.push({ token: chosen, p: Math.min(0.01, paired[paired.length-1]?.p ?? 0.01) });
+        paired.sort((a,b) => b.p - a.p);
+      }
+
+      // Renormalize for display
+      const s = paired.reduce((a,b)=>a+b.p, 0) || 1;
+      paired = paired.map(x => ({ token: x.token, p: x.p / s }));
+
+      return { step: i+1, chosenToken: chosen, topK: paired };
+    });
+
+    state.cache.decodingKey = key;
+    state.cache.decodingSteps = steps;
+    return steps;
+  }
+
+  function buildCandidateTokens(chosen){
+    // Small, human-friendly "toy vocab" for visualization.
+    // Ensures chosen token is included and adds plausible distractors.
+    const base = [
+      "Ein","Eine","Der","Die","Das","ist","sind","war","kann","auch","ein","eine",
+      "Hund","Hunde","Säugetier","Tier","Haustier","Leine","Führen","Menschen","domestiziertes",
+      "Finanzinstitut","Sitzgelegenheit","oder","zum","von",".",",","?","!"
+    ];
+    // Add a few generic fillers
+    const fillers = ["sehr","oft","meist","typisch","kurz","lang","weil","dass","und","aber"];
+    const set = new Set([...base, ...fillers, chosen]);
+    return [...set];
+  }
+
+  function toyLogitsForStep(scenarioId, stepIndex, candidates){
+    // Deterministic pseudo-logits per step
+    const seed = stableHash(`${scenarioId}|logits|${stepIndex}|${candidates.length}`);
+    let x = seed >>> 0;
+    const logits = new Array(candidates.length);
+    for(let i=0;i<candidates.length;i++){
+      x = xorshift32(x);
+      const u = (x >>> 0) / 4294967296; // [0,1)
+      // roughly normal-ish around 0
+      logits[i] = (u - 0.5) * 3.0;
+    }
+    // Give a deterministic boost to the chosen-looking tokens by pattern (not semantic)
+    // We don't know chosen here, but the distribution will still be stable and illustrative.
+    return logits;
+  }
+
+  function barsTopK(list, chosen){
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "8px";
+
+    const maxP = Math.max(0.0001, ...list.map(x => x.p));
+    for(const it of list){
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gridTemplateColumns = "auto 1fr auto";
+      row.style.gap = "10px";
+      row.style.alignItems = "center";
+
+      const tok = document.createElement("span");
+      tok.className = "mono";
+      tok.textContent = it.token;
+
+      const barOuter = document.createElement("div");
+      barOuter.style.height = "10px";
+      barOuter.style.borderRadius = "999px";
+      barOuter.style.border = "1px solid rgba(34,48,68,.85)";
+      barOuter.style.background = "rgba(15,22,35,.65)";
+      barOuter.style.overflow = "hidden";
+
+      const barInner = document.createElement("div");
+      barInner.style.height = "100%";
+      barInner.style.width = `${Math.max(2, Math.round((it.p / maxP) * 100))}%`;
+      barInner.style.borderRadius = "999px";
+      barInner.style.background = it.token === chosen
+        ? "rgba(110,231,183,.70)"
+        : "rgba(102,217,239,.55)";
+      barOuter.appendChild(barInner);
+
+      const pct = document.createElement("span");
+      pct.className = "mono small";
+      pct.textContent = (it.p * 100).toFixed(1) + "%";
+
+      row.appendChild(tok);
+      row.appendChild(barOuter);
+      row.appendChild(pct);
+      wrap.appendChild(row);
+    }
+    return wrap;
+  }
+
+function populateScenarioSelect(){
+    const doc = state.scenariosDoc;
+    el.scenarioSelect.innerHTML = "";
+    if(!doc || !Array.isArray(doc.scenarios) || !doc.scenarios.length){
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Keine Szenarien";
+      el.scenarioSelect.appendChild(opt);
+      return;
+    }
+    for(const s of doc.scenarios){
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.title || s.id;
+      el.scenarioSelect.appendChild(opt);
+    }
+  }
+
+  function selectDefaultScenario(){
+    const doc = state.scenariosDoc;
+    const def = doc?.meta?.defaultScenarioId;
+    const first = doc?.scenarios?.[0]?.id;
+    state.scenarioId = def || first || null;
+    if(state.scenarioId) el.scenarioSelect.value = state.scenarioId;
+  }
+
+  function getScenario(){
+    if(state.mode !== "guided") return null;
+    const list = state.scenariosDoc?.scenarios ?? [];
+    return list.find(s => s.id === state.scenarioId) || null;
+  }
+
+  function tokenRow(tokens, focusList){
+    const row = document.createElement("div");
+    row.className = "token-row";
+    for(const t of tokens){
+      const chip = document.createElement("span");
+      chip.className = "token" + (focusList.includes(stripLeadingSpace(t.text)) ? " focus" : "");
+      chip.innerHTML = `<span class="mono">${escapeHtml(t.text)}</span><span class="id">${escapeHtml(String(t.id))}</span>`;
+      row.appendChild(chip);
+    }
+    if(!tokens.length){
+      row.appendChild(pNotice("Keine Tokens.", true));
+    }
+    return row;
+  }
+
+  function stripLeadingSpace(s){ return (s || "").replace(/^\s+/, ""); }
+
+  function section(title, nodes){
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.style.background = "rgba(15,22,35,.55)";
+    wrap.style.borderRadius = "14px";
+    wrap.style.border = "1px solid rgba(34,48,68,.7)";
+    wrap.style.boxShadow = "none";
+
+    const h = document.createElement("div");
+    h.className = "card-h";
+    const h2 = document.createElement("h2"); h2.textContent = title;
+    h.appendChild(h2);
+    wrap.appendChild(h);
+
+    const b = document.createElement("div");
+    b.className = "card-b";
+    for(const n of nodes) b.appendChild(n);
+    wrap.appendChild(b);
+
+    return wrap;
+  }
+
+  function kv(k, v){
+    const row = document.createElement("div");
+    row.className = "kv";
+    const kEl = document.createElement("div");
+    kEl.className = "k";
+    kEl.textContent = k;
+    const vEl = document.createElement("div");
+    vEl.className = "v";
+    vEl.textContent = v;
+    row.appendChild(kEl);
+    row.appendChild(vEl);
+    return row;
+  }
+
+  function pNotice(text, warn=false){
+    const d = document.createElement("div");
+    d.className = "notice" + (warn ? " warn" : "");
+    d.textContent = text;
+    return d;
+  }
+
+  function h3(text){
+    const h = document.createElement("div");
+    h.style.fontSize = "12px";
+    h.style.color = "var(--muted)";
+    h.style.marginTop = "10px";
+    h.style.marginBottom = "6px";
+    h.textContent = text;
+    return h;
+  }
+
+  function $(sel){ return document.querySelector(sel); }
+  
+// -----------------------------
+// 4) Math helpers (pure)
+// -----------------------------
+function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+  // NOTE: When inserting scenario text into innerHTML, always escape.
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+})();
+</script>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <div id="toastTitle" style="font-weight:600;">—</div>
+  <div id="toastBody" class="small">—</div>
+</div>
+</body>
+</html>
