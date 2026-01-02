@@ -717,7 +717,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.9";
+  const APP_VERSION = "v1.4.10";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2961,7 +2961,10 @@ const promptBox = document.createElement("div");
       // clone current inspector
       el.sheetBody.appendChild(el.inspector.cloneNode(true));
     } else if(tab === "explain"){
-      el.sheetBody.appendChild(el.explain.cloneNode(true));
+      // In Tools view we always show the explanation content, independent of the collapsed state in the main layout.
+      const c = el.explain.cloneNode(true);
+      c.style.display = "";
+      el.sheetBody.appendChild(c);
     }
   }
 
