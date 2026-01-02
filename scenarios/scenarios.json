@@ -9,7 +9,9 @@
     {
       "id": "baseline-hund",
       "title": "Basic · Orientierung — Text entsteht Schritt für Schritt",
-      "learningGoals": ["Next-Token-Prinzip"],
+      "learningGoals": [
+        "Next-Token-Prinzip"
+      ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
@@ -18,11 +20,26 @@
       },
       "tokenization": {
         "tokens": [
-          { "text": "Was", "id": 1001 },
-          { "text": " ist", "id": 1002 },
-          { "text": " ein", "id": 1003 },
-          { "text": " Hund", "id": 1004 },
-          { "text": "?", "id": 1005 }
+          {
+            "text": "Was",
+            "id": 1001
+          },
+          {
+            "text": " ist",
+            "id": 1002
+          },
+          {
+            "text": " ein",
+            "id": 1003
+          },
+          {
+            "text": " Hund",
+            "id": 1004
+          },
+          {
+            "text": "?",
+            "id": 1005
+          }
         ]
       },
       "generation": {
@@ -43,13 +60,17 @@
           "decoding": "Next-Token-Prinzip · Text entsteht Schritt für Schritt"
         }
       },
-      "tags": ["basic"]
+      "tags": [
+        "basic"
+      ]
     },
-
     {
       "id": "kompositum-hundeleine",
       "title": "Basic · Tokenisierung — Subwords statt ganzer Wörter",
-      "learningGoals": ["Tokenisierung", "Subwords"],
+      "learningGoals": [
+        "Tokenisierung",
+        "Subwords"
+      ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
@@ -58,19 +79,40 @@
       },
       "tokenization": {
         "tokens": [
-          { "text": "Was", "id": 1101 },
-          { "text": " ist", "id": 1102 },
-          { "text": " eine", "id": 1103 },
-          { "text": " Hund", "id": 1104 },
-          { "text": "eleine", "id": 1105 },
-          { "text": "?", "id": 1106 }
+          {
+            "text": "Was",
+            "id": 1101
+          },
+          {
+            "text": " ist",
+            "id": 1102
+          },
+          {
+            "text": " eine",
+            "id": 1103
+          },
+          {
+            "text": " Hund",
+            "id": 1104
+          },
+          {
+            "text": "eleine",
+            "id": 1105
+          },
+          {
+            "text": "?",
+            "id": 1106
+          }
         ]
       },
       "generation": {
         "outputText": "Eine Hundeleine ist eine Leine zum Führen eines Hundes."
       },
       "highlights": {
-        "tokenFocus": ["Hund", "eleine"],
+        "tokenFocus": [
+          "Hund",
+          "eleine"
+        ],
         "explain": [
           {
             "at": "tokenization",
@@ -81,13 +123,16 @@
           "tokenization": "Subword-Tokenisierung · Zerlegung in Teilstücke"
         }
       },
-      "tags": ["basic"]
+      "tags": [
+        "basic"
+      ]
     },
-
     {
       "id": "posenc-hund-hund-hund",
       "title": "Ref 01 · Positionsinformation — Gleiche Tokens, unterschiedliche Position",
-      "learningGoals": ["Positional Encoding"],
+      "learningGoals": [
+        "Positional Encoding"
+      ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
@@ -96,9 +141,18 @@
       },
       "tokenization": {
         "tokens": [
-          { "text": "Hund", "id": 1201 },
-          { "text": " Hund", "id": 1201 },
-          { "text": " Hund", "id": 1201 }
+          {
+            "text": "Hund",
+            "id": 1201
+          },
+          {
+            "text": " Hund",
+            "id": 1201
+          },
+          {
+            "text": " Hund",
+            "id": 1201
+          }
         ]
       },
       "generation": {
@@ -119,13 +173,17 @@
           "embedding": "Positionsinformation · Identische Tokens werden unterscheidbar"
         }
       },
-      "tags": ["referenz"]
+      "tags": [
+        "referenz"
+      ]
     },
-
     {
       "id": "roles-mann-sieht-hund",
       "title": "Ref 04a · Reihenfolge & Rollen — Der Mann sieht den Hund",
-      "learningGoals": ["Reihenfolge", "Rollen"],
+      "learningGoals": [
+        "Reihenfolge",
+        "Rollen"
+      ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
@@ -134,11 +192,26 @@
       },
       "tokenization": {
         "tokens": [
-          { "text": "Der", "id": 1501 },
-          { "text": " Mann", "id": 1502 },
-          { "text": " sieht", "id": 1503 },
-          { "text": " den", "id": 1504 },
-          { "text": " Hund", "id": 1505 }
+          {
+            "text": "Der",
+            "id": 1501
+          },
+          {
+            "text": " Mann",
+            "id": 1502
+          },
+          {
+            "text": " sieht",
+            "id": 1503
+          },
+          {
+            "text": " den",
+            "id": 1504
+          },
+          {
+            "text": " Hund",
+            "id": 1505
+          }
         ]
       },
       "generation": {
@@ -160,13 +233,17 @@
           "attention": "Beziehungen · Wer bezieht sich auf wen"
         }
       },
-      "tags": ["referenz"]
+      "tags": [
+        "referenz"
+      ]
     },
-
     {
       "id": "roles-hund-sieht-mann",
       "title": "Ref 04b · Reihenfolge & Rollen — Der Hund sieht den Mann",
-      "learningGoals": ["Reihenfolge", "Rollen"],
+      "learningGoals": [
+        "Reihenfolge",
+        "Rollen"
+      ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
@@ -175,11 +252,26 @@
       },
       "tokenization": {
         "tokens": [
-          { "text": "Der", "id": 1501 },
-          { "text": " Hund", "id": 1505 },
-          { "text": " sieht", "id": 1503 },
-          { "text": " den", "id": 1504 },
-          { "text": " Mann", "id": 1502 }
+          {
+            "text": "Der",
+            "id": 1501
+          },
+          {
+            "text": " Hund",
+            "id": 1505
+          },
+          {
+            "text": " sieht",
+            "id": 1503
+          },
+          {
+            "text": " den",
+            "id": 1504
+          },
+          {
+            "text": " Mann",
+            "id": 1502
+          }
         ]
       },
       "generation": {
@@ -201,13 +293,17 @@
           "attention": "Beziehungen · Wer bezieht sich auf wen"
         }
       },
-      "tags": ["referenz"]
+      "tags": [
+        "referenz"
+      ]
     },
-
     {
       "id": "attention-hund-beisst-mann",
       "title": "Ref 02a · Attention — Welche Tokens beziehen sich aufeinander?",
-      "learningGoals": ["Attention", "Kontextgewichtung"],
+      "learningGoals": [
+        "Attention",
+        "Kontextgewichtung"
+      ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
@@ -216,11 +312,26 @@
       },
       "tokenization": {
         "tokens": [
-          { "text": "Der", "id": 1301 },
-          { "text": " Hund", "id": 1302 },
-          { "text": " beißt", "id": 1303 },
-          { "text": " den", "id": 1304 },
-          { "text": " Mann", "id": 1305 }
+          {
+            "text": "Der",
+            "id": 1301
+          },
+          {
+            "text": " Hund",
+            "id": 1302
+          },
+          {
+            "text": " beißt",
+            "id": 1303
+          },
+          {
+            "text": " den",
+            "id": 1304
+          },
+          {
+            "text": " Mann",
+            "id": 1305
+          }
         ]
       },
       "generation": {
@@ -241,13 +352,17 @@
           "attention": "Attention · Kontextgewichtung zwischen Tokens"
         }
       },
-      "tags": ["referenz"]
+      "tags": [
+        "referenz"
+      ]
     },
-
     {
       "id": "limits-bank-geschlossen",
       "title": "Ref 05 · Grenzen — Mehrdeutigkeit ohne Kontext",
-      "learningGoals": ["Mehrdeutigkeit", "Kontextgrenzen"],
+      "learningGoals": [
+        "Mehrdeutigkeit",
+        "Kontextgrenzen"
+      ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
@@ -256,10 +371,22 @@
       },
       "tokenization": {
         "tokens": [
-          { "text": "Die", "id": 1701 },
-          { "text": " Bank", "id": 1702 },
-          { "text": " ist", "id": 1703 },
-          { "text": " geschlossen", "id": 1704 }
+          {
+            "text": "Die",
+            "id": 1701
+          },
+          {
+            "text": " Bank",
+            "id": 1702
+          },
+          {
+            "text": " ist",
+            "id": 1703
+          },
+          {
+            "text": " geschlossen",
+            "id": 1704
+          }
         ]
       },
       "generation": {
@@ -280,13 +407,17 @@
           "attention": "Grenzen · Kontextgewichtung ist kein Weltwissen"
         }
       },
-      "tags": ["referenz"]
+      "tags": [
+        "referenz"
+      ]
     },
-
     {
       "id": "decoding-der-hund-ist-ein",
       "title": "Ref 03 · Decoding — Auswahl einer plausiblen Fortsetzung",
-      "learningGoals": ["Decoding", "Auswahl"],
+      "learningGoals": [
+        "Decoding",
+        "Auswahl"
+      ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
@@ -295,10 +426,22 @@
       },
       "tokenization": {
         "tokens": [
-          { "text": "Der", "id": 1401 },
-          { "text": " Hund", "id": 1402 },
-          { "text": " ist", "id": 1403 },
-          { "text": " ein", "id": 1404 }
+          {
+            "text": "Der",
+            "id": 1401
+          },
+          {
+            "text": " Hund",
+            "id": 1402
+          },
+          {
+            "text": " ist",
+            "id": 1403
+          },
+          {
+            "text": " ein",
+            "id": 1404
+          }
         ]
       },
       "generation": {
@@ -320,13 +463,17 @@
           "logits": "Logits · Mehrere Kandidaten gleichzeitig"
         }
       },
-      "tags": ["referenz"]
+      "tags": [
+        "referenz"
+      ]
     },
-
     {
       "id": "embeddings-semantic-clusters",
       "title": "Ref 06 · Embeddings — Nähe und Distanz im Bedeutungsraum",
-      "learningGoals": ["Embeddings", "Semantische Nähe"],
+      "learningGoals": [
+        "Embeddings",
+        "Semantische Nähe"
+      ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
@@ -335,17 +482,35 @@
       },
       "tokenization": {
         "tokens": [
-          { "text": "Mann", "id": 2001 },
-          { "text": " Mensch", "id": 2002 },
-          { "text": " Radio", "id": 2003 },
-          { "text": " Auto", "id": 2004 }
+          {
+            "text": "Mann",
+            "id": 2001
+          },
+          {
+            "text": " Mensch",
+            "id": 2002
+          },
+          {
+            "text": " Radio",
+            "id": 2003
+          },
+          {
+            "text": " Auto",
+            "id": 2004
+          }
         ]
       },
       "embeddings": {
         "mode": "groups",
         "groups": {
-          "human": ["Mann", "Mensch"],
-          "tech": ["Radio", "Auto"]
+          "human": [
+            "Mann",
+            "Mensch"
+          ],
+          "tech": [
+            "Radio",
+            "Auto"
+          ]
         },
         "params": {
           "jitter": 0.1,
@@ -375,13 +540,17 @@
           "embedding": "Embeddings · Nähe und Distanz im Raum"
         }
       },
-      "tags": ["referenz"]
+      "tags": [
+        "referenz"
+      ]
     },
-
     {
       "id": "attention-mlp-followup",
       "title": "Ref 02b · MLP — Transformation nach Kontext",
-      "learningGoals": ["MLP", "Transformation"],
+      "learningGoals": [
+        "MLP",
+        "Transformation"
+      ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
@@ -410,423 +579,9 @@
           "mlp": "MLP · Transformation nach Kontext"
         }
       },
-      "tags": ["epilog"]
-    }
-  ]
-}
-{
-  "meta": {
-    "version": "v1.4.15-didactic-freeze",
-    "project": "cher-llm-simulator",
-    "description": "LLM Simulator – Didaktisch konsolidierte Referenzszenarien",
-    "defaultScenarioId": "posenc-hund-hund-hund"
-  },
-  "scenarios": [
-    {
-      "id": "baseline-hund",
-      "title": "Basic · Orientierung — Text entsteht Schritt für Schritt",
-      "learningGoals": ["Next-Token-Prinzip"],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Antworte in einem Satz.",
-        "user": "Was ist ein Hund?"
-      },
-      "tokenization": {
-        "tokens": [
-          { "text": "Was", "id": 1001 },
-          { "text": " ist", "id": 1002 },
-          { "text": " ein", "id": 1003 },
-          { "text": " Hund", "id": 1004 },
-          { "text": "?", "id": 1005 }
-        ]
-      },
-      "generation": {
-        "outputText": "Ein Hund ist ein Säugetier."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "decoding",
-            "text": "Die Ausgabe entsteht schrittweise: Das Modell wählt jeweils das nächste Token (Next-Token-Prinzip)."
-          },
-          {
-            "at": "tokenization",
-            "text": "Tokens sind die Einheiten, mit denen das Modell arbeitet. Sie sind nicht immer identisch mit ganzen Wörtern."
-          }
-        ],
-        "focusByStep": {
-          "decoding": "Next-Token-Prinzip · Text entsteht Schritt für Schritt"
-        }
-      },
-      "tags": ["basic"]
-    },
-
-    {
-      "id": "kompositum-hundeleine",
-      "title": "Basic · Tokenisierung — Subwords statt ganzer Wörter",
-      "learningGoals": ["Tokenisierung", "Subwords"],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Antworte kurz.",
-        "user": "Was ist eine Hundeleine?"
-      },
-      "tokenization": {
-        "tokens": [
-          { "text": "Was", "id": 1101 },
-          { "text": " ist", "id": 1102 },
-          { "text": " eine", "id": 1103 },
-          { "text": " Hund", "id": 1104 },
-          { "text": "eleine", "id": 1105 },
-          { "text": "?", "id": 1106 }
-        ]
-      },
-      "generation": {
-        "outputText": "Eine Hundeleine ist eine Leine zum Führen eines Hundes."
-      },
-      "highlights": {
-        "tokenFocus": ["Hund", "eleine"],
-        "explain": [
-          {
-            "at": "tokenization",
-            "text": "Komposita werden in bekannte Teilstücke (Subwords) zerlegt. Das Modell erkennt dabei keine Bedeutung, sondern nutzt ein endliches Vokabular."
-          }
-        ],
-        "focusByStep": {
-          "tokenization": "Subword-Tokenisierung · Zerlegung in Teilstücke"
-        }
-      },
-      "tags": ["basic"]
-    },
-
-    {
-      "id": "posenc-hund-hund-hund",
-      "title": "Ref 01 · Positionsinformation — Gleiche Tokens, unterschiedliche Position",
-      "learningGoals": ["Positional Encoding"],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Beobachte die Verarbeitung, nicht die Textantwort.",
-        "user": "Hund Hund Hund"
-      },
-      "tokenization": {
-        "tokens": [
-          { "text": "Hund", "id": 1201 },
-          { "text": " Hund", "id": 1201 },
-          { "text": " Hund", "id": 1201 }
-        ]
-      },
-      "generation": {
-        "outputText": "(Guided) Ausgabe bleibt stabil – beobachte Embeddings."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "embedding",
-            "text": "Alle drei Tokens sind inhaltlich identisch. Erst durch ihre Position im Text werden sie für das Modell unterscheidbar."
-          },
-          {
-            "at": "embedding",
-            "text": "Führende Leerzeichen gehören technisch zum Token-Text. Für dieses Beispiel ist entscheidend: Der inhaltliche Token ist gleich, die Position ist unterschiedlich."
-          }
-        ],
-        "focusByStep": {
-          "embedding": "Positionsinformation · Identische Tokens werden unterscheidbar"
-        }
-      },
-      "tags": ["referenz"]
-    },
-
-    {
-      "id": "roles-mann-sieht-hund",
-      "title": "Ref 04a · Reihenfolge & Rollen — Der Mann sieht den Hund",
-      "learningGoals": ["Reihenfolge", "Rollen"],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Vergleiche mit dem Szenario „Der Hund sieht den Mann“.",
-        "user": "Der Mann sieht den Hund"
-      },
-      "tokenization": {
-        "tokens": [
-          { "text": "Der", "id": 1501 },
-          { "text": " Mann", "id": 1502 },
-          { "text": " sieht", "id": 1503 },
-          { "text": " den", "id": 1504 },
-          { "text": " Hund", "id": 1505 }
-        ]
-      },
-      "generation": {
-        "outputText": "(Guided) Vergleiche Beziehungen und Rollen."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "embedding",
-            "text": "Gleiche Tokens in anderer Reihenfolge erzeugen andere Beziehungen im Satz."
-          },
-          {
-            "at": "attention",
-            "text": "Die Attention-Muster verändern sich, weil sich die Beziehungen zwischen den Tokens ändern."
-          }
-        ],
-        "focusByStep": {
-          "embedding": "Reihenfolge · Gleiche Tokens, andere Bedeutung",
-          "attention": "Beziehungen · Wer bezieht sich auf wen"
-        }
-      },
-      "tags": ["referenz"]
-    },
-
-    {
-      "id": "roles-hund-sieht-mann",
-      "title": "Ref 04b · Reihenfolge & Rollen — Der Hund sieht den Mann",
-      "learningGoals": ["Reihenfolge", "Rollen"],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Vergleiche mit dem Szenario „Der Mann sieht den Hund“.",
-        "user": "Der Hund sieht den Mann"
-      },
-      "tokenization": {
-        "tokens": [
-          { "text": "Der", "id": 1501 },
-          { "text": " Hund", "id": 1505 },
-          { "text": " sieht", "id": 1503 },
-          { "text": " den", "id": 1504 },
-          { "text": " Mann", "id": 1502 }
-        ]
-      },
-      "generation": {
-        "outputText": "(Guided) Vergleiche Beziehungen und Rollen."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "embedding",
-            "text": "Gleiche Tokens in anderer Reihenfolge erzeugen andere Beziehungen im Satz."
-          },
-          {
-            "at": "attention",
-            "text": "Die Attention-Muster verändern sich, weil sich die Beziehungen zwischen den Tokens ändern."
-          }
-        ],
-        "focusByStep": {
-          "embedding": "Reihenfolge · Gleiche Tokens, andere Bedeutung",
-          "attention": "Beziehungen · Wer bezieht sich auf wen"
-        }
-      },
-      "tags": ["referenz"]
-    },
-
-    {
-      "id": "attention-hund-beisst-mann",
-      "title": "Ref 02a · Attention — Welche Tokens beziehen sich aufeinander?",
-      "learningGoals": ["Attention", "Kontextgewichtung"],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Beobachte die Attention-Gewichtung.",
-        "user": "Der Hund beißt den Mann"
-      },
-      "tokenization": {
-        "tokens": [
-          { "text": "Der", "id": 1301 },
-          { "text": " Hund", "id": 1302 },
-          { "text": " beißt", "id": 1303 },
-          { "text": " den", "id": 1304 },
-          { "text": " Mann", "id": 1305 }
-        ]
-      },
-      "generation": {
-        "outputText": "(Guided) Beobachte die Kontextgewichtung."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "attention",
-            "text": "Attention verteilt Gewicht auf andere Tokens im Text. Sie entscheidet nichts und erzeugt kein Verständnis."
-          },
-          {
-            "at": "attention",
-            "text": "Die Gewichte zeigen, welche Tokens für andere Tokens gerade relevant sind."
-          }
-        ],
-        "focusByStep": {
-          "attention": "Attention · Kontextgewichtung zwischen Tokens"
-        }
-      },
-      "tags": ["referenz"]
-    },
-
-    {
-      "id": "limits-bank-geschlossen",
-      "title": "Ref 05 · Grenzen — Mehrdeutigkeit ohne Kontext",
-      "learningGoals": ["Mehrdeutigkeit", "Kontextgrenzen"],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Beachte: Mehrdeutigkeit kann bestehen bleiben.",
-        "user": "Die Bank ist geschlossen"
-      },
-      "tokenization": {
-        "tokens": [
-          { "text": "Die", "id": 1701 },
-          { "text": " Bank", "id": 1702 },
-          { "text": " ist", "id": 1703 },
-          { "text": " geschlossen", "id": 1704 }
-        ]
-      },
-      "generation": {
-        "outputText": "(Guided) Mehrdeutigkeit bleibt möglich."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "attention",
-            "text": "Attention kann nur vorhandene Tokens gewichten. Sie fügt kein Weltwissen hinzu und entscheidet keine Bedeutung."
-          },
-          {
-            "at": "attention",
-            "text": "Unklare Ergebnisse sind kein Fehler des Modells, sondern eine Folge unklarer Eingaben."
-          }
-        ],
-        "focusByStep": {
-          "attention": "Grenzen · Kontextgewichtung ist kein Weltwissen"
-        }
-      },
-      "tags": ["referenz"]
-    },
-
-    {
-      "id": "decoding-der-hund-ist-ein",
-      "title": "Ref 03 · Decoding — Auswahl einer plausiblen Fortsetzung",
-      "learningGoals": ["Decoding", "Auswahl"],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Beobachte die Auswahl der Fortsetzung.",
-        "user": "Der Hund ist ein"
-      },
-      "tokenization": {
-        "tokens": [
-          { "text": "Der", "id": 1401 },
-          { "text": " Hund", "id": 1402 },
-          { "text": " ist", "id": 1403 },
-          { "text": " ein", "id": 1404 }
-        ]
-      },
-      "generation": {
-        "outputText": "Der Hund ist ein Säugetier."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "logits",
-            "text": "Logits bewerten mehrere mögliche nächste Tokens. Zu diesem Zeitpunkt ist noch nichts entschieden."
-          },
-          {
-            "at": "decoding",
-            "text": "Das Modell wählt nicht die wahre Antwort, sondern eine statistisch plausible Fortsetzung."
-          }
-        ],
-        "focusByStep": {
-          "decoding": "Decoding · Auswahl unter plausiblen Möglichkeiten",
-          "logits": "Logits · Mehrere Kandidaten gleichzeitig"
-        }
-      },
-      "tags": ["referenz"]
-    },
-
-    {
-      "id": "embeddings-semantic-clusters",
-      "title": "Ref 06 · Embeddings — Nähe und Distanz im Bedeutungsraum",
-      "learningGoals": ["Embeddings", "Semantische Nähe"],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Beobachte die Repräsentation, nicht die Antwort.",
-        "user": "Mann Mensch Radio Auto"
-      },
-      "tokenization": {
-        "tokens": [
-          { "text": "Mann", "id": 2001 },
-          { "text": " Mensch", "id": 2002 },
-          { "text": " Radio", "id": 2003 },
-          { "text": " Auto", "id": 2004 }
-        ]
-      },
-      "embeddings": {
-        "mode": "groups",
-        "groups": {
-          "human": ["Mann", "Mensch"],
-          "tech": ["Radio", "Auto"]
-        },
-        "params": {
-          "jitter": 0.1,
-          "groupSeparationHint": "high"
-        },
-        "notes": "Didaktische Beispiel-Embeddings: synthetisch erzeugt, nicht aus einem trainierten Modell."
-      },
-      "generation": {
-        "outputText": "(Guided) Fokus: Nähe und Distanz im Embedding-Raum."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "embedding",
-            "text": "Embeddings stellen Tokens als Punkte in einem Zahlenraum dar. Nähe entspricht Ähnlichkeit."
-          },
-          {
-            "at": "embedding",
-            "text": "Die hier gezeigten Embeddings sind synthetische Beispiele und dienen nur der Veranschaulichung."
-          },
-          {
-            "at": "embedding",
-            "text": "Ähnlichkeit entsteht aus statistischen Mustern, nicht aus Verständnis."
-          }
-        ],
-        "focusByStep": {
-          "embedding": "Embeddings · Nähe und Distanz im Raum"
-        }
-      },
-      "tags": ["referenz"]
-    },
-
-    {
-      "id": "attention-mlp-followup",
-      "title": "Ref 02b · MLP — Transformation nach Kontext",
-      "learningGoals": ["MLP", "Transformation"],
-      "mode": "simulated",
-      "promptStack": {
-        "system": "Du bist ein sachlicher Assistent.",
-        "instruction": "Dieses Szenario dient der Vollständigkeit.",
-        "user": "Der Hund beißt den Mann"
-      },
-      "generation": {
-        "outputText": "(Guided) Fokus: Transformation nach Kontext."
-      },
-      "highlights": {
-        "explain": [
-          {
-            "at": "mlp",
-            "text": "Das MLP verarbeitet kontextualisierte Token-Vektoren weiter. Es erkennt keine Bedeutungen und trifft keine Entscheidungen."
-          },
-          {
-            "at": "mlp",
-            "text": "Es handelt sich um einen mathematischen Transformationsschritt aus Gewichtungen und Aktivierungsfunktionen."
-          },
-          {
-            "at": "mlp",
-            "text": "Beziehungen entstehen durch Attention. Das MLP verändert diese Repräsentationen weiter, erzeugt sie aber nicht."
-          }
-        ],
-        "focusByStep": {
-          "mlp": "MLP · Transformation nach Kontext"
-        }
-      },
-      "tags": ["epilog"]
+      "tags": [
+        "epilog"
+      ]
     }
   ]
 }
