@@ -717,7 +717,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.13";
+  const APP_VERSION = "v1.4.14";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1736,7 +1736,16 @@ async function loadScenarios(url){
     const posEncToggle = controls.querySelector("#posEncToggle");
     posEncToggle.checked = !!state.params.posEnc;
     posEncToggle.addEventListener("change", (e) => {
-      state.params.posEnc = !!e.target.checked;
+      const nowOn = !!e.target.checked;
+      state.params.posEnc = nowOn;
+      // If positional encoding is turned on, switch similarity view to "Base + Positional Encoding"
+      // so changes become immediately visible (v1.4.14).
+      if(nowOn){
+        state.params.simVizMode = "withPos";
+      } else {
+        // When turning off, fall back to base.
+        state.params.simVizMode = "base";
+      }
       invalidateEmbeddingCache();
       render();
     });
