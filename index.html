@@ -585,8 +585,11 @@
         </div>
 
         <div class="card" style="background: rgba(15,22,35,.55); border-radius: var(--radius2); border:1px solid rgba(34,48,68,.7); box-shadow:none;">
-          <div class="card-h">
-            <h2>Erklärung</h2>
+          <div class="card-h" id="explainHeader" role="button" tabindex="0" aria-controls="explain" aria-expanded="false" style="cursor:pointer;">
+            <h2 style="display:flex; align-items:center; gap:8px; margin:0;">
+              <span id="explainChevron" class="small muted" aria-hidden="true">▸</span>
+              <span>Erklärung</span>
+            </h2>
             <span class="badge small mono" id="explainAt">—</span>
           </div>
           <div class="card-b" id="explain"></div>
@@ -714,7 +717,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.6";
+  const APP_VERSION = "v1.4.9";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -754,6 +757,7 @@ const state = {
       simVizMode: "base",   // base | withPos
       simRefIdx: 0,
       simDetailsOpen: false, // remember open/closed state of similarity details
+      explainOpen: false, // remember open/closed state of the Explanation panel (default: collapsed)
       
       decodeTopP: 1.0,
 decodeTopK: 0,
@@ -789,6 +793,8 @@ temperature: 0.8, topP: 0.9, topK: 10, dModel: 16, posEnc: true, attnLayer: 1, a
     view: $("#view"),
     explain: $("#explain"),
     explainAt: $("#explainAt"),
+    explainHeader: $("#explainHeader"),
+    explainChevron: $("#explainChevron"),
     scenarioGoals: $("#scenarioGoals"),
     warningBox: $("#warningBox"),
     inspector: $("#inspector"),
@@ -853,7 +859,8 @@ async function init(){
 
     // optional: load global explanations (non-blocking)
     loadExplanationsOptional("scenarios/explanations.vNext.json")
-      .then(() => { render(); });
+      .then(() => { render();
+  applyExplainOpenState(); });
     if(!loaded){
       // Fallback to embedded minimal scenarios (keeps app usable on file://)
       state.scenariosDoc = embeddedScenarios();
@@ -1040,6 +1047,27 @@ async function loadScenarios(url){
     el.modeSandbox.addEventListener("click", () => setMode("sandbox"));
     el.resetBtn.addEventListener("click", () => reset());
 
+  // Explanation panel toggle (v1.4.8)
+  function toggleExplain(){
+    state.params.explainOpen = !state.params.explainOpen;
+    applyExplainOpenState();
+  }
+  if(el.explainHeader){
+    el.explainHeader.addEventListener("click", toggleExplain);
+    el.explainHeader.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        toggleExplain();
+      }
+    });
+  }
+  if(el.explainToggle){
+    el.explainToggle.addEventListener("click", () => {
+      state.params.explainOpen = !state.params.explainOpen;
+      applyExplainOpenState();
+    });
+  }
+
     // Extra: pointer/touch handlers (iOS Safari sometimes misses click on overlays)
     el.closeSheetBtn?.addEventListener("pointerup", (e) => { e.preventDefault(); closeSheet(); });
     el.diagBtn?.addEventListener("pointerup", (e) => { e.preventDefault(); openDiag(); });
@@ -1145,6 +1173,7 @@ async function loadScenarios(url){
     renderGoals(scenario);
     renderView(state.step, scenario);
     renderExplain(state.step, scenario);
+    applyExplainOpenState();
     renderInspector(state.step, scenario);
     renderButtons();
 
@@ -1397,6 +1426,20 @@ async function loadScenarios(url){
     return { coreHtml, blocks, links };
   }
 
+  
+  function applyExplainOpenState(){
+    const open = !!state.params.explainOpen;
+    // Toggle body visibility
+    el.explain.style.display = open ? "" : "none";
+    // Header state + chevron
+    if(el.explainHeader){
+      el.explainHeader.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+    if(el.explainChevron){
+      el.explainChevron.textContent = open ? "▾" : "▸";
+    }
+  }
+
   function renderExplain(step, scenario){
     el.explainAt.textContent = step;
 
@@ -1504,6 +1547,7 @@ async function loadScenarios(url){
     }
 
     el.explain.replaceChildren(box);
+    applyExplainOpenState();
   }
 
   function genericExplain(step){
@@ -1731,6 +1775,10 @@ async function loadScenarios(url){
 
     
 
+    // Explanation block
+    wrap.appendChild(h3("Interpretation (wichtig)"));
+    wrap.appendChild(pNotice("Die Dimensionen haben keine direkte, menschenlesbare Bedeutung. Entscheidend ist: Tokens werden als Zahlenvektoren dargestellt, damit Matrixoperationen (z. B. Attention) möglich sind."));
+
     // --- Semantische Nähe (optional & aufklappbar) ---
 const embSpec = getScenarioEmbeddingSpec(scenario);
     const hasScenarioEmbeddings = !!embSpec;
@@ -1876,9 +1924,6 @@ const embSpec = getScenarioEmbeddingSpec(scenario);
       wrap.appendChild(details);
     }
 
-    // Explanation block
-    wrap.appendChild(h3("Interpretation (wichtig)"));
-    wrap.appendChild(pNotice("Die Dimensionen haben keine direkte, menschenlesbare Bedeutung. Entscheidend ist: Tokens werden als Zahlenvektoren dargestellt, damit Matrixoperationen (z. B. Attention) möglich sind."));
 
     return wrap;
   }
