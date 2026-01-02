@@ -1,8 +1,8 @@
 {
   "meta": {
-    "version": "v1.0",
+    "version": "v1.1",
     "project": "cher-llm-simulator",
-    "description": "LLM Simulator – Referenzszenarien v1.0 (kuratiert)",
+    "description": "LLM Simulator – Referenzszenarien v1.1 (kuratiert)",
     "defaultScenarioId": "posenc-hund-hund-hund"
   },
   "scenarios": [
@@ -469,6 +469,81 @@
       },
       "tags": [
         "basic"
+      ]
+    },
+    {
+      "id": "embeddings-semantic-clusters",
+      "title": "Ref 06 · Embeddings — Semantische Nähe: Zwei Cluster im Raum",
+      "learningGoals": [
+        "Embeddings",
+        "Semantische Nähe",
+        "Ähnlichkeit/Distanz",
+        "Cluster"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Beobachte die Verarbeitung, nicht die Textantwort.",
+        "user": "Mann Mensch Radio Auto"
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Mann",
+            "id": 2001
+          },
+          {
+            "text": " Mensch",
+            "id": 2002
+          },
+          {
+            "text": " Radio",
+            "id": 2003
+          },
+          {
+            "text": " Auto",
+            "id": 2004
+          }
+        ]
+      },
+      "embeddings": {
+        "mode": "groups",
+        "groups": {
+          "human": [
+            "Mann",
+            "Mensch"
+          ],
+          "tech": [
+            "Radio",
+            "Auto"
+          ]
+        },
+        "params": {
+          "jitter": 0.1,
+          "groupSeparationHint": "high"
+        },
+        "notes": "Didaktische Beispiel-Embeddings: Gruppen erzeugen Nähe im Raum (synthetisch, nicht aus einem trainierten Modell)."
+      },
+      "generation": {
+        "outputText": "(Guided) Fokus: Embeddings. Beobachte die Nähe innerhalb der Cluster (human/tech)."
+      },
+      "highlights": {
+        "explain": [
+          {
+            "at": "embedding",
+            "text": "In diesem Szenario werden Embeddings synthetisch so erzeugt, dass Tokens innerhalb eines Clusters (z. B. Mann/Mensch) näher beieinander liegen als Tokens aus verschiedenen Clustern (z. B. Mann/Radio)."
+          },
+          {
+            "at": "embedding",
+            "text": "Falls die App eine Ähnlichkeitsanzeige bietet, ist sie nur aktiv, wenn im Szenario ein embeddings-Block vorhanden ist."
+          }
+        ],
+        "focusByStep": {
+          "embedding": "Semantische Nähe · Zwei Cluster im Embedding-Raum"
+        }
+      },
+      "tags": [
+        "referenz"
       ]
     }
   ]
