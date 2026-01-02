@@ -714,7 +714,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.5";
+  const APP_VERSION = "v1.4.6";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -753,6 +753,7 @@ const state = {
       // Embedding similarity visualization (v1.4.5)
       simVizMode: "base",   // base | withPos
       simRefIdx: 0,
+      simDetailsOpen: false, // remember open/closed state of similarity details
       
       decodeTopP: 1.0,
 decodeTopK: 0,
@@ -1726,6 +1727,8 @@ async function loadScenarios(url){
       grid.appendChild(pNotice("Keine Tokens.", true));
     }
 
+    wrap.appendChild(grid);
+
     
 
     // --- Semantische Nähe (optional & aufklappbar) ---
@@ -1872,10 +1875,6 @@ const embSpec = getScenarioEmbeddingSpec(scenario);
       details.appendChild(inner);
       wrap.appendChild(details);
     }
-
-
-    
-wrap.appendChild(grid);
 
     // Explanation block
     wrap.appendChild(h3("Interpretation (wichtig)"));
