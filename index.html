@@ -717,7 +717,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.10";
+  const APP_VERSION = "v1.4.11";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2862,10 +2862,11 @@ const promptBox = document.createElement("div");
   // Mobile sheet rendering
   // -----------------------------
   function updateResponsiveControls(){
-    const isMobile = window.matchMedia("(max-width: 767px)").matches;
-    el.mobileToolsBtn.style.display = isMobile ? "" : "none";
-    // If we leave mobile while sheet open, close it.
-    if(!isMobile) closeSheet();
+    // Show Tools button whenever the right sidebar (Inspector/Erklärung) is hidden by responsive layout.
+    const isCompact = window.matchMedia("(max-width: 1023px)").matches;
+    el.mobileToolsBtn.style.display = isCompact ? "" : "none";
+    // If we leave compact layout while sheet is open, close it.
+    if(!isCompact) closeSheet();
   }
 
   function openSheet(tab){
