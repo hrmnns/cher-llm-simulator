@@ -714,7 +714,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.3";
+  const APP_VERSION = "v1.4.4";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -749,6 +749,10 @@ const state = {
       
       
       
+      
+      // Embedding similarity visualization (v1.4.4)
+      simVizMode: "base",   // base | withPos
+      simRefIdx: 0,
       
       decodeTopP: 1.0,
 decodeTopK: 0,
@@ -1560,6 +1564,11 @@ async function loadScenarios(url){
       items.push({ k: "Szenario-ID", v: scenario ? scenario.id : "—" });
       items.push({ k: "Titel", v: scenario ? scenario.title : "—" });
       items.push({ k: "Token-Anzahl", v: scenario?.tokenization?.tokens?.length ?? 0 });
+      // Embeddings in scenario (v1.4.4)
+      const embSpec = scenario?.embeddings;
+      const embMode = embSpec?.mode ? String(embSpec.mode) : "";
+      const embPresent = !!(embSpec && embMode);
+      items.push({ k: "Embeddings (Szenario)", v: embPresent ? `Ja (${embMode})` : "Nein" });
     } else {
       items.push({ k: "Input-Länge", v: (state.sandboxInput || "").length });
       items.push({ k: "Tokenizer", v: "Platzhalter" });
@@ -1689,6 +1698,141 @@ async function loadScenarios(url){
 
     // Compute embeddings (cached)
     const emb = getEmbeddingsForScenario(scenario, toks);
+
+    // --- Optional: scenario-defined semantic proximity (v1.4.4) ---
+    const embSpec = getScenarioEmbeddingSpec(scenario);
+    const hasScenarioEmbeddings = !!embSpec;
+
+    if(hasScenarioEmbeddings){
+      wrap.appendChild(h3("Semantische Nähe (didaktisch)"));
+
+      const note = document.createElement("div");
+      note.className = "notice";
+      note.innerHTML = `
+        <div class="small"><strong>Hinweis:</strong> Diese Nähe basiert auf <strong>synthetischen Beispiel-Embeddings</strong>, die im Szenario konstruiert wurden (keine echten Modellgewichte).</div>
+        <div class="small muted" style="margin-top:6px;">Optional kannst du vergleichen: Basis-Embedding vs. (Basis + Positional Encoding).</div>
+      `;
+      wrap.appendChild(note);
+
+      const simControls = document.createElement("div");
+      simControls.className = "notice";
+      simControls.style.display = "grid";
+      simControls.style.gap = "10px";
+
+      // Reference token selector
+      const refSel = document.createElement("select");
+      refSel.id = "simRefSel";
+      refSel.setAttribute("aria-label", "Referenz-Token auswählen");
+      toks.forEach((t, i) => {
+        const opt = document.createElement("option");
+        opt.value = String(i);
+        opt.textContent = stripLeadingSpace(t.text);
+        refSel.appendChild(opt);
+      });
+
+      // Mode selector: base vs withPos (only meaningful if posEnc is enabled)
+      const modeSel = document.createElement("select");
+      modeSel.id = "simModeSel";
+      modeSel.setAttribute("aria-label", "Ähnlichkeitsmodus auswählen");
+      const optBase = document.createElement("option");
+      optBase.value = "base";
+      optBase.textContent = "Base Embedding (Semantik)";
+      modeSel.appendChild(optBase);
+
+      const optPos = document.createElement("option");
+      optPos.value = "withPos";
+      optPos.textContent = "Base + Positional Encoding";
+      modeSel.appendChild(optPos);
+
+      simControls.innerHTML = `
+        <div class="kv">
+          <div class="k">Referenz</div>
+          <div class="v" id="simRefMount"></div>
+        </div>
+        <div class="kv">
+          <div class="k">Modus</div>
+          <div class="v" id="simModeMount"></div>
+        </div>
+      `;
+      simControls.querySelector("#simRefMount").appendChild(refSel);
+      simControls.querySelector("#simModeMount").appendChild(modeSel);
+      wrap.appendChild(simControls);
+
+      // Apply state
+      state.params.simRefIdx = clamp(Number(state.params.simRefIdx) || 0, 0, Math.max(0, toks.length-1));
+      refSel.value = String(state.params.simRefIdx);
+      modeSel.value = String(state.params.simVizMode || "base");
+
+      // If posEnc is disabled, "withPos" is not meaningful → force base
+      if(!state.params.posEnc){
+        modeSel.value = "base";
+        modeSel.disabled = true;
+        modeSel.title = "Aktiviere Positional Encoding, um diesen Vergleich zu sehen.";
+      }
+
+      const simBox = document.createElement("div");
+      simBox.className = "notice";
+      wrap.appendChild(simBox);
+
+      function renderSimilarity(){
+        state.params.simRefIdx = clamp(Number(refSel.value) || 0, 0, Math.max(0, toks.length-1));
+        state.params.simVizMode = String(modeSel.value || "base");
+
+        const baseEmb = getBaseEmbeddingsForScenario(scenario, toks);
+        const useVecs = (state.params.simVizMode === "withPos")
+          ? getEmbeddingsForScenario(scenario, toks) // includes posEnc toggle
+          : baseEmb;
+
+        const refIdx = state.params.simRefIdx;
+        const refTok = stripLeadingSpace(toks[refIdx]?.text || "");
+        const refVec = useVecs[refIdx] || [];
+
+        const rows = [];
+        for(let i=0;i<toks.length;i++){
+          if(i === refIdx) continue;
+          const v = useVecs[i] || [];
+          const sim = cosineSimilarity(refVec, v);
+          rows.push({ idx:i, tok: stripLeadingSpace(toks[i].text), sim });
+        }
+        rows.sort((a,b) => b.sim - a.sim);
+
+        simBox.innerHTML = `<div class="small muted">Ähnlichkeit relativ zu <span class="mono">${escapeHtml(refTok)}</span> (Cosine Similarity)</div>`;
+
+        const dist = document.createElement("div");
+        dist.className = "dist";
+        dist.style.marginTop = "10px";
+
+        for(const r of rows){
+          const row = document.createElement("div");
+          row.className = "dist-row";
+
+          const left = document.createElement("div");
+          const simVal = (Math.round(r.sim * 1000) / 1000).toFixed(3);
+          // map [-1,1] -> [0,100] for bar width; keep some minimum visibility
+          const w = Math.max(1, Math.round(((r.sim + 1) / 2) * 100));
+          left.innerHTML =
+            `<div class="small"><span class="mono">${escapeHtml(r.tok)}</span> <span class="muted small">sim=${simVal}</span></div>` +
+            `<div class="dist-bar"><div style="width:${w}%;"></div></div>`;
+
+          const right = document.createElement("div");
+          right.className = "mono small";
+          right.style.textAlign = "right";
+          right.textContent = simVal;
+
+          row.appendChild(left);
+          row.appendChild(right);
+          dist.appendChild(row);
+        }
+
+        simBox.appendChild(dist);
+      }
+
+      refSel.addEventListener("change", () => { renderSimilarity(); });
+      modeSel.addEventListener("change", () => { renderSimilarity(); });
+
+      renderSimilarity();
+    }
+
 
     wrap.appendChild(h3("Token → Vektor (Barcode-Ansicht)"));
     const grid = document.createElement("div");
@@ -2930,10 +3074,89 @@ const promptBox = document.createElement("div");
   // Helpers
   // -----------------------------
   
+
   function invalidateEmbeddingCache(){
     state.cache.embeddings = null;
     state.cache.embeddingKey = null;
+    // v1.4.4: separate cache for base embeddings (without positional encoding)
+    state.cache.baseEmbeddings = null;
+    state.cache.baseEmbeddingKey = null;
   }
+
+  // v1.4.4: read optional embedding spec from scenario
+  function getScenarioEmbeddingSpec(scenario){
+    const spec = scenario?.embeddings;
+    if(!spec || typeof spec !== "object") return null;
+    const mode = String(spec.mode || "").toLowerCase();
+    if(mode !== "groups") return null;
+    const groups = spec.groups;
+    if(!groups || typeof groups !== "object") return null;
+    return { mode, groups };
+  }
+
+  // v1.4.4: base embeddings (without positional encoding)
+  function getBaseEmbeddingsForScenario(scenario, tokens){
+    const d = state.params.dModel;
+
+    const spec = getScenarioEmbeddingSpec(scenario);
+    const specKey = spec
+      ? stableHash("spec|" + JSON.stringify(spec.groups) + "|d" + d)
+      : 0;
+
+    const key = [
+      scenario?.id ?? "no-scenario",
+      String(d),
+      String(tokens?.length ?? 0),
+      (tokens || []).map(t => String(t.id)).join(","),
+      String(specKey)
+    ].join("|");
+
+    if(state.cache.baseEmbeddingKey === key && Array.isArray(state.cache.baseEmbeddings)){
+      return state.cache.baseEmbeddings;
+    }
+
+    let out;
+    if(spec){
+      // Build membership map from token text (trim leading spaces)
+      const membership = new Map();
+      for(const [gName, arr] of Object.entries(spec.groups)){
+        if(!Array.isArray(arr)) continue;
+        for(const tok of arr){
+          const k = stripLeadingSpace(String(tok));
+          if(k) membership.set(k, String(gName));
+        }
+      }
+
+      // Group base vectors
+      const groupBase = {};
+      for(const gName of Object.keys(spec.groups)){
+        const baseSeed = stableHash(`grp|${scenario?.id ?? "x"}|${gName}|d${d}`);
+        groupBase[gName] = seededVector(baseSeed, d);
+      }
+
+      out = (tokens || []).map((t) => {
+        const name = stripLeadingSpace(t.text);
+        const g = membership.get(name);
+        if(g && groupBase[g]){
+          // Small deterministic jitter per token (keeps cluster tight but not identical)
+          const j = seededVector(stableHash(`jit|${scenario?.id ?? "x"}|${t.id}|d${d}`), d).map(x => x * 0.08);
+          return groupBase[g].map((v,i) => v + j[i]);
+        }
+        // Fallback: seeded per-token vector (same as before)
+        const base = seededVector(stableHash(`tok|${scenario?.id ?? "x"}|${t.id}|d${d}`), d);
+        return base;
+      });
+    } else {
+      // Original behavior: deterministic per token
+      const seed = stableHash(`${scenario?.id ?? "no-scenario"}|base|d${d}|${(tokens || []).map(t => String(t.id)).join(",")}`);
+      out = (tokens || []).map((t) => seededVector(seed ^ (t.id * 2654435761), d));
+    }
+
+    state.cache.baseEmbeddingKey = key;
+    state.cache.baseEmbeddings = out;
+    return out;
+  }
+
 
   function getEmbeddingsForScenario(scenario, tokens){
     const key = [
@@ -2941,7 +3164,9 @@ const promptBox = document.createElement("div");
       String(state.params.dModel),
       String(!!state.params.posEnc),
       String(tokens?.length ?? 0),
-      (tokens || []).map(t => String(t.id)).join(",")
+      (tokens || []).map(t => String(t.id)).join(","),
+      // include scenario embedding spec (if any) so cache invalidates correctly
+      String(stableHash("spec|" + JSON.stringify(getScenarioEmbeddingSpec(scenario)?.groups || {}) + "|d" + String(state.params.dModel)))
     ].join("|");
 
     if(state.cache.embeddingKey === key && Array.isArray(state.cache.embeddings)){
@@ -2949,15 +3174,14 @@ const promptBox = document.createElement("div");
     }
 
     const d = state.params.dModel;
-    const seed = stableHash(key);
+    const base = getBaseEmbeddingsForScenario(scenario, tokens);
 
     const out = (tokens || []).map((t, pos) => {
-      const base = seededVector(seed ^ (t.id * 2654435761), d); // deterministic per token
       if(state.params.posEnc){
         const pe = positionalEncoding(pos, d);
-        return base.map((v, i) => v + pe[i]);
+        return base[pos].map((v, i) => v + pe[i]);
       }
-      return base;
+      return base[pos];
     });
 
     state.cache.embeddingKey = key;
@@ -3041,6 +3265,21 @@ const promptBox = document.createElement("div");
     const exps = arr.map(x => Math.exp(x - m));
     const s = exps.reduce((a,b)=>a+b, 0) || 1;
     return exps.map(e => e / s);
+  }
+
+
+  function cosineSimilarity(a,b){
+    const n = Math.min(a.length, b.length);
+    if(n === 0) return 0;
+    let da = 0, db = 0, dp = 0;
+    for(let i=0;i<n;i++){
+      const x = a[i], y = b[i];
+      dp += x*y;
+      da += x*x;
+      db += y*y;
+    }
+    const denom = Math.sqrt(Math.max(1e-12, da)) * Math.sqrt(Math.max(1e-12, db));
+    return dp / denom;
   }
 
   function dot(a,b){
