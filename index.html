@@ -717,7 +717,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.12";
+  const APP_VERSION = "v1.4.13";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1785,7 +1785,9 @@ const embSpec = getScenarioEmbeddingSpec(scenario);
 
     if(hasScenarioEmbeddings){
       const details = document.createElement("details");
-      details.open = false;
+      // Remember open/closed state across re-render (v1.4.13)
+      details.open = !!state.params.simDetailsOpen;
+      details.addEventListener("toggle", () => { state.params.simDetailsOpen = details.open; });
       details.style.marginTop = "10px";
       const summary = document.createElement("summary");
       summary.innerHTML = `Semantische Nähe (optional) <span class="small muted">nur wenn Embeddings im Szenario</span>`;
@@ -1897,13 +1899,12 @@ const embSpec = getScenarioEmbeddingSpec(scenario);
           const simVal = (Math.round(r.sim * 1000) / 1000).toFixed(3);
           // map [-1,1] -> [0,100] for bar width; keep some minimum visibility
           const w = Math.max(1, Math.round(((r.sim + 1) / 2) * 100));
-
-          // Self row should not dominate visually: darker, but subtle
-          const barColor = r.isSelf ? "#1b5e20" : "#81c784";
+          // Color: use existing palette. Self-bar slightly stronger.
+          const selfBg = "rgba(102,217,239,.9)";
 
           left.innerHTML =
             `<div class="small"><span class="mono">${escapeHtml(r.tok)}</span> <span class="muted small">sim=${simVal}</span></div>` +
-            `<div class="dist-bar"><div style="width:${w}%; background:${barColor};"></div></div>`;
+            `<div class="dist-bar"><div style="width:${w}%;${r.isSelf ? ` background:${selfBg};` : ``}"></div></div>`;
 
           const right = document.createElement("div");
           right.className = "mono small";
