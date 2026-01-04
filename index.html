@@ -739,7 +739,7 @@
 
 <script>
 (() => {
-  const APP_VERSION="v1.4.24";
+  const APP_VERSION="v1.4.25";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2310,7 +2310,7 @@ if(!toks.length){
     const detailsPanel = document.createElement("details");
     detailsPanel.className = "notice";
     detailsPanel.style.marginTop = "10px";
-    detailsPanel.open = false;
+    bindDetailsPersistence(detailsPanel, "attn-heatmap-details", false);
     const detailsSummary = document.createElement("summary");
     detailsSummary.innerHTML = `Details zur Heatmap <span class="small muted">Auswahl · Legende · Tipp</span>`;
     detailsPanel.appendChild(detailsSummary);
@@ -2328,7 +2328,7 @@ if(!toks.length){
     const settingsPanel = document.createElement("details");
     settingsPanel.className = "notice";
     settingsPanel.style.marginTop = "10px";
-    settingsPanel.open = false;
+    bindDetailsPersistence(settingsPanel, "attn-heatmap-settings", false);
     const settingsSummary = document.createElement("summary");
     settingsSummary.innerHTML = `Einstellungen zur Heatmap <span class="small muted">Mask · Layer · Head</span>`;
     settingsPanel.appendChild(settingsSummary);
@@ -3062,7 +3062,7 @@ if(!toks.length){
     const detailsPanel = document.createElement("details");
     detailsPanel.className = "notice";
     detailsPanel.style.marginTop = "10px";
-    detailsPanel.open = false;
+    bindDetailsPersistence(detailsPanel, "mlp-heatmap-details", false);
     const detailsSummary = document.createElement("summary");
     detailsSummary.innerHTML = `Details zur Heatmap <span class="small muted">Auswahl · Legende · Tipp</span>`;
     detailsPanel.appendChild(detailsSummary);
@@ -3936,6 +3936,25 @@ function buildAttentionMatrix(scenario, tokens){
   }
 
   function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+  // Persist open/closed state of <details> panels across re-renders.
+  function _detailsKey(id){ return "cher-llm-sim:details:" + id + ":open"; }
+  function loadDetailsOpen(id, fallback=false){
+    try{
+      const v = localStorage.getItem(_detailsKey(id));
+      if(v === null) return fallback;
+      return v === "1";
+    }catch(e){ return fallback; }
+  }
+  function bindDetailsPersistence(detailsEl, id, fallbackOpen=false){
+    if(!detailsEl) return;
+    detailsEl.id = id;
+    // Apply persisted state (or fallback) BEFORE first paint whenever possible
+    detailsEl.open = loadDetailsOpen(id, fallbackOpen);
+    detailsEl.addEventListener("toggle", () => {
+      try{ localStorage.setItem(_detailsKey(id), detailsEl.open ? "1" : "0"); }catch(e){}
+    });
+  }
+
 
 
   // -----------------------------
