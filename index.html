@@ -684,7 +684,7 @@ details.heatmap-panel > summary{
 }
 
 
-/* v1.4.34 – match explanation infobox header typography + add toggle arrow */
+/* v1.4.35 – match explanation infobox header typography + add toggle arrow */
 details.heatmap-panel > summary{
   font-size: 0.8em !important;        /* same as explanation headers */
   font-weight: 600 !important;
@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION="v1.4.34";
+  const APP_VERSION="v1.4.35";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1890,7 +1890,17 @@ async function loadScenarios(url){
     const toks = scenario.tokenization?.tokens ?? [];
     const focus = scenario.highlights?.tokenFocus ?? [];
 
-    wrap.appendChild(pNotice("Embeddings sind Vektorrepräsentationen von Token. In dieser Simulation werden sie deterministisch (seeded) erzeugt, damit der Schritt reproduzierbar bleibt."));
+    // Intro (dezent, ohne Notice-Rahmen)
+    const intro = document.createElement("div");
+    intro.className = "small muted";
+    intro.textContent = "Embeddings sind Vektorrepräsentationen von Token. In dieser Simulation werden sie deterministisch (seeded) erzeugt, damit der Schritt reproduzierbar bleibt.";
+    wrap.appendChild(intro);
+
+    const divider = document.createElement("div");
+    divider.style.height = "1px";
+    divider.style.background = "rgba(255,255,255,.10)";
+    divider.style.margin = "10px 0";
+    wrap.appendChild(divider);
 
     // Controls (v1.1): d_model + positional encoding toggle
     const controls = document.createElement("div");
@@ -1925,8 +1935,6 @@ async function loadScenarios(url){
     `;
     controls.appendChild(pe);
 
-    wrap.appendChild(controls);
-
     // Apply current state to controls
     const dModelSelect = controls.querySelector("#dModelSelect");
     dModelSelect.value = String(state.params.dModel);
@@ -1956,7 +1964,7 @@ async function loadScenarios(url){
     // Compute embeddings (cached)
     const emb = getEmbeddingsForScenario(scenario, toks);
 
-    // --- Optional: scenario-defined semantic proximity (v1.4.5) ---
+    // --- Visualisierung: Token → Vektor ---
     wrap.appendChild(h3("Token → Vektor (Barcode-Ansicht)"));
     const grid = document.createElement("div");
     grid.style.display = "grid";
@@ -1985,43 +1993,59 @@ async function loadScenarios(url){
 
     wrap.appendChild(grid);
 
-    
+    // --- Details-Panel (Interpretation + Semantische Nähe) ---
+    const detailsPanel = document.createElement("details");
+    detailsPanel.classList.add("heatmap-panel","heatmap-details");
+    detailsPanel.className = "heatmap-panel heatmap-details";
+    detailsPanel.style.marginTop = "10px";
+    bindDetailsPersistence(detailsPanel, "emb-details", false);
 
-    // Explanation block
-    wrap.appendChild(h3("Interpretation (wichtig)"));
-    wrap.appendChild(pNotice("Die Dimensionen haben keine direkte, menschenlesbare Bedeutung. Entscheidend ist: Tokens werden als Zahlenvektoren dargestellt, damit Matrixoperationen (z. B. Attention) möglich sind."));
+    const detailsSummary = document.createElement("summary");
+    detailsSummary.innerHTML = `<span class="heatmap-summary-title">Details zu Embeddings</span> <span class="heatmap-summary-tag">Interpretation · Semantische Nähe</span>`;
+    detailsPanel.appendChild(detailsSummary);
 
-    // --- Semantische Nähe (optional & aufklappbar) ---
-const embSpec = getScenarioEmbeddingSpec(scenario);
+    const detailsInner = document.createElement("div");
+    detailsInner.className = "heatmap-panel-body";
+    detailsInner.style.marginTop = "8px";
+
+    // Interpretation (ohne Notice-Rahmen)
+    const interpTitle = document.createElement("div");
+    interpTitle.className = "small";
+    interpTitle.style.fontWeight = "700";
+    interpTitle.textContent = "Interpretation (wichtig)";
+    detailsInner.appendChild(interpTitle);
+
+    const interpText = document.createElement("div");
+    interpText.className = "small muted";
+    interpText.style.marginTop = "6px";
+    interpText.textContent = "Die Dimensionen haben keine direkte, menschenlesbare Bedeutung. Entscheidend ist: Tokens werden als Zahlenvektoren dargestellt, damit Matrixoperationen (z. B. Attention) möglich sind.";
+    detailsInner.appendChild(interpText);
+
+    // --- Semantische Nähe (optional, wenn im Szenario definiert) ---
+    const embSpec = getScenarioEmbeddingSpec(scenario);
     const hasScenarioEmbeddings = !!embSpec;
 
     if(hasScenarioEmbeddings){
-      const details = document.createElement("details");
-    details.classList.add("heatmap-panel","heatmap-details");
-      // Remember open/closed state across re-render (v1.4.13)
-      details.open = !!state.params.simDetailsOpen;
-      details.addEventListener("toggle", () => { state.params.simDetailsOpen = details.open; });
-      details.style.marginTop = "10px";
-      const summary = document.createElement("summary");
-      summary.innerHTML = `Semantische Nähe (optional) <span class="small muted">nur wenn Embeddings im Szenario</span>`;
-      details.appendChild(summary);
-      const inner = document.createElement("div");
-    inner.className = "heatmap-panel-body";
-    inner.style.marginTop = "8px";
+      const spacer = document.createElement("div");
+      spacer.style.height = "10px";
+      detailsInner.appendChild(spacer);
 
+      const simTitle = document.createElement("div");
+      simTitle.className = "small";
+      simTitle.style.fontWeight = "700";
+      simTitle.textContent = "Semantische Nähe (optional)";
+      detailsInner.appendChild(simTitle);
 
-      const note = document.createElement("div");
-      note.className = "notice";
-      note.innerHTML = `
-        <div class="small"><strong>Hinweis:</strong> Diese Nähe basiert auf <strong>synthetischen Beispiel-Embeddings</strong>, die im Szenario konstruiert wurden (keine echten Modellgewichte).</div>
-        <div class="small muted" style="margin-top:6px;">Optional kannst du vergleichen: Basis-Embedding vs. (Basis + Positional Encoding).</div>
-      `;
-      inner.appendChild(note);
+      const simHint = document.createElement("div");
+      simHint.className = "small muted";
+      simHint.style.marginTop = "6px";
+      simHint.textContent = "Diese Nähe basiert auf synthetischen Beispiel-Embeddings, die im Szenario konstruiert wurden (keine echten Modellgewichte). Optional kannst du vergleichen: Basis-Embedding vs. (Basis + Positional Encoding).";
+      detailsInner.appendChild(simHint);
 
       const simControls = document.createElement("div");
-      simControls.className = "notice";
       simControls.style.display = "grid";
       simControls.style.gap = "10px";
+      simControls.style.marginTop = "10px";
 
       // Reference token selector
       const refSel = document.createElement("select");
@@ -2060,7 +2084,7 @@ const embSpec = getScenarioEmbeddingSpec(scenario);
       `;
       simControls.querySelector("#simRefMount").appendChild(refSel);
       simControls.querySelector("#simModeMount").appendChild(modeSel);
-      inner.appendChild(simControls);
+      detailsInner.appendChild(simControls);
 
       // Apply state
       state.params.simRefIdx = clamp(Number(state.params.simRefIdx) || 0, 0, Math.max(0, toks.length-1));
@@ -2075,8 +2099,8 @@ const embSpec = getScenarioEmbeddingSpec(scenario);
       }
 
       const simBox = document.createElement("div");
-      simBox.className = "notice";
-      inner.appendChild(simBox);
+      simBox.style.marginTop = "10px";
+      detailsInner.appendChild(simBox);
 
       function renderSimilarity(){
         state.params.simRefIdx = clamp(Number(refSel.value) || 0, 0, Math.max(0, toks.length-1));
@@ -2132,15 +2156,41 @@ const embSpec = getScenarioEmbeddingSpec(scenario);
 
         simBox.appendChild(dist);
       }
-refSel.addEventListener("change", () => { renderSimilarity(); });
+
+      refSel.addEventListener("change", () => { renderSimilarity(); });
       modeSel.addEventListener("change", () => { renderSimilarity(); });
 
       renderSimilarity();
-
-      details.appendChild(inner);
-      wrap.appendChild(details);
+    } else {
+      const noSim = document.createElement("div");
+      noSim.className = "small muted";
+      noSim.style.marginTop = "10px";
+      noSim.textContent = "Semantische Nähe ist hier nicht verfügbar (nur wenn das Szenario Beispiel-Embeddings mitliefert).";
+      detailsInner.appendChild(noSim);
     }
 
+    detailsPanel.appendChild(detailsInner);
+    wrap.appendChild(detailsPanel);
+
+    // --- Settings-Panel (d_model + PosEnc) ---
+    const settingsPanel = document.createElement("details");
+    settingsPanel.classList.add("heatmap-panel","heatmap-settings");
+    settingsPanel.className = "heatmap-panel heatmap-settings";
+    settingsPanel.style.marginTop = "10px";
+    bindDetailsPersistence(settingsPanel, "emb-settings", false);
+
+    const settingsSummary = document.createElement("summary");
+    settingsSummary.innerHTML = `<span class="heatmap-summary-title">Einstellungen zu Embeddings</span> <span class="heatmap-summary-tag">d_model · Positional Encoding</span>`;
+    settingsPanel.appendChild(settingsSummary);
+
+    const settingsInner = document.createElement("div");
+    settingsInner.className = "heatmap-panel-body";
+    settingsInner.style.marginTop = "8px";
+    // Avoid nested notice styling
+    controls.className = "";
+    settingsInner.appendChild(controls);
+    settingsPanel.appendChild(settingsInner);
+    wrap.appendChild(settingsPanel);
 
     return wrap;
   }
