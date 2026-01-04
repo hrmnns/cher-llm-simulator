@@ -730,7 +730,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.17";
+  const APP_VERSION = "v1.4.18";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2043,7 +2043,12 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
       <div class="small muted">
         Interpretation: Zeile <span class="mono">i</span> (Token „fragt“) verteilt Gewicht auf Spalte <span class="mono">j</span> (Token „liefert Kontext“).
       </div>
-    `;
+    
+      <details id="attnTopN" style="margin-top:6px;">
+        <summary class="small">Top-5 für i=?</summary>
+        <div class="small mono" id="attnTopNBody" style="margin-top:6px; line-height:1.35;">Keine Zeile ausgewählt.</div>
+      </details>
+`;
     wrap.appendChild(info);
 
     const hmWrap = document.createElement("div");
@@ -2066,6 +2071,40 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
 
     const DEFAULT_MSG = "Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.";
     const isHoverFine = (window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+
+    const topNDetails = info.querySelector("#attnTopN");
+    const topNSummary = topNDetails ? topNDetails.querySelector("summary") : null;
+    const topNBody = info.querySelector("#attnTopNBody");
+    const TOP_N = 5;
+
+    function resetTopN(){
+      if(!topNDetails || !topNBody) return;
+      if(topNSummary) topNSummary.textContent = `Top-${TOP_N} für i=?`;
+      topNBody.textContent = "Keine Zeile ausgewählt.";
+    }
+
+    function updateTopN(i){
+      if(!topNDetails || !topNBody) return;
+      const fromTok = tokenName(i);
+      if(topNSummary) topNSummary.textContent = `Top-${TOP_N} für i=${i} (${fromTok})`;
+      const entries = [];
+      for(let j=0;j<T;j++){
+        const masked = (state.params.causalMask && j > i);
+        if(masked) continue;
+        const v = (M[i][j] || 0);
+        entries.push({ j, v });
+      }
+      entries.sort((a,b)=>b.v-a.v);
+      const top = entries.slice(0, TOP_N);
+      if(!top.length){
+        topNBody.textContent = "Keine Werte verfügbar.";
+        return;
+      }
+      topNBody.innerHTML = top.map(e => {
+        const toTok = tokenName(e.j);
+        return `j=${e.j} (${escapeHtml(toTok)}): ${(e.v*100).toFixed(1)}%`;
+      }).join("<br>");
+    }
 
     function tokenName(idx){
       return stripLeadingSpace(toks[idx]?.text || "");
@@ -2105,6 +2144,7 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
       applyRowColHighlight(i, j);
 
       if(infoLine) infoLine.textContent = describe(i, j);
+      updateTopN(i);
       lastHover = { i, j };
     }
 
@@ -2117,6 +2157,7 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
         grid._cellMap[i][j].classList.add("pinned");
       }
       if(infoLine) infoLine.textContent = describe(i, j) + "  ·  (pinned)";
+      updateTopN(i);
     }
 
     function clearPinned(){
@@ -2125,6 +2166,7 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
         for(const c of grid._cells) c.classList.remove("pinned");
       }
       if(lastHover && infoLine) infoLine.textContent = describe(lastHover.i, lastHover.j);
+      if(lastHover) updateTopN(lastHover.i); else resetTopN();
       if(!lastHover && infoLine) infoLine.textContent =
         "Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.";
     }
@@ -2218,10 +2260,12 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
         if(pinned.i == null || pinned.j == null) {
 
           if(infoLine) infoLine.textContent = DEFAULT_MSG;
+          resetTopN();
 
         } else {
 
-          if(infoLine) infoLine.textContent = describe(pinned.i, pinned.j) + "  ·  (pinned)";
+          if(infoLine) infoLine.textContent = describe(pinned.i, pinned.j) + "  ·  (gepinnt)";
+          updateTopN(pinned.i);
 
         }
 
@@ -2725,12 +2769,51 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
       <div class="small muted">
         Interpretation: Zeile <span class="mono">i</span> (Token „fragt Kontext“) schaut auf Spalte <span class="mono">j</span> (Token „liefert Kontext“).
       </div>
-    `;
+    
+      <details id="attnTopNCompact" style="margin-top:6px;">
+        <summary class="small">Top-5 für i=?</summary>
+        <div class="small mono" id="attnTopNBodyCompact" style="margin-top:6px; line-height:1.35;">Keine Zeile ausgewählt.</div>
+      </details>
+`;
     wrap.appendChild(info);
     const infoLine = info.querySelector("#attnCellInfoCompact");
 
     const DEFAULT_MSG = "Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.";
     const isHoverFine = (window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+
+    const topNDetails = info.querySelector("#attnTopNCompact");
+    const topNSummary = topNDetails ? topNDetails.querySelector("summary") : null;
+    const topNBody = info.querySelector("#attnTopNBodyCompact");
+    const TOP_N = 5;
+
+    function resetTopN(){
+      if(!topNDetails || !topNBody) return;
+      if(topNSummary) topNSummary.textContent = `Top-${TOP_N} für i=?`;
+      topNBody.textContent = "Keine Zeile ausgewählt.";
+    }
+
+    function updateTopN(i){
+      if(!topNDetails || !topNBody) return;
+      const fromTok = tokenName(i);
+      if(topNSummary) topNSummary.textContent = `Top-${TOP_N} für i=${i} (${fromTok})`;
+      const entries = [];
+      for(let j=0;j<T;j++){
+        const masked = (state.params.causalMask && j > i);
+        if(masked) continue;
+        const v = (M[i][j] || 0);
+        entries.push({ j, v });
+      }
+      entries.sort((a,b)=>b.v-a.v);
+      const top = entries.slice(0, TOP_N);
+      if(!top.length){
+        topNBody.textContent = "Keine Werte verfügbar.";
+        return;
+      }
+      topNBody.innerHTML = top.map(e => {
+        const toTok = tokenName(e.j);
+        return `j=${e.j} (${escapeHtml(toTok)}): ${(e.v*100).toFixed(1)}%`;
+      }).join("<br>");
+    }
 
     const hmWrap = document.createElement("div");
     hmWrap.className = "heatmap-wrap";
@@ -2788,6 +2871,7 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
       if(grid._cellMap?.[i]?.[j]) grid._cellMap[i][j].classList.add("hovered");
       applyRowColHighlight(i, j);
       if(infoLine) infoLine.textContent = describe(i, j);
+      updateTopN(i);
       lastHover = { i, j };
     }
 
@@ -2797,7 +2881,8 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
       }
       pinned = { i, j };
       if(grid._cellMap?.[i]?.[j]) grid._cellMap[i][j].classList.add("pinned");
-      if(infoLine) infoLine.textContent = describe(i, j) + "  (gepinnt)";
+      if(infoLine) infoLine.textContent = describe(i, j) + "  ·  (gepinnt)";
+      updateTopN(i);
     }
 
     // build cells
@@ -2840,6 +2925,7 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
               for(const c of grid._cells) c.classList.remove("pinned");
             }
             pinned = { i: null, j: null };
+            if(lastHover) updateTopN(lastHover.i); else resetTopN();
             if(infoLine){
               infoLine.textContent = lastHover ? describe(lastHover.i, lastHover.j) : "Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.";
             }
@@ -2856,6 +2942,7 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
 
     // show first cell by default
     if(T > 0 && infoLine) infoLine.textContent = describe(0, 0);
+    if(T > 0) updateTopN(0);
 
     const container = document.createElement("div");
     container.style.display = "inline-block";
@@ -2885,10 +2972,12 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
         if(pinned.i == null || pinned.j == null) {
 
           if(infoLine) infoLine.textContent = DEFAULT_MSG;
+          resetTopN();
 
         } else {
 
-          if(infoLine) infoLine.textContent = describe(pinned.i, pinned.j) + "  ·  (pinned)";
+          if(infoLine) infoLine.textContent = describe(pinned.i, pinned.j) + "  ·  (gepinnt)";
+          updateTopN(pinned.i);
 
         }
 
