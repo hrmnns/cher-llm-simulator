@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v1.4.16-didactic-freeze (#9)",
+    "version": "v1.4.17-didactic-freeze",
     "project": "cher-llm-simulator",
     "description": "LLM Simulator – Didaktisch konsolidierte Referenzszenarien",
     "defaultScenarioId": "posenc-hund-hund-hund"
@@ -517,7 +517,39 @@
       },
       "tags": [
         "referenz"
-      ]
+      ],
+      "embeddings": {
+        "mode": "groups",
+        "groups": {
+          "finance_crime": [
+            "Bankräuber",
+            "Bank"
+          ],
+          "nature": [
+            "Fluss"
+          ],
+          "action": [
+            "ging",
+            "setzte"
+          ],
+          "function": [
+            "Der",
+            "zur",
+            "und",
+            "sich",
+            "später",
+            "auf",
+            "die",
+            "am",
+            "."
+          ]
+        },
+        "params": {
+          "jitter": 0.1,
+          "groupSeparationHint": "medium"
+        },
+        "notes": "Didaktische Beispiel-Embeddings: synthetisch erzeugt, nicht aus einem trainierten Modell."
+      }
     },
     {
       "id": "decoding-der-hund-ist-ein",
