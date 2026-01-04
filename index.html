@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION="v1.4.36";
+  const APP_VERSION="v1.4.37";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2214,6 +2214,12 @@ async function loadScenarios(url){
     const focus = scenario.highlights?.tokenFocus ?? [];
 
     wrap.appendChild(pNotice("Attention gewichtet, welche Token beim nächsten Rechenschritt stärker berücksichtigt werden. Hier zeigen wir eine vereinfachte Attention-Heatmap (Zeile i gewichtet Spalte j)."));
+
+    const divider = document.createElement("div");
+    divider.style.height = "1px";
+    divider.style.background = "rgba(255,255,255,.10)";
+    divider.style.margin = "10px 0";
+    wrap.appendChild(divider);
 
     // Controls
     const controls = document.createElement("div");
