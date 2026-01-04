@@ -609,6 +609,41 @@ details.heatmap-settings > summary::-webkit-details-marker{ display:none; }
   color: #ffffff;
 }
 
+
+/* v1.4.31 – heatmap panels styled like collapsible info boxes */
+.heatmap-panel{
+  border: 1px solid rgba(159,176,192,.35);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,.02);
+  margin-top: 10px;
+}
+.heatmap-panel > summary{
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.heatmap-panel > summary::-webkit-details-marker{ display:none; }
+
+.heatmap-summary-title{
+  font-weight: 800;
+  color: #ffffff;
+}
+.heatmap-summary-tag{
+  font-size: 0.75em;
+  padding: 2px 8px;
+  border: 1px solid rgba(159,176,192,.35);
+  border-radius: 999px;
+  color: rgba(159,176,192,.85); /* keep muted feel */
+}
+
+.heatmap-panel-body{
+  padding-left: 10px;
+  border-left: 2px solid rgba(120,130,160,.35);
+}
+
 </style>
 </head>
 <body>
@@ -816,7 +851,7 @@ details.heatmap-settings > summary::-webkit-details-marker{ display:none; }
 
 <script>
 (() => {
-  const APP_VERSION="v1.4.30";
+  const APP_VERSION="v1.4.31";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1902,7 +1937,8 @@ const embSpec = getScenarioEmbeddingSpec(scenario);
       summary.innerHTML = `Semantische Nähe (optional) <span class="small muted">nur wenn Embeddings im Szenario</span>`;
       details.appendChild(summary);
       const inner = document.createElement("div");
-      inner.style.marginTop = "8px";
+    inner.className = "heatmap-panel-body";
+    inner.style.marginTop = "8px";
 
 
       const note = document.createElement("div");
@@ -2387,13 +2423,14 @@ if(!toks.length){
     // Details panel (Auswahl + Legende + Tipp) under heatmap
     const detailsPanel = document.createElement("details");
     detailsPanel.classList.add("heatmap-panel","heatmap-details");
-    detailsPanel.className = "notice";
+    detailsPanel.className = "heatmap-panel heatmap-details";
     detailsPanel.style.marginTop = "10px";
     bindDetailsPersistence(detailsPanel, "attn-heatmap-details", false);
     const detailsSummary = document.createElement("summary");
-    detailsSummary.innerHTML = `<span class="heatmap-summary-title">Details zur Heatmap</span> <span class="small muted">Auswahl · Legende · Tipp</span>`;
+    detailsSummary.innerHTML = `<span class="heatmap-summary-title">Details zur Heatmap</span> <span class="heatmap-summary-tag">Auswahl · Legende · Tipp</span>`;
     detailsPanel.appendChild(detailsSummary);
     const detailsInner = document.createElement("div");
+    detailsInner.className = "heatmap-panel-body";
     detailsInner.style.marginTop = "8px";
     // Avoid nested notice styling
     info.className = "";
@@ -2406,13 +2443,14 @@ if(!toks.length){
     // Settings panel (Mask/Layer/Head) under heatmap
     const settingsPanel = document.createElement("details");
     settingsPanel.classList.add("heatmap-panel","heatmap-settings");
-    settingsPanel.className = "notice";
+    settingsPanel.className = "heatmap-panel heatmap-settings";
     settingsPanel.style.marginTop = "10px";
     bindDetailsPersistence(settingsPanel, "attn-heatmap-settings", false);
     const settingsSummary = document.createElement("summary");
-    settingsSummary.innerHTML = `<span class="heatmap-summary-title">Einstellungen zur Heatmap</span> <span class="small muted">Mask · Layer · Head</span>`;
+    settingsSummary.innerHTML = `<span class="heatmap-summary-title">Einstellungen zur Heatmap</span> <span class="heatmap-summary-tag">Mask · Layer · Head</span>`;
     settingsPanel.appendChild(settingsSummary);
     const settingsInner = document.createElement("div");
+    settingsInner.className = "heatmap-panel-body";
     settingsInner.style.marginTop = "8px";
     // Avoid nested notice styling
     controls.className = "";
@@ -3141,13 +3179,14 @@ if(!toks.length){
     // Details panel (Auswahl + Legende + Tipp) under heatmap
     const detailsPanel = document.createElement("details");
     detailsPanel.classList.add("heatmap-panel","heatmap-details");
-    detailsPanel.className = "notice";
+    detailsPanel.className = "heatmap-panel heatmap-details";
     detailsPanel.style.marginTop = "10px";
     bindDetailsPersistence(detailsPanel, "mlp-heatmap-details", false);
     const detailsSummary = document.createElement("summary");
-    detailsSummary.innerHTML = `<span class="heatmap-summary-title">Details zur Heatmap</span> <span class="small muted">Auswahl · Legende · Tipp</span>`;
+    detailsSummary.innerHTML = `<span class="heatmap-summary-title">Details zur Heatmap</span> <span class="heatmap-summary-tag">Auswahl · Legende · Tipp</span>`;
     detailsPanel.appendChild(detailsSummary);
     const detailsInner = document.createElement("div");
+    detailsInner.className = "heatmap-panel-body";
     detailsInner.style.marginTop = "8px";
     // Avoid nested notice styling
     info.className = "";
