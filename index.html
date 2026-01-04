@@ -730,7 +730,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.15";
+  const APP_VERSION = "v1.4.16";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2666,8 +2666,30 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
     const toks = (scenario && scenario.tokenization && scenario.tokenization.tokens) ? scenario.tokenization.tokens : [];
     if(!toks.length) return pNotice("Keine Tokens – keine Heatmap.", true);
 
+    const focus = scenario?.highlights?.tokenFocus ?? [];
+
     const M = buildAttentionMatrix(scenario, toks);
     const T = toks.length;
+
+    const wrap = document.createElement("div");
+
+    // --- Live info + pinned cell (not tooltip-only) ---
+    const info = document.createElement("div");
+    info.className = "notice";
+    info.style.display = "grid";
+    info.style.gap = "6px";
+    info.style.marginBottom = "10px";
+    info.innerHTML = `
+      <div class="small muted">Auswahl</div>
+      <div class="small" id="attnCellInfoCompact">
+        Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.
+      </div>
+      <div class="small muted">
+        Interpretation: Zeile <span class="mono">i</span> (Token „fragt Kontext“) schaut auf Spalte <span class="mono">j</span> (Token „liefert Kontext“).
+      </div>
+    `;
+    wrap.appendChild(info);
+    const infoLine = info.querySelector("#attnCellInfoCompact");
 
     const hmWrap = document.createElement("div");
     hmWrap.className = "heatmap-wrap";
@@ -2675,11 +2697,71 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
 
     const grid = document.createElement("div");
     grid.className = "heatmap-grid";
-    grid.style.gridTemplateColumns = "repeat(" + T + ", 18px)";
+    grid.style.gridTemplateColumns = `repeat(${T}, 18px)`;
 
+    // scaling
     let maxVal = 0;
     for(let i=0;i<T;i++) for(let j=0;j<T;j++) maxVal = Math.max(maxVal, M[i][j] || 0);
-    if(maxVal < 1e-9) maxVal = 1e-9;
+    maxVal = Math.max(1e-9, maxVal);
+
+    // state
+    let pinned = { i: null, j: null };
+    let lastHover = null;
+
+    function tokenName(idx){
+      const t = toks[idx];
+      return (t && typeof t.text === "string") ? t.text : String(idx);
+    }
+
+    function describe(i, j){
+      const fromTok = tokenName(i);
+      const toTok = tokenName(j);
+      const v = (M[i]?.[j] ?? 0) * 100;
+      return `i=${i} („${fromTok}“) → j=${j} („${toTok}“): ${v.toFixed(1)}%`;
+    }
+
+    function clearHoverClasses(){
+      if(!grid._cells) return;
+      for(const c of grid._cells){
+        c.classList.remove("hovered","rowcol");
+      }
+    }
+
+    function applyRowColHighlight(i, j){
+      if(!grid._cellMap) return;
+      // Row i
+      if(grid._cellMap[i]){
+        for(const c of grid._cellMap[i]){
+          if(c) c.classList.add("rowcol");
+        }
+      }
+      // Col j
+      for(let r=0;r<T;r++){
+        const c = grid._cellMap[r]?.[j];
+        if(c) c.classList.add("rowcol");
+      }
+    }
+
+    function setHover(i, j){
+      clearHoverClasses();
+      if(grid._cellMap?.[i]?.[j]) grid._cellMap[i][j].classList.add("hovered");
+      applyRowColHighlight(i, j);
+      if(infoLine) infoLine.textContent = describe(i, j);
+      lastHover = { i, j };
+    }
+
+    function setPinned(i, j){
+      if(grid._cells){
+        for(const c of grid._cells) c.classList.remove("pinned");
+      }
+      pinned = { i, j };
+      if(grid._cellMap?.[i]?.[j]) grid._cellMap[i][j].classList.add("pinned");
+      if(infoLine) infoLine.textContent = describe(i, j) + "  (gepinnt)";
+    }
+
+    // build cells
+    grid._cells = [];
+    grid._cellMap = Array.from({length:T}, () => Array(T).fill(null));
 
     for(let i=0;i<T;i++){
       for(let j=0;j<T;j++){
@@ -2687,18 +2769,74 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
         cell.className = "heatmap-cell";
         const v = M[i][j] || 0;
         const a = clamp01(v / maxVal);
-        cell.style.background = "rgba(102,217,239," + (0.08 + a*0.72).toFixed(3) + ")";
-        cell.title = "i=" + i + " → j=" + j + ": " + (v*100).toFixed(1) + "%";
+        cell.style.background = `rgba(102,217,239, ${0.08 + a*0.72})`;
+        cell.title = describe(i, j);
+
+        const fromTok = tokenName(i);
+        const toTok   = tokenName(j);
+        if(focus.includes(fromTok) || focus.includes(toTok)){
+          cell.style.borderColor = "rgba(110,231,183,.45)";
+        }
+
+        cell.addEventListener("mouseenter", () => {
+          setHover(i, j);
+          if(pinned.i != null && pinned.j != null){
+            grid._cellMap[pinned.i]?.[pinned.j]?.classList.add("pinned");
+          }
+        });
+
+        cell.addEventListener("pointermove", () => {
+          setHover(i, j);
+          if(pinned.i != null && pinned.j != null){
+            grid._cellMap[pinned.i]?.[pinned.j]?.classList.add("pinned");
+          }
+        });
+
+        cell.addEventListener("click", () => {
+          if(pinned.i === i && pinned.j === j){
+            // unpin
+            if(grid._cells){
+              for(const c of grid._cells) c.classList.remove("pinned");
+            }
+            pinned = { i: null, j: null };
+            if(infoLine){
+              infoLine.textContent = lastHover ? describe(lastHover.i, lastHover.j) : "Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.";
+            }
+          }else{
+            setPinned(i, j);
+          }
+        });
+
         grid.appendChild(cell);
+        grid._cells.push(cell);
+        grid._cellMap[i][j] = cell;
       }
     }
-    hmWrap.appendChild(grid);
-    return hmWrap;
-  }
 
-  
-  
-  function viewMLP(scenario){
+    // show first cell by default
+    if(T > 0 && infoLine) infoLine.textContent = describe(0, 0);
+
+    const container = document.createElement("div");
+    container.style.display = "inline-block";
+    container.appendChild(grid);
+    hmWrap.appendChild(container);
+
+    wrap.appendChild(hmWrap);
+
+    // Axis hint (same as Attention card, but compact)
+    const axes = document.createElement("div");
+    axes.className = "heatmap-axes";
+    axes.innerHTML = `
+      <div class="heatmap-legend">
+        <span class="legend-swatch"></span>
+        <span><strong>Heller</strong> = höhere Gewichtung. Zeile <span class="mono">i</span> = „fragt Kontext“, Spalte <span class="mono">j</span> = „liefert Kontext“.</span>
+      </div>
+      <div class="small muted">Tipp: Klick pinnt die Zelle (für Vergleich beim Umschalten von Layer/Head/Causal Mask).</div>
+    `;
+    wrap.appendChild(axes);
+
+    return wrap;
+  }function viewMLP(scenario){
     const wrap = document.createElement("div");
     wrap.appendChild(pNotice("MLP/FFN ergänzt die Attention: Attention mischt Information über Tokens (Kontext), MLP transformiert pro Token nichtlinear. In diesem Schritt kannst du direkt vergleichen: (A) FFN ohne Kontext (nur Embedding) vs. (B) FFN mit Kontext (nach Attention)."));
 
