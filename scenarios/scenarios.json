@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v1.4.17-didactic-freeze",
+    "version": "v1.4.18-didactic-freeze",
     "project": "cher-llm-simulator",
     "description": "LLM Simulator – Didaktisch konsolidierte Referenzszenarien",
     "defaultScenarioId": "posenc-hund-hund-hund"
@@ -65,62 +65,75 @@
       ]
     },
     {
-      "id": "kompositum-hundeleine",
-      "title": "Basic · Tokenisierung — Subwords statt ganzer Wörter",
+      "id": "kompositum-bankraeuber",
+      "title": "Basic · Tokenisierung — Kompositum zerlegt: Bank + räuber",
       "learningGoals": [
         "Tokenisierung",
-        "Subwords"
+        "Subwords",
+        "Wiederverwendung von Tokens"
       ],
       "mode": "simulated",
       "promptStack": {
         "system": "Du bist ein sachlicher Assistent.",
         "instruction": "Antworte kurz.",
-        "user": "Was ist eine Hundeleine?"
+        "user": "Der Bankräuber ging zur Bank."
       },
       "tokenization": {
         "tokens": [
           {
-            "text": "Was",
-            "id": 1101
+            "text": "Der",
+            "id": 2101
           },
           {
-            "text": " ist",
-            "id": 1102
+            "text": " Bank",
+            "id": 2102
           },
           {
-            "text": " eine",
-            "id": 1103
+            "text": "räuber",
+            "id": 2103
           },
           {
-            "text": " Hund",
-            "id": 1104
+            "text": " ging",
+            "id": 2104
           },
           {
-            "text": "eleine",
-            "id": 1105
+            "text": " zur",
+            "id": 2105
           },
           {
-            "text": "?",
-            "id": 1106
+            "text": " Bank",
+            "id": 2102
+          },
+          {
+            "text": ".",
+            "id": 2106
           }
         ]
       },
       "generation": {
-        "outputText": "Eine Hundeleine ist eine Leine zum Führen eines Hundes."
+        "outputText": "Ein Bankräuber ist jemand, der eine Bank ausraubt."
       },
       "highlights": {
         "tokenFocus": [
-          "Hund",
-          "eleine"
+          "Bank",
+          "räuber"
         ],
         "explain": [
           {
             "at": "tokenization",
-            "text": "Komposita werden in bekannte Teilstücke (Subwords) zerlegt. Das Modell erkennt dabei keine Bedeutung, sondern nutzt ein endliches Vokabular."
+            "text": "Komposita werden oft in Subwords zerlegt: „ Bank“ + „räuber“. Tokens sind nicht zwingend ganze Wörter."
+          },
+          {
+            "at": "tokenization",
+            "text": "Wiederverwendung: Das Token „ Bank“ taucht im Kompositum und später als eigenes Wort auf – mit derselben Token-ID."
+          },
+          {
+            "at": "tokenization",
+            "text": "Der Tokenizer erkennt dabei keine Bedeutung. Er arbeitet mit einem endlichen Vokabular und teilt Text in passende Stücke."
           }
         ],
         "focusByStep": {
-          "tokenization": "Subword-Tokenisierung · Zerlegung in Teilstücke"
+          "tokenization": "Subword-Tokenisierung · Kompositum-Zerlegung & Token-Wiederverwendung"
         }
       },
       "tags": [
