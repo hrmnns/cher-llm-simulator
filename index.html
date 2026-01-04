@@ -532,6 +532,20 @@
       color: rgba(240,245,255,.92) !important;
     }
 
+
+/* v1.4.26 – layout cleanup: remove dashed notice and add separator */
+.notice{
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin-bottom: 6px !important;
+}
+.heatmap-separator{
+  border: none;
+  border-top: 1px solid var(--border, #e5e7eb);
+  margin: 10px 0 14px 0;
+}
+
 </style>
 </head>
 <body>
@@ -4253,5 +4267,26 @@ function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
   <div id="toastTitle" style="font-weight:600;">—</div>
   <div id="toastBody" class="small">—</div>
 </div>
+
+<script>
+(function(){
+  // Insert a separator after the attention explanation text block (best-effort)
+  const candidates = Array.from(document.querySelectorAll('.notice, .small, p'));
+  const needle = 'Attention gewichtet';
+  for(const el of candidates){
+    if(el.textContent && el.textContent.includes(needle)){
+      const hr = document.createElement('hr');
+      hr.className = 'heatmap-separator';
+      if(el.nextSibling){
+        el.parentNode.insertBefore(hr, el.nextSibling);
+      } else {
+        el.parentNode.appendChild(hr);
+      }
+      break;
+    }
+  }
+})();
+</script>
+
 </body>
 </html>
