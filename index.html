@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION="v1.4.38";
+  const APP_VERSION="v1.4.41";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2565,7 +2565,8 @@ if(!toks.length){
     detailsPanel.style.marginTop = "10px";
     bindDetailsPersistence(detailsPanel, "attn-heatmap-details", false);
     const detailsSummary = document.createElement("summary");
-    detailsSummary.innerHTML = `<span class="heatmap-summary-title">Details zur Heatmap</span> <span class="heatmap-summary-tag">Auswahl · Legende · Tipp</span>`;
+    const tagBits = ["Auswahl","Legende","Tipp"];
+    detailsSummary.innerHTML = `<span class="heatmap-summary-title">Details zur Heatmap</span> <span class="heatmap-summary-tag">${tagBits.join(" · ")}</span>`;
     detailsPanel.appendChild(detailsSummary);
     const detailsInner = document.createElement("div");
     detailsInner.className = "heatmap-panel-body";
@@ -3320,6 +3321,12 @@ if(!toks.length){
       </div>
       <div class="small muted">Tipp: Klick pinnt die Zelle (für Vergleich beim Umschalten von Layer/Head/Causal Mask).</div>
     `;
+    if(opts.detailsInfoText){
+      const infoHint = document.createElement("div");
+      infoHint.className = "small muted";
+      infoHint.textContent = "Info: " + String(opts.detailsInfoText);
+      axes.appendChild(infoHint);
+    }
     // Details panel (Auswahl + Legende + Tipp) under heatmap
     const detailsPanel = document.createElement("details");
     detailsPanel.classList.add("heatmap-panel","heatmap-details");
@@ -3342,7 +3349,18 @@ if(!toks.length){
     return wrap;
   }function viewMLP(scenario){
     const wrap = document.createElement("div");
-    wrap.appendChild(pNotice("MLP/FFN ergänzt die Attention: Attention mischt Information über Tokens (Kontext), MLP transformiert pro Token nichtlinear. In diesem Schritt kannst du direkt vergleichen: (A) FFN ohne Kontext (nur Embedding) vs. (B) FFN mit Kontext (nach Attention)."));
+    // Intro (dezent, ohne Notice-Rahmen)
+    const intro = document.createElement("div");
+    intro.className = "small muted";
+    intro.textContent = "MLP/FFN ergänzt die Attention: Attention mischt Information über Tokens (Kontext), MLP transformiert pro Token nichtlinear. In diesem Schritt kannst du direkt vergleichen: (A) FFN ohne Kontext (nur Embedding) vs. (B) FFN mit Kontext (nach Attention).";
+    wrap.appendChild(intro);
+
+    const divider0 = document.createElement("div");
+    divider0.style.height = "1px";
+    divider0.style.background = "rgba(255,255,255,.10)";
+    divider0.style.margin = "10px 0";
+    wrap.appendChild(divider0);
+
 
     // Context reminder: compact heatmap
     // --- Bereich 1: Heatmap (Kontextgrundlage) ---
@@ -3359,25 +3377,8 @@ if(!toks.length){
     hmHeader.appendChild(hmBadge);
     wrap.appendChild(hmHeader);
 
-    wrap.appendChild(attentionHeatmapCompact(scenario, { showBadge: false }));
+    wrap.appendChild(attentionHeatmapCompact(scenario, { showBadge: false, detailsInfoText: "Die Heatmap zeigt, welche Token (Spalte j) beim Berechnen des Kontextvektors für Token i (Zeile i) stärker gewichtet werden. Das ist die Kontextgrundlage für den MLP-Vergleich darunter." }));
 
-    // Details panel (unter der Heatmap)
-    const hmDetailsPanel = document.createElement("details");
-    hmDetailsPanel.className = "heatmap-panel heatmap-details";
-    hmDetailsPanel.style.marginTop = "10px";
-    bindDetailsPersistence(hmDetailsPanel, "mlp-heatmap-details", false);
-    const hmDetailsSummary = document.createElement("summary");
-    hmDetailsSummary.innerHTML = `<span class="heatmap-summary-title">Details zur Heatmap</span><span class="heatmap-summary-tag">Auswahl · Legende · Tipp</span>`;
-    hmDetailsPanel.appendChild(hmDetailsSummary);
-    const hmDetailsInner = document.createElement("div");
-    hmDetailsInner.className = "heatmap-panel-body";
-    hmDetailsInner.style.marginTop = "8px";
-    const hmDetailsText = document.createElement("div");
-    hmDetailsText.className = "small muted";
-    hmDetailsText.textContent = "Die Heatmap zeigt, welche Token (Spalte j) beim Berechnen des Kontextvektors für Token i (Zeile i) stärker gewichtet werden. Das ist die Kontextgrundlage für den MLP-Vergleich darunter.";
-    hmDetailsInner.appendChild(hmDetailsText);
-    hmDetailsPanel.appendChild(hmDetailsInner);
-    wrap.appendChild(hmDetailsPanel);
 
     // Divider zwischen Bereich 1 (Heatmap) und Bereich 2 (MLP)
     const divider2 = document.createElement("div");
@@ -3436,6 +3437,19 @@ if(!toks.length){
     chkCompare.checked = !!state.params.mlpCompare;
     chkDelta.checked = !!state.params.showDelta;
 
+    function updateMlpBadge(i){
+      // Persist current token index for screenshots / consistency
+      state.params.mlpTok = i;
+      const bits = [];
+      bits.push(`i=${i}`);
+      bits.push(`d_model ${state.params.dModel}`);
+      bits.push(state.params.mlpCompare ? "Vergleich On" : "Vergleich Off");
+      bits.push(state.params.showDelta ? "Delta On" : "Delta Off");
+      if(typeof mlpBadge !== "undefined" && mlpBadge){
+        mlpBadge.textContent = "Aktiv: " + bits.join(" · ");
+      }
+    }
+
     // Build representations
     const E = getEmbeddingsForScenario(scenario, toks); // [T][d]
     const A = buildAttentionMatrix(scenario, toks);     // [T][T]
@@ -3443,7 +3457,25 @@ if(!toks.length){
     const ffn = buildToyFFN((scenario && scenario.id) ? scenario.id : "x", dModel);
 
     const outBox = document.createElement("div");
-    wrap.appendChild(h3("MLP Vorher/Nachher (toy-FFN)"));
+    // --- Bereich 2: MLP Vorher/Nachher ---
+    const mlpHeader = document.createElement("div");
+    mlpHeader.style.display = "flex";
+    mlpHeader.style.alignItems = "baseline";
+    mlpHeader.style.justifyContent = "space-between";
+    mlpHeader.style.gap = "10px";
+    const mlpTitle = h3("MLP Vorher/Nachher (toy-FFN)");
+    const mlpBadge = document.createElement("span");
+    mlpBadge.className = "badge small";
+    mlpHeader.appendChild(mlpTitle);
+    mlpHeader.appendChild(mlpBadge);
+    wrap.appendChild(mlpHeader);
+    const mlpUnderText = document.createElement("div");
+    mlpUnderText.className = "small muted";
+    mlpUnderText.style.marginTop = "4px";
+    mlpUnderText.innerHTML = 'Wenn sich <span class="mono">Input</span> (Embedding vs. Kontext) sichtbar unterscheidet, wird auch das FFN-Output anders. So trennt man sauber: <strong>Kontextbildung</strong> (Attention) vs. <strong>nichtlineare Transformation</strong> (MLP).';
+    wrap.appendChild(mlpUnderText);
+
+
     wrap.appendChild(outBox);
 
     // Panels (Standard): Details + Einstellungen unter der Visualisierung
@@ -3503,18 +3535,40 @@ if(!toks.length){
     }
 
     function renderSingle(i){
+
       const emb = E[i];
       const ctx = ctxWithAttention(i);
       const out = ffnForward(ctx);
 
       outBox.innerHTML = "";
-      outBox.appendChild(renderVectorBars(emb, "Embedding (ohne Kontext)"));
-      outBox.appendChild(renderVectorBars(ctx, "Kontext nach Attention (Input in FFN)"));
+      const stack = document.createElement("div");
+      stack.style.display = "grid";
+      stack.style.gap = "10px";
+
+      const c1 = document.createElement("div");
+      c1.className = "compare-card";
+      c1.innerHTML = '<div class="compare-title"><strong>Embedding (ohne Kontext)</strong></div>';
+      c1.appendChild(renderVectorBars(emb, "Embedding (ohne Kontext)"));
+
+      const c2 = document.createElement("div");
+      c2.className = "compare-card";
+      c2.innerHTML = '<div class="compare-title"><strong>Kontext nach Attention</strong><span class="small muted">Input in FFN</span></div>';
+      c2.appendChild(renderVectorBars(ctx, "Kontext nach Attention (Input in FFN)"));
       if(!!state.params.showDelta){
-        outBox.appendChild(renderDeltaBars(ctx, emb, "Delta: Kontext − Embedding"));
+        c2.appendChild(renderDeltaBars(ctx, emb, "Delta: Kontext − Embedding"));
       }
-      outBox.appendChild(renderVectorBars(out, "FFN-Output (nach MLP/FFN)"));
+
+      const c3 = document.createElement("div");
+      c3.className = "compare-card";
+      c3.innerHTML = '<div class="compare-title"><strong>FFN-Output</strong><span class="small muted">nach MLP/FFN</span></div>';
+      c3.appendChild(renderVectorBars(out, "FFN-Output (nach MLP/FFN)"));
+
+      stack.appendChild(c1);
+      stack.appendChild(c2);
+      stack.appendChild(c3);
+      outBox.appendChild(stack);
     }
+
 
     function renderCompare(i){
       const emb = E[i];
@@ -3547,17 +3601,11 @@ if(!toks.length){
       grid.appendChild(right);
 
       outBox.appendChild(grid);
-
-      const note = document.createElement("div");
-      note.className = "notice";
-      note.innerHTML =
-        '<div class="small muted">Interpretation</div>'
-        + '<div class="small">Wenn sich <span class="mono">Input</span> (Embedding vs. Kontext) sichtbar unterscheidet, wird auch das FFN-Output anders. So trennt man sauber: <strong>Kontextbildung</strong> (Attention) vs. <strong>nichtlineare Transformation</strong> (MLP).</div>';
-      outBox.appendChild(note);
     }
 
     function render(i){
       v.textContent = i + ": " + stripLeadingSpace(toks[i].text);
+      updateMlpBadge(i);
       if(!!state.params.mlpCompare) renderCompare(i);
       else renderSingle(i);
     }
