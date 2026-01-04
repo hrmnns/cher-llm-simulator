@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v1.4.15-didactic-freeze",
+    "version": "v1.4.16-didactic-freeze",
     "project": "cher-llm-simulator",
     "description": "LLM Simulator – Didaktisch konsolidierte Referenzszenarien",
     "defaultScenarioId": "posenc-hund-hund-hund"
@@ -405,6 +405,114 @@
         ],
         "focusByStep": {
           "attention": "Grenzen · Kontextgewichtung ist kein Weltwissen"
+        }
+      },
+      "tags": [
+        "referenz"
+      ]
+    },
+    {
+      "id": "attention-bank-kontext",
+      "title": "Ref 07 · Attention & Nähe — Gleicher Token, andere Bedeutung durch Kontext",
+      "learningGoals": [
+        "Attention",
+        "Mehrdeutigkeit",
+        "Semantische Nähe"
+      ],
+      "mode": "simulated",
+      "promptStack": {
+        "system": "Du bist ein sachlicher Assistent.",
+        "instruction": "Beobachte Attention und semantische Nähe. Die Textantwort ist zweitrangig.",
+        "user": "Der Bankräuber ging zur Bank und setzte sich später auf die Bank am Fluss."
+      },
+      "tokenization": {
+        "tokens": [
+          {
+            "text": "Der",
+            "id": 1801
+          },
+          {
+            "text": " Bankräuber",
+            "id": 1802
+          },
+          {
+            "text": " ging",
+            "id": 1803
+          },
+          {
+            "text": " zur",
+            "id": 1804
+          },
+          {
+            "text": " Bank",
+            "id": 1805
+          },
+          {
+            "text": " und",
+            "id": 1806
+          },
+          {
+            "text": " setzte",
+            "id": 1807
+          },
+          {
+            "text": " sich",
+            "id": 1808
+          },
+          {
+            "text": " später",
+            "id": 1809
+          },
+          {
+            "text": " auf",
+            "id": 1810
+          },
+          {
+            "text": " die",
+            "id": 1811
+          },
+          {
+            "text": " Bank",
+            "id": 1805
+          },
+          {
+            "text": " am",
+            "id": 1812
+          },
+          {
+            "text": " Fluss",
+            "id": 1813
+          },
+          {
+            "text": ".",
+            "id": 1814
+          }
+        ]
+      },
+      "generation": {
+        "outputText": "(Guided) Fokus: Zwei Mal „Bank“ – gleiche Tokenform, unterschiedliche Bedeutung durch Kontext."
+      },
+      "highlights": {
+        "tokenFocus": [
+          "Bank"
+        ],
+        "explain": [
+          {
+            "at": "embedding",
+            "text": "Beide Vorkommen von „Bank“ sind (als Token) identisch. Im Embedding-Raum liegen sie daher zunächst sehr nah beieinander."
+          },
+          {
+            "at": "attention",
+            "text": "Attention gewichtet Kontext: Bei „zur Bank“ wird eher der Weg zur Institution relevant; bei „auf die Bank am Fluss“ eher Sitzgelegenheit und Ort („Fluss“)."
+          },
+          {
+            "at": "attention",
+            "text": "Damit lässt sich gut zeigen: Semantische Nähe (Embedding) ist nicht gleich Bedeutungsauflösung im Satz – diese entsteht erst durch Kontextgewichtung."
+          }
+        ],
+        "focusByStep": {
+          "embedding": "Semantische Nähe · Gleiche Tokenform wirkt zunächst ähnlich",
+          "attention": "Kontextauflösung · Welche „Bank“ ist gemeint?"
         }
       },
       "tags": [
