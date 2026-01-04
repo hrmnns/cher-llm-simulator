@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v1.4.16-didactic-freeze",
+    "version": "v1.4.16-didactic-freeze (#9)",
     "project": "cher-llm-simulator",
     "description": "LLM Simulator – Didaktisch konsolidierte Referenzszenarien",
     "defaultScenarioId": "posenc-hund-hund-hund"
