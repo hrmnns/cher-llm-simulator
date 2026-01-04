@@ -684,7 +684,7 @@ details.heatmap-panel > summary{
 }
 
 
-/* v1.4.35 – match explanation infobox header typography + add toggle arrow */
+/* v1.4.36 – match explanation infobox header typography + add toggle arrow */
 details.heatmap-panel > summary{
   font-size: 0.8em !important;        /* same as explanation headers */
   font-weight: 600 !important;
@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION="v1.4.35";
+  const APP_VERSION="v1.4.36";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1965,7 +1965,20 @@ async function loadScenarios(url){
     const emb = getEmbeddingsForScenario(scenario, toks);
 
     // --- Visualisierung: Token → Vektor ---
-    wrap.appendChild(h3("Token → Vektor (Barcode-Ansicht)"));
+
+    // Header: Titel + Status-Badge (wie Attention)
+    const embHeader = document.createElement("div");
+    embHeader.style.display = "flex";
+    embHeader.style.alignItems = "baseline";
+    embHeader.style.justifyContent = "space-between";
+    embHeader.style.gap = "10px";
+    const embTitle = h3("Token → Vektor (Barcode-Ansicht)");
+    const embBadge = document.createElement("span");
+    embBadge.className = "badge small";
+    embBadge.textContent = `Aktiv: d_model ${state.params.dModel} · ${state.params.posEnc ? "PosEnc On" : "PosEnc Off"}`;
+    embHeader.appendChild(embTitle);
+    embHeader.appendChild(embBadge);
+    wrap.appendChild(embHeader);
     const grid = document.createElement("div");
     grid.style.display = "grid";
     grid.style.gap = "10px";
