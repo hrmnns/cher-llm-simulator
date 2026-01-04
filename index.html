@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION="v1.4.41";
+  const APP_VERSION = "v1.4.43";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -3377,7 +3377,36 @@ if(!toks.length){
     hmHeader.appendChild(hmBadge);
     wrap.appendChild(hmHeader);
 
-    wrap.appendChild(attentionHeatmapCompact(scenario, { showBadge: false, detailsInfoText: "Die Heatmap zeigt, welche Token (Spalte j) beim Berechnen des Kontextvektors für Token i (Zeile i) stärker gewichtet werden. Das ist die Kontextgrundlage für den MLP-Vergleich darunter." }));
+    
+    // Kontextgrundlage: komplett zuklappbar (default: zu)
+    const hmSection = document.createElement("details");
+    hmSection.className = "heatmap-panel heatmap-details";
+    const hmSummary = document.createElement("summary");
+    hmSummary.className = "heatmap-panel-summary";
+
+    const hmPanelTitle = document.createElement("span");
+    hmPanelTitle.className = "heatmap-panel-title";
+    hmPanelTitle.textContent = "Kontextgrundlage: Attention-Heatmap";
+    hmSummary.appendChild(hmPanelTitle);
+
+    const hmSummaryBadge = document.createElement("span");
+    hmSummaryBadge.className = "badge small";
+    hmSummaryBadge.textContent = "Heatmap";
+    hmSummary.appendChild(hmSummaryBadge);
+
+    hmSection.appendChild(hmSummary);
+
+    const hmBody = document.createElement("div");
+    hmBody.className = "heatmap-panel-body";
+
+    hmBody.appendChild(attentionHeatmapCompact(scenario, { showBadge: false, showHeatmapDetailsPanel: false, detailsInfoText: "Die Heatmap zeigt, welche Token (Spalte j) beim Berechnen des Kontextvektors für Token i (Zeile i) stärker gewichtet werden. Das ist die Kontextgrundlage für den MLP-Vergleich darunter." }));
+
+    hmSection.appendChild(hmBody);
+
+    bindDetailsPersistence(hmSection, "mlp-heatmap", false);
+
+    wrap.appendChild(hmSection);
+
 
 
     // Divider zwischen Bereich 1 (Heatmap) und Bereich 2 (MLP)
