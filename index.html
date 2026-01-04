@@ -385,7 +385,20 @@
       border: 1px solid rgba(34,48,68,.35);
       background: rgba(102,217,239,.10);
     }
-    .heatmap-axes{
+    
+    /* Attention heatmap: interactive highlight (vNext) */
+    .heatmap-cell.hovered{
+      outline: 2px solid rgba(247,201,72,.75); /* warn */
+      outline-offset: 1px;
+    }
+    .heatmap-cell.pinned{
+      outline: 2px solid rgba(110,231,183,.85); /* ok */
+      outline-offset: 1px;
+    }
+    .heatmap-cell.rowcol{
+      box-shadow: inset 0 0 0 2px rgba(159,176,192,.28);
+    }
+.heatmap-axes{
       display:grid;
       gap:8px;
       margin-top:10px;
@@ -717,7 +730,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.14";
+  const APP_VERSION = "v1.4.15";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2016,6 +2029,23 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
 
     // Render heatmap grid
     wrap.appendChild(h3("Heatmap"));
+
+    // --- NEW: live info + pinned cell (no more "tooltip-only") ---
+    const info = document.createElement("div");
+    info.className = "notice";
+    info.style.display = "grid";
+    info.style.gap = "6px";
+    info.innerHTML = `
+      <div class="small muted">Auswahl</div>
+      <div class="small" id="attnCellInfo">
+        Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.
+      </div>
+      <div class="small muted">
+        Interpretation: Zeile <span class="mono">i</span> (Token „fragt“) verteilt Gewicht auf Spalte <span class="mono">j</span> (Token „liefert Kontext“).
+      </div>
+    `;
+    wrap.appendChild(info);
+
     const hmWrap = document.createElement("div");
     hmWrap.className = "heatmap-wrap";
 
@@ -2028,29 +2058,134 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
     for(let i=0;i<T;i++) for(let j=0;j<T;j++) maxVal = Math.max(maxVal, M[i][j] || 0);
     maxVal = Math.max(1e-9, maxVal);
 
+    // State for UI interaction
+    let pinned = { i: null, j: null };
+    let lastHover = null;
+
+    const infoLine = info.querySelector("#attnCellInfo");
+
+    function tokenName(idx){
+      return stripLeadingSpace(toks[idx]?.text || "");
+    }
+
+    function describe(i, j){
+      const fromTok = tokenName(i);
+      const toTok   = tokenName(j);
+      const masked  = (state.params.causalMask && j > i);
+      if(masked) return `i=${i} (${fromTok}) → j=${j} (${toTok}): masked (Causal Mask)`;
+      const v = (M[i][j] || 0);
+      return `i=${i} (${fromTok}) → j=${j} (${toTok}): ${(v*100).toFixed(1)}%`;
+    }
+
+    function clearHoverClasses(){
+      if(!grid._cells) return;
+      for(const c of grid._cells){
+        c.classList.remove("hovered","rowcol");
+      }
+    }
+
+    function applyRowColHighlight(i, j){
+      if(!grid._cells) return;
+      for(const c of grid._cells){
+        const ci = Number(c.dataset.i);
+        const cj = Number(c.dataset.j);
+        if(ci === i || cj === j) c.classList.add("rowcol");
+      }
+    }
+
+    function setHover(i, j){
+      clearHoverClasses();
+      if(grid._cellMap?.[i]?.[j]){
+        const cell = grid._cellMap[i][j];
+        cell.classList.add("hovered");
+      }
+      applyRowColHighlight(i, j);
+
+      if(infoLine) infoLine.textContent = describe(i, j);
+      lastHover = { i, j };
+    }
+
+    function setPinned(i, j){
+      if(grid._cells){
+        for(const c of grid._cells) c.classList.remove("pinned");
+      }
+      pinned = { i, j };
+      if(grid._cellMap?.[i]?.[j]){
+        grid._cellMap[i][j].classList.add("pinned");
+      }
+      if(infoLine) infoLine.textContent = describe(i, j) + "  ·  (pinned)";
+    }
+
+    function clearPinned(){
+      pinned = { i: null, j: null };
+      if(grid._cells){
+        for(const c of grid._cells) c.classList.remove("pinned");
+      }
+      if(lastHover && infoLine) infoLine.textContent = describe(lastHover.i, lastHover.j);
+      if(!lastHover && infoLine) infoLine.textContent =
+        "Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.";
+    }
+
+    // Build cells + keep references for fast highlighting
+    grid._cells = [];
+    grid._cellMap = Array.from({length:T}, () => Array(T).fill(null));
+
     for(let i=0;i<T;i++){
       for(let j=0;j<T;j++){
         const cell = document.createElement("div");
         cell.className = "heatmap-cell";
+        cell.dataset.i = String(i);
+        cell.dataset.j = String(j);
+
         const v = M[i][j] || 0;
         const a = clamp01(v / maxVal); // 0..1
         cell.style.background = `rgba(102,217,239, ${0.08 + a*0.72})`;
 
-        const fromTok = stripLeadingSpace(toks[i].text);
-        const toTok   = stripLeadingSpace(toks[j].text);
-        const masked  = (state.params.causalMask && j > i);
-        cell.title = masked
-          ? `i=${i} (${fromTok}) → j=${j} (${toTok}): masked`
-          : `i=${i} (${fromTok}) → j=${j} (${toTok}): ${(v*100).toFixed(1)}%`;
+        // Keep tooltip (still useful), but not required anymore
+        cell.title = describe(i, j);
 
         // Optional highlight: if either token is in focus list, add border
+        const fromTok = tokenName(i);
+        const toTok   = tokenName(j);
         if(focus.includes(fromTok) || focus.includes(toTok)){
           cell.style.borderColor = "rgba(110,231,183,.45)";
         }
 
+        cell.addEventListener("mouseenter", () => {
+          setHover(i, j);
+          if(pinned.i != null && pinned.j != null){
+            if(grid._cellMap[pinned.i]?.[pinned.j]) grid._cellMap[pinned.i][pinned.j].classList.add("pinned");
+          }
+        });
+
+        cell.addEventListener("pointermove", () => {
+          setHover(i, j);
+          if(pinned.i != null && pinned.j != null){
+            if(grid._cellMap[pinned.i]?.[pinned.j]) grid._cellMap[pinned.i][pinned.j].classList.add("pinned");
+          }
+        });
+
+        cell.addEventListener("click", () => {
+          if(pinned.i === i && pinned.j === j){
+            clearPinned();
+          } else {
+            setPinned(i, j);
+          }
+        });
+
         grid.appendChild(cell);
+        grid._cells.push(cell);
+        grid._cellMap[i][j] = cell;
       }
     }
+
+    // Clicking on background clears pin
+    hmWrap.addEventListener("click", (e) => {
+      if(e.target === hmWrap || e.target === grid){
+        clearPinned();
+        clearHoverClasses();
+      }
+    });
 
     const container = document.createElement("div");
     container.style.display = "inline-block";
@@ -2058,8 +2193,7 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
     hmWrap.appendChild(container);
 
     wrap.appendChild(hmWrap);
-
-    // Legend / axis help
+// Legend / axis help
     const axes = document.createElement("div");
     axes.className = "heatmap-axes";
     axes.innerHTML = `
