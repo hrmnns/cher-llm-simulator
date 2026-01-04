@@ -739,7 +739,7 @@
 
 <script>
 (() => {
-  const APP_VERSION="v1.4.23";
+  const APP_VERSION="v1.4.24";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1995,9 +1995,7 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
       </div>
       <div class="small muted">Tipp: Mask=On entspricht autoregressiver Textgenerierung. Layer/Head zeigen unterschiedliche Perspektiven.</div>
     `;
-    wrap.appendChild(controls);
 
-    
     // Segmented controls (Mask/Layer/Head)
     const segBtns = Array.from(controls.querySelectorAll(".segbtn"));
 
@@ -2324,6 +2322,23 @@ if(!toks.length){
     detailsInner.appendChild(axes);
     detailsPanel.appendChild(detailsInner);
     wrap.appendChild(detailsPanel);
+
+    
+    // Settings panel (Mask/Layer/Head) under heatmap
+    const settingsPanel = document.createElement("details");
+    settingsPanel.className = "notice";
+    settingsPanel.style.marginTop = "10px";
+    settingsPanel.open = false;
+    const settingsSummary = document.createElement("summary");
+    settingsSummary.innerHTML = `Einstellungen zur Heatmap <span class="small muted">Mask · Layer · Head</span>`;
+    settingsPanel.appendChild(settingsSummary);
+    const settingsInner = document.createElement("div");
+    settingsInner.style.marginTop = "8px";
+    // Avoid nested notice styling
+    controls.className = "";
+    settingsInner.appendChild(controls);
+    settingsPanel.appendChild(settingsInner);
+    wrap.appendChild(settingsPanel);
 
     return wrap;
   }
