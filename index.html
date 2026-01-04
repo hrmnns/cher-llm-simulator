@@ -730,7 +730,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.18";
+  const APP_VERSION="v1.4.21";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2049,8 +2049,6 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
         <div class="small mono" id="attnTopNBody" style="margin-top:6px; line-height:1.35;">Keine Zeile ausgewählt.</div>
       </details>
 `;
-    wrap.appendChild(info);
-
     const hmWrap = document.createElement("div");
     hmWrap.className = "heatmap-wrap";
 
@@ -2287,7 +2285,22 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
         Tipp: Mit <strong>Causal Mask</strong> kann ein Token nur auf sich selbst und vorherige Tokens achten (typisch für Decoder-LLMs).
       </div>
     `;
-    wrap.appendChild(axes);
+    // Details panel (Auswahl + Legende + Tipp) under heatmap
+    const detailsPanel = document.createElement("details");
+    detailsPanel.className = "notice";
+    detailsPanel.style.marginTop = "10px";
+    detailsPanel.open = false;
+    const detailsSummary = document.createElement("summary");
+    detailsSummary.innerHTML = `Details zur Heatmap <span class="small muted">Auswahl · Legende · Tipp</span>`;
+    detailsPanel.appendChild(detailsSummary);
+    const detailsInner = document.createElement("div");
+    detailsInner.style.marginTop = "8px";
+    // Avoid nested notice styling
+    info.className = "";
+    detailsInner.appendChild(info);
+    detailsInner.appendChild(axes);
+    detailsPanel.appendChild(detailsInner);
+    wrap.appendChild(detailsPanel);
 
     return wrap;
   }
@@ -2998,7 +3011,22 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
       </div>
       <div class="small muted">Tipp: Klick pinnt die Zelle (für Vergleich beim Umschalten von Layer/Head/Causal Mask).</div>
     `;
-    wrap.appendChild(axes);
+    // Details panel (Auswahl + Legende + Tipp) under heatmap
+    const detailsPanel = document.createElement("details");
+    detailsPanel.className = "notice";
+    detailsPanel.style.marginTop = "10px";
+    detailsPanel.open = false;
+    const detailsSummary = document.createElement("summary");
+    detailsSummary.innerHTML = `Details zur Heatmap <span class="small muted">Auswahl · Legende · Tipp</span>`;
+    detailsPanel.appendChild(detailsSummary);
+    const detailsInner = document.createElement("div");
+    detailsInner.style.marginTop = "8px";
+    // Avoid nested notice styling
+    info.className = "";
+    detailsInner.appendChild(info);
+    detailsInner.appendChild(axes);
+    detailsPanel.appendChild(detailsInner);
+    wrap.appendChild(detailsPanel);
 
     return wrap;
   }function viewMLP(scenario){
