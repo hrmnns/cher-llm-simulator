@@ -644,6 +644,75 @@ details.heatmap-settings > summary::-webkit-details-marker{ display:none; }
   border-left: 2px solid rgba(120,130,160,.35);
 }
 
+
+/* v1.4.33 – make heatmap panels match explanation infoboxes (very subtle) */
+details.heatmap-panel{
+  border: 1px solid rgba(159,176,192,.18) !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  padding: 6px 8px !important;
+}
+
+details.heatmap-panel > summary{
+  font-size: 0.85em !important;
+  font-weight: 600 !important;
+  color: rgba(229,231,235,.9) !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.heatmap-summary-title{
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  color: inherit !important;
+}
+
+.heatmap-summary-tag{
+  font-size: 0.7em !important;
+  padding: 1px 6px !important;
+  border: 1px solid rgba(159,176,192,.18) !important;
+  border-radius: 999px !important;
+  color: rgba(159,176,192,.75) !important;
+  background: transparent !important;
+}
+
+.heatmap-panel-body{
+  margin-top: 6px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(120,130,160,.22) !important;
+}
+
+
+/* v1.4.34 – match explanation infobox header typography + add toggle arrow */
+details.heatmap-panel > summary{
+  font-size: 0.8em !important;        /* same as explanation headers */
+  font-weight: 600 !important;
+  letter-spacing: .01em;
+  color: rgba(229,231,235,.9) !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* arrow indicator like explanation boxes */
+details.heatmap-panel > summary::before{
+  content: "▸";
+  display: inline-block;
+  opacity: .75;
+  transform: translateY(-1px);
+}
+details.heatmap-panel[open] > summary::before{
+  content: "▾";
+}
+
+/* ensure title inherits exactly */
+.heatmap-summary-title{
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  color: inherit !important;
+}
+
 </style>
 </head>
 <body>
@@ -851,7 +920,7 @@ details.heatmap-settings > summary::-webkit-details-marker{ display:none; }
 
 <script>
 (() => {
-  const APP_VERSION="v1.4.31";
+  const APP_VERSION="v1.4.34";
   // -----------------------------
   // Constants
   // -----------------------------
