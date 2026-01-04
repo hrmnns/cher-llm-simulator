@@ -240,6 +240,15 @@
       font-size:12px;
       line-height:1.35;
     }
+
+    /* Segmented controls (Attention params) */
+    .segbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
+    .seggrp{display:flex; align-items:center; gap:6px; padding:6px 8px; border:1px solid rgba(159,176,192,.28); border-radius:12px; background: rgba(9,18,30,.25);}
+    .seglabel{font-size:12px; color: rgba(159,176,192,.9); margin-right:2px;}
+    .segbtn{appearance:none; border:1px solid rgba(159,176,192,.28); background: rgba(9,18,30,.35); color: var(--text); padding:4px 8px; border-radius:10px; font-size:12px; line-height:1; cursor:pointer;}
+    .segbtn[aria-pressed="true"]{border-color: rgba(110,231,183,.65); box-shadow: 0 0 0 2px rgba(110,231,183,.15) inset;}
+    .segbtn:focus{outline:2px solid rgba(247,201,72,.55); outline-offset:2px;}
+
     .notice strong{color:var(--text)}
     .notice.warn{
       border-color: rgba(247,201,72,.45);
@@ -730,7 +739,7 @@
 
 <script>
 (() => {
-  const APP_VERSION="v1.4.21";
+  const APP_VERSION="v1.4.22";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1967,58 +1976,60 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
     controls.style.gap = "10px";
 
     controls.innerHTML = `
-      <div class="kv">
-        <div class="k">Layer</div>
-        <div class="v">
-          <select id="attnLayerSel" aria-label="Layer auswählen">
-            <option value="1">1</option>
-            <option value="2">2</option>
-          </select>
+      <div class="segbar">
+        <div class="seggrp" role="group" aria-label="Causal Mask umschalten">
+          <span class="seglabel" title="Causal Mask (zeitliche Einschränkung)">Mask</span>
+          <button type="button" class="segbtn" data-kind="mask" data-value="on" title="Causal Mask an (nur Vergangenheit)">On</button>
+          <button type="button" class="segbtn" data-kind="mask" data-value="off" title="Causal Mask aus (Analyse-Modus)">Off</button>
+        </div>
+        <div class="seggrp" role="group" aria-label="Layer auswählen">
+          <span class="seglabel">Layer</span>
+          <button type="button" class="segbtn" data-kind="layer" data-value="1">L1</button>
+          <button type="button" class="segbtn" data-kind="layer" data-value="2">L2</button>
+        </div>
+        <div class="seggrp" role="group" aria-label="Head auswählen">
+          <span class="seglabel">Head</span>
+          <button type="button" class="segbtn" data-kind="head" data-value="1">H1</button>
+          <button type="button" class="segbtn" data-kind="head" data-value="2">H2</button>
         </div>
       </div>
-      <div class="kv">
-        <div class="k">Head</div>
-        <div class="v">
-          <select id="attnHeadSel" aria-label="Head auswählen">
-            <option value="1">1</option>
-            <option value="2">2</option>
-          </select>
-        </div>
-      </div>
-      <div class="kv">
-        <div class="k">Causal Mask</div>
-        <div class="v">
-          <label style="display:flex; align-items:center; gap:10px;">
-            <input id="causalToggle" type="checkbox" />
-            <span class="small muted">nur auf aktuelle und vorherige Token</span>
-          </label>
-        </div>
-      </div>
+      <div class="small muted">Tipp: Mask=On entspricht autoregressiver Textgenerierung. Layer/Head zeigen unterschiedliche Perspektiven.</div>
     `;
     wrap.appendChild(controls);
 
-    const layerSel = controls.querySelector("#attnLayerSel");
-    const headSel  = controls.querySelector("#attnHeadSel");
-    const causalToggle = controls.querySelector("#causalToggle");
+    
+    // Segmented controls (Mask/Layer/Head)
+    const segBtns = Array.from(controls.querySelectorAll(".segbtn"));
 
-    layerSel.value = String(state.params.attnLayer);
-    headSel.value  = String(state.params.attnHead);
-    causalToggle.checked = !!state.params.causalMask;
+    function syncSeg(){
+      for(const b of segBtns){
+        const kind = b.dataset.kind;
+        const val  = b.dataset.value;
+        let active = false;
+        if(kind === "mask") active = (val === (state.params.causalMask ? "on" : "off"));
+        if(kind === "layer") active = (Number(val) === Number(state.params.attnLayer));
+        if(kind === "head")  active = (Number(val) === Number(state.params.attnHead));
+        b.setAttribute("aria-pressed", active ? "true" : "false");
+      }
+    }
 
-    layerSel.addEventListener("change", (e) => {
-      state.params.attnLayer = Number(e.target.value);
+    function setSeg(kind, val){
+      if(kind === "mask"){
+        state.params.causalMask = (val === "on");
+      } else if(kind === "layer"){
+        state.params.attnLayer = Number(val);
+      } else if(kind === "head"){
+        state.params.attnHead = Number(val);
+      }
       render();
-    });
-    headSel.addEventListener("change", (e) => {
-      state.params.attnHead = Number(e.target.value);
-      render();
-    });
-    causalToggle.addEventListener("change", (e) => {
-      state.params.causalMask = !!e.target.checked;
-      render();
+    }
+
+    segBtns.forEach((b) => {
+      b.addEventListener("click", () => setSeg(b.dataset.kind, b.dataset.value));
     });
 
-    if(!toks.length){
+    syncSeg();
+if(!toks.length){
       wrap.appendChild(pNotice("Keine Tokens – keine Heatmap.", true));
       return wrap;
     }
