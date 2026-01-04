@@ -739,7 +739,7 @@
 
 <script>
 (() => {
-  const APP_VERSION="v1.4.22";
+  const APP_VERSION="v1.4.23";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2039,7 +2039,19 @@ if(!toks.length){
     const T = toks.length;
 
     // Render heatmap grid
-    wrap.appendChild(h3("Heatmap"));
+    // Header row: title + status badge (for screenshots)
+    const hmHeader = document.createElement("div");
+    hmHeader.style.display = "flex";
+    hmHeader.style.alignItems = "baseline";
+    hmHeader.style.justifyContent = "space-between";
+    hmHeader.style.gap = "10px";
+    const hmTitle = h3("Heatmap");
+    const hmBadge = document.createElement("span");
+    hmBadge.className = "badge small";
+    hmBadge.textContent = `Aktiv: ${state.params.causalMask ? "Mask On" : "Mask Off"} · L${state.params.attnLayer} · H${state.params.attnHead}`;
+    hmHeader.appendChild(hmTitle);
+    hmHeader.appendChild(hmBadge);
+    wrap.appendChild(hmHeader);
 
     // --- NEW: live info + pinned cell (no more "tooltip-only") ---
     const info = document.createElement("div");
@@ -2778,6 +2790,15 @@ if(!toks.length){
     const T = toks.length;
 
     const wrap = document.createElement("div");
+
+    // Status badge (matches Attention card; useful for screenshots)
+    const hmBadge = document.createElement("span");
+    hmBadge.className = "badge small";
+    hmBadge.style.marginBottom = "8px";
+    hmBadge.style.display = "inline-flex";
+    hmBadge.textContent = `Aktiv: ${state.params.causalMask ? "Mask On" : "Mask Off"} · L${state.params.attnLayer} · H${state.params.attnHead}`;
+    wrap.appendChild(hmBadge);
+
 
     // --- Live info + pinned cell (not tooltip-only) ---
     const info = document.createElement("div");
