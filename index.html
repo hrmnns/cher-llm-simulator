@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION="v1.4.37";
+  const APP_VERSION="v1.4.38";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -3051,7 +3051,10 @@ if(!toks.length){
     return box;
   }
 
-  function attentionHeatmapCompact(scenario){
+  function attentionHeatmapCompact(scenario, opts){
+    opts = opts || {};
+    const showBadge = (opts.showBadge !== false);
+
     const toks = (scenario && scenario.tokenization && scenario.tokenization.tokens) ? scenario.tokenization.tokens : [];
     if(!toks.length) return pNotice("Keine Tokens – keine Heatmap.", true);
 
@@ -3063,12 +3066,15 @@ if(!toks.length){
     const wrap = document.createElement("div");
 
     // Status badge (matches Attention card; useful for screenshots)
+    if(showBadge){
     const hmBadge = document.createElement("span");
-    hmBadge.className = "badge small";
-    hmBadge.style.marginBottom = "8px";
-    hmBadge.style.display = "inline-flex";
-    hmBadge.textContent = `Aktiv: ${state.params.causalMask ? "Mask On" : "Mask Off"} · L${state.params.attnLayer} · H${state.params.attnHead}`;
-    wrap.appendChild(hmBadge);
+        hmBadge.className = "badge small";
+        hmBadge.style.marginBottom = "8px";
+        hmBadge.style.display = "inline-flex";
+        hmBadge.textContent = `Aktiv: ${state.params.causalMask ? "Mask On" : "Mask Off"} · L${state.params.attnLayer} · H${state.params.attnHead}`;
+        wrap.appendChild(hmBadge);
+    }
+
 
 
     // --- Live info + pinned cell (not tooltip-only) ---
@@ -3339,8 +3345,47 @@ if(!toks.length){
     wrap.appendChild(pNotice("MLP/FFN ergänzt die Attention: Attention mischt Information über Tokens (Kontext), MLP transformiert pro Token nichtlinear. In diesem Schritt kannst du direkt vergleichen: (A) FFN ohne Kontext (nur Embedding) vs. (B) FFN mit Kontext (nach Attention)."));
 
     // Context reminder: compact heatmap
-    wrap.appendChild(h3("Attention-Heatmap (Kontextgrundlage)"));
-    wrap.appendChild(attentionHeatmapCompact(scenario));
+    // --- Bereich 1: Heatmap (Kontextgrundlage) ---
+    const hmHeader = document.createElement("div");
+    hmHeader.style.display = "flex";
+    hmHeader.style.alignItems = "baseline";
+    hmHeader.style.justifyContent = "space-between";
+    hmHeader.style.gap = "10px";
+    const hmTitle = h3("Heatmap");
+    const hmBadge = document.createElement("span");
+    hmBadge.className = "badge small";
+    hmBadge.textContent = `Aktiv: ${state.params.causalMask ? "Mask On" : "Mask Off"} · L${state.params.attnLayer} · H${state.params.attnHead}`;
+    hmHeader.appendChild(hmTitle);
+    hmHeader.appendChild(hmBadge);
+    wrap.appendChild(hmHeader);
+
+    wrap.appendChild(attentionHeatmapCompact(scenario, { showBadge: false }));
+
+    // Details panel (unter der Heatmap)
+    const hmDetailsPanel = document.createElement("details");
+    hmDetailsPanel.className = "heatmap-panel heatmap-details";
+    hmDetailsPanel.style.marginTop = "10px";
+    bindDetailsPersistence(hmDetailsPanel, "mlp-heatmap-details", false);
+    const hmDetailsSummary = document.createElement("summary");
+    hmDetailsSummary.innerHTML = `<span class="heatmap-summary-title">Details zur Heatmap</span><span class="heatmap-summary-tag">Auswahl · Legende · Tipp</span>`;
+    hmDetailsPanel.appendChild(hmDetailsSummary);
+    const hmDetailsInner = document.createElement("div");
+    hmDetailsInner.className = "heatmap-panel-body";
+    hmDetailsInner.style.marginTop = "8px";
+    const hmDetailsText = document.createElement("div");
+    hmDetailsText.className = "small muted";
+    hmDetailsText.textContent = "Die Heatmap zeigt, welche Token (Spalte j) beim Berechnen des Kontextvektors für Token i (Zeile i) stärker gewichtet werden. Das ist die Kontextgrundlage für den MLP-Vergleich darunter.";
+    hmDetailsInner.appendChild(hmDetailsText);
+    hmDetailsPanel.appendChild(hmDetailsInner);
+    wrap.appendChild(hmDetailsPanel);
+
+    // Divider zwischen Bereich 1 (Heatmap) und Bereich 2 (MLP)
+    const divider2 = document.createElement("div");
+    divider2.style.height = "1px";
+    divider2.style.background = "rgba(255,255,255,.10)";
+    divider2.style.margin = "14px 0 10px";
+    wrap.appendChild(divider2);
+
 
     const toks = (scenario && scenario.tokenization && scenario.tokenization.tokens) ? scenario.tokenization.tokens : [];
     if(!toks.length){
@@ -3361,9 +3406,7 @@ if(!toks.length){
       + '<span class="mono" id="mlpTokVal"></span>'
       + '</div></div>'
       + '<div class="small muted">Zeige toy-FFN Input/Output für Token i.</div>';
-    wrap.appendChild(controls);
-
-    // Toggles (persist in state)
+    // Controls: token selector
     if(typeof state.params.showDelta !== "boolean") state.params.showDelta = true;
     if(typeof state.params.mlpCompare !== "boolean") state.params.mlpCompare = true;
 
@@ -3381,8 +3424,6 @@ if(!toks.length){
       + '</label>'
       + '</div>'
       + '<div class="small muted" style="margin-top:8px;">Tipp: Der Vergleich ist der Aha-Punkt. Ohne Attention bleibt die Repräsentation lokal (Embedding). Mit Attention entsteht ein Kontextvektor, der die FFN-Eingabe sichtbar verschiebt.</div>';
-    wrap.appendChild(toggles);
-
     const r = controls.querySelector("#mlpTokRange");
     const v = controls.querySelector("#mlpTokVal");
     const chkCompare = toggles.querySelector("#mlpCompare");
@@ -3404,6 +3445,43 @@ if(!toks.length){
     const outBox = document.createElement("div");
     wrap.appendChild(h3("MLP Vorher/Nachher (toy-FFN)"));
     wrap.appendChild(outBox);
+
+    // Panels (Standard): Details + Einstellungen unter der Visualisierung
+    const mlpDetailsPanel = document.createElement("details");
+    mlpDetailsPanel.className = "heatmap-panel heatmap-details";
+    mlpDetailsPanel.style.marginTop = "10px";
+    bindDetailsPersistence(mlpDetailsPanel, "mlp-details", false);
+    const mlpDetailsSummary = document.createElement("summary");
+    mlpDetailsSummary.innerHTML = `<span class="heatmap-summary-title">Details …</span><span class="heatmap-summary-tag">Toy-FFN · Lesart · Hinweis</span>`;
+    mlpDetailsPanel.appendChild(mlpDetailsSummary);
+    const mlpDetailsInner = document.createElement("div");
+    mlpDetailsInner.className = "heatmap-panel-body";
+    mlpDetailsInner.style.marginTop = "8px";
+    const mlpDetailsText = document.createElement("div");
+    mlpDetailsText.className = "small muted";
+    mlpDetailsText.textContent = "Dieses toy-FFN ist eine didaktische Vereinfachung: Es zeigt, wie ein Feedforward-Netz (MLP) den Eingabevektor (Embedding oder Kontext) weiterverarbeitet. Die Zahlen dienen nur der Orientierung.";
+    mlpDetailsInner.appendChild(mlpDetailsText);
+    mlpDetailsPanel.appendChild(mlpDetailsInner);
+    wrap.appendChild(mlpDetailsPanel);
+
+    const mlpSettingsPanel = document.createElement("details");
+    mlpSettingsPanel.className = "heatmap-panel heatmap-settings";
+    mlpSettingsPanel.style.marginTop = "10px";
+    bindDetailsPersistence(mlpSettingsPanel, "mlp-settings", false);
+    const mlpSettingsSummary = document.createElement("summary");
+    mlpSettingsSummary.innerHTML = `<span class="heatmap-summary-title">Einstellungen …</span><span class="heatmap-summary-tag">Token i · Vergleich · Delta</span>`;
+    mlpSettingsPanel.appendChild(mlpSettingsSummary);
+    const mlpSettingsInner = document.createElement("div");
+    mlpSettingsInner.className = "heatmap-panel-body";
+    mlpSettingsInner.style.marginTop = "8px";
+    // Avoid nested notice styling
+    controls.className = "";
+    toggles.className = "";
+    mlpSettingsInner.appendChild(controls);
+    mlpSettingsInner.appendChild(toggles);
+    mlpSettingsPanel.appendChild(mlpSettingsInner);
+    wrap.appendChild(mlpSettingsPanel);
+
 
     function ctxWithAttention(i){
       const ctx = new Array(dModel);
