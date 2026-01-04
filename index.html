@@ -730,7 +730,7 @@
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.16";
+  const APP_VERSION = "v1.4.17";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2064,6 +2064,9 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
 
     const infoLine = info.querySelector("#attnCellInfo");
 
+    const DEFAULT_MSG = "Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.";
+    const isHoverFine = (window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+
     function tokenName(idx){
       return stripLeadingSpace(toks[idx]?.text || "");
     }
@@ -2191,6 +2194,41 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
     container.style.display = "inline-block";
     container.appendChild(grid);
     hmWrap.appendChild(container);
+
+
+
+    // Desktop-only: when leaving heatmap, clear hover highlights; keep pinned cell (if any)
+
+    if(isHoverFine){
+
+      hmWrap.addEventListener("mouseleave", () => {
+
+        clearHoverClasses();
+
+        // keep pinned visible
+
+        if(pinned.i != null && pinned.j != null && grid._cellMap?.[pinned.i]?.[pinned.j]) {
+
+          grid._cellMap[pinned.i][pinned.j].classList.add("pinned");
+
+        }
+
+        // restore info line to pinned or default
+
+        if(pinned.i == null || pinned.j == null) {
+
+          if(infoLine) infoLine.textContent = DEFAULT_MSG;
+
+        } else {
+
+          if(infoLine) infoLine.textContent = describe(pinned.i, pinned.j) + "  ·  (pinned)";
+
+        }
+
+      });
+
+    }
+
 
     wrap.appendChild(hmWrap);
 // Legend / axis help
@@ -2691,6 +2729,9 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
     wrap.appendChild(info);
     const infoLine = info.querySelector("#attnCellInfoCompact");
 
+    const DEFAULT_MSG = "Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.";
+    const isHoverFine = (window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+
     const hmWrap = document.createElement("div");
     hmWrap.className = "heatmap-wrap";
     hmWrap.style.padding = "8px";
@@ -2820,6 +2861,41 @@ refSel.addEventListener("change", () => { renderSimilarity(); });
     container.style.display = "inline-block";
     container.appendChild(grid);
     hmWrap.appendChild(container);
+
+
+
+    // Desktop-only: when leaving heatmap, clear hover highlights; keep pinned cell (if any)
+
+    if(isHoverFine){
+
+      hmWrap.addEventListener("mouseleave", () => {
+
+        clearHoverClasses();
+
+        // keep pinned visible
+
+        if(pinned.i != null && pinned.j != null && grid._cellMap?.[pinned.i]?.[pinned.j]) {
+
+          grid._cellMap[pinned.i][pinned.j].classList.add("pinned");
+
+        }
+
+        // restore info line to pinned or default
+
+        if(pinned.i == null || pinned.j == null) {
+
+          if(infoLine) infoLine.textContent = DEFAULT_MSG;
+
+        } else {
+
+          if(infoLine) infoLine.textContent = describe(pinned.i, pinned.j) + "  ·  (pinned)";
+
+        }
+
+      });
+
+    }
+
 
     wrap.appendChild(hmWrap);
 
