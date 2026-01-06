@@ -954,7 +954,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.66";
+  const APP_VERSION = "v1.4.71";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2961,69 +2961,209 @@ if(!toks.length){
   
   function viewLogits(scenario){
     const wrap = document.createElement("div");
-    const toks = scenario.tokenization?.tokens ?? [];
-    wrap.appendChild(pNotice("Logits sind Rohwerte für mögliche nächste Tokens. Per Softmax werden daraus Wahrscheinlichkeiten. Hier zeigen wir eine didaktische Top-K-Ansicht pro Generationsschritt."));
-
-    // Ensure we have steps
     const steps = getDecodingSteps(scenario);
+
+    // Intro (dezent)
+    const intro = document.createElement("div");
+    intro.className = "small muted";
+    intro.textContent = "Logits sind Rohwerte für mögliche nächste Tokens. Erst nach Softmax werden daraus Wahrscheinlichkeiten – und erst im Decoding wird daraus eine Auswahl.";
+    wrap.appendChild(intro);
+
+    const divider0 = document.createElement("div");
+    divider0.style.height = "1px";
+    divider0.style.background = "rgba(255,255,255,.10)";
+    divider0.style.margin = "10px 0";
+    wrap.appendChild(divider0);
+
     if(!steps.length){
       wrap.appendChild(pNotice("Keine Generationsdaten vorhanden.", true));
       return wrap;
     }
 
-    // Step selector
-    const controls = document.createElement("div");
-    controls.className = "notice";
-    controls.style.display = "grid";
-    controls.style.gap = "10px";
-    controls.innerHTML = `
-      <div class="kv">
-        <div class="k">Schritt</div>
-        <div class="v" style="display:flex; gap:10px; align-items:center;">
-          <input id="logitStepRange" type="range" min="1" max="${steps.length}" step="1" />
-          <span class="mono" id="logitStepVal"></span>
-        </div>
-      </div>
-      <div class="small muted">Tipp: Ändere <span class="mono">temperature</span>, <span class="mono">topP</span> und <span class="mono">topK</span> unter Tools, um die Verteilung zu verändern.</div>
-    `;
-    wrap.appendChild(controls);
+    // clamp & persist step
+    const stepMax = steps.length;
+    const currentStep = clamp(Number(state.params.logitStep) || 1, 1, stepMax);
+    if(state.params.logitStep !== currentStep) state.params.logitStep = currentStep;
 
-    const deltaToggle = document.createElement("div");
-    deltaToggle.className = "notice";
-    deltaToggle.innerHTML =
-      '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
-      + '<input id="mlpShowDelta" type="checkbox" checked />'
-      + '<span><strong>Delta anzeigen</strong> (Kontext − Embedding)</span>'
-      + '</label>'
-      + '<div class="small muted" style="margin-top:6px;">Ohne Attention bleibt nur das Embedding. Mit Attention entsteht ein Kontextvektor. Das Delta macht sichtbar, was der Kontext ergänzt.</div>';
-    wrap.appendChild(deltaToggle);
+    const layout = document.createElement("div");
+    layout.style.display = "grid";
+    layout.style.gridTemplateColumns = "1fr";
+    layout.style.gap = "12px";
+    layout.style.alignItems = "start";
+    wrap.appendChild(layout);
 
-    const r = controls.querySelector("#logitStepRange");
-    const v = controls.querySelector("#logitStepVal");
-    r.value = String(clamp(Number(state.params.logitStep) || 1, 1, steps.length));
-    v.textContent = `#${r.value} / ${steps.length}`;
-    r.addEventListener("input", (e) => {
-      state.params.logitStep = Number(e.target.value);
-      v.textContent = `#${e.target.value} / ${steps.length}`;
-      render();
-    });
-const idx = clamp((Number(state.params.logitStep) || 1) - 1, 0, steps.length - 1);
-    const step = steps[idx];
+    // one-off listener; render() recreates DOM anyway
 
-    // Chosen token highlight
+    // --- Left: Visualisierung ---
+    const viz = document.createElement("div");
+    viz.className = "heatmap-panel";
+    layout.appendChild(viz);
+
+    const vizHeader = document.createElement("div");
+    vizHeader.style.display = "flex";
+    vizHeader.style.justifyContent = "space-between";
+    vizHeader.style.alignItems = "baseline";
+    vizHeader.style.gap = "10px";
+    viz.appendChild(vizHeader);
+
+    const title = document.createElement("div");
+    title.className = "h2";
+    title.textContent = "Top‑K Wahrscheinlichkeiten";
+    vizHeader.appendChild(title);
+
+    const sub = document.createElement("div");
+    sub.className = "small muted mono";
+    sub.textContent = `für Schritt #${currentStep} / ${stepMax}`;
+    vizHeader.appendChild(sub);
+
+    const step = steps[currentStep - 1];
+
+    // chosen token
     const chosenBox = document.createElement("div");
     chosenBox.className = "notice";
+    chosenBox.style.marginTop = "10px";
     chosenBox.innerHTML = `
-      <div class="small muted">Gewähltes Token</div>
-      <div class="mono" style="font-size:16px; color: var(--ok);">${escapeHtml(step.chosenToken)}</div>
+      <div class="small muted">Gewähltes Token (Decoding)</div>
+      <div class="mono" style="font-size:16px; color: var(--ok);">${escapeHtml(step.chosenToken ?? "")}</div>
     `;
-    wrap.appendChild(chosenBox);
+    viz.appendChild(chosenBox);
 
-    wrap.appendChild(h3("Top-K Wahrscheinlichkeiten"));
-    wrap.appendChild(barsTopK(step.topK, step.chosenToken));
+    // bars (scrolly if many)
+    const barsWrap = document.createElement("div");
+    barsWrap.style.marginTop = "10px";
+    if(Array.isArray(step.topK) && step.topK.length > 10){
+      barsWrap.style.maxHeight = "340px";
+      barsWrap.style.overflow = "auto";
+      barsWrap.style.paddingRight = "6px";
+    }
+    barsWrap.appendChild(barsTopK(step.topK ?? [], step.chosenToken));
+    viz.appendChild(barsWrap);
 
-    wrap.appendChild(h3("Hinweis"));
-    wrap.appendChild(pNotice("Die konkreten Werte sind in v1.3 eine seeded Simulation (oder aus Szenario-Replay). Entscheidend ist der Ablauf: Logits → Softmax → Auswahl des nächsten Tokens."));
+    const hint = document.createElement("div");
+    hint.className = "small muted";
+    hint.style.marginTop = "10px";
+    hint.textContent = "Hinweis: Die Werte in dieser Simulation sind didaktisch/synthetisch – wichtig ist der Ablauf: Logits → Softmax → (Sampling/Greedy) Auswahl des nächsten Tokens.";
+    viz.appendChild(hint);
+
+    // --- Right: Panels (Details + Einstellungen) ---
+
+    // Details panel
+    const detailsPanel = document.createElement("details");
+    detailsPanel.className = "heatmap-panel";
+    bindDetailsPersistence(detailsPanel, "logits-details", true);
+
+    const detailsSummary = document.createElement("summary");
+    detailsSummary.innerHTML = `<span class="mono" style="font-weight:600;">Details zur Anzeige</span> <span class="heatmap-summary-tag">Logits · Softmax · Top‑K/Top‑P</span>`;
+    detailsPanel.appendChild(detailsSummary);
+
+    const detailsInner = document.createElement("div");
+    detailsInner.className = "heatmap-panel-body";
+    detailsInner.style.marginTop = "8px";
+
+    const detailsText = document.createElement("div");
+    detailsText.className = "small muted";
+    detailsText.innerHTML = `
+      <div style="margin-bottom:8px;">
+        <span class="mono" style="font-weight:600;">Logits</span> sind unskalierte Rohwerte (Scores) für Kandidaten. Größer = „passt besser“ – aber noch keine Wahrscheinlichkeit.
+      </div>
+      <div style="margin-bottom:8px;">
+        <span class="mono" style="font-weight:600;">Softmax</span> macht daraus Wahrscheinlichkeiten, die sich zu 100% addieren. Dabei wird der Abstand zwischen Kandidaten sichtbar.
+      </div>
+      <div style="margin-bottom:8px;">
+        <span class="mono" style="font-weight:600;">Top‑K</span> begrenzt auf die K wahrscheinlichsten Tokens. <span class="mono" style="font-weight:600;">Top‑P</span> (Nucleus) nimmt so viele Tokens, bis die kumulierte Wahrscheinlichkeit ≥ P ist.
+      </div>
+      <div>
+        <span class="mono" style="font-weight:600;">Temperature</span> steuert, wie „spitz“ oder „flach“ die Verteilung ist: niedrig = konservativer, hoch = variabler.
+      </div>
+    `;
+    detailsInner.appendChild(detailsText);
+    detailsPanel.appendChild(detailsInner);
+    layout.appendChild(detailsPanel);
+
+    // Settings panel
+    const settingsPanel = document.createElement("details");
+    settingsPanel.className = "heatmap-panel heatmap-settings";
+    settingsPanel.style.marginTop = "10px";
+    bindDetailsPersistence(settingsPanel, "logits-settings", false);
+
+    const settingsSummary = document.createElement("summary");
+    settingsSummary.innerHTML = `<span class="mono" style="font-weight:600;">Einstellungen zur Anzeige</span> <span class="heatmap-summary-tag">Schritt</span>`;
+    settingsPanel.appendChild(settingsSummary);
+
+    const settingsInner = document.createElement("div");
+    settingsInner.className = "heatmap-panel-body";
+    settingsInner.style.marginTop = "8px";
+
+    const controls = document.createElement("div");
+    controls.style.display = "grid";
+    controls.style.gap = "10px";
+
+    const row = document.createElement("div");
+    row.className = "kv";
+    row.innerHTML = `
+      <div class="k">Schritt</div>
+      <div class="v" style="display:flex; gap:10px; align-items:center;">
+        <button class="segbtn" id="logitPrev" title="Vorheriger Schritt">←</button>
+        <input id="logitStepRange" type="range" min="1" max="${stepMax}" step="1" />
+        <button class="segbtn" id="logitNext" title="Nächster Schritt">→</button>
+        <span class="mono small" id="logitStepVal"></span>
+      </div>
+    `;
+    controls.appendChild(row);
+
+    const tip = document.createElement("div");
+    tip.className = "small muted";
+    tip.innerHTML = `Tipp: Ändere <span class="mono">temperature</span>, <span class="mono">topK</span> oder <span class="mono">topP</span> unter „Tools“, um die Verteilung zu verändern.`;
+    controls.appendChild(tip);
+
+    settingsInner.appendChild(controls);
+    settingsPanel.appendChild(settingsInner);
+    layout.appendChild(settingsPanel);
+
+    const r = settingsPanel.querySelector("#logitStepRange");
+    const v = settingsPanel.querySelector("#logitStepVal");
+    const btnPrev = settingsPanel.querySelector("#logitPrev");
+    const btnNext = settingsPanel.querySelector("#logitNext");
+
+    const applyStep = (val) => {
+      const clamped = clamp(Number(val) || 1, 1, stepMax);
+      state.params.logitStep = clamped;
+      if(r) r.value = String(clamped);
+      if(v) v.textContent = `#${clamped} / ${stepMax}`;
+      render();
+    };
+
+    if(r){
+      r.value = String(currentStep);
+    }
+    if(v) v.textContent = `#${currentStep} / ${stepMax}`;
+
+
+    // Disable arrows at bounds (pure UX, no state)
+    if(btnPrev) btnPrev.disabled = currentStep <= 1;
+    if(btnNext) btnNext.disabled = currentStep >= stepMax;
+
+    // Wire controls
+    if(r){
+      r.addEventListener("input", (e) => {
+        applyStep(e.target.value);
+      });
+      r.addEventListener("change", (e) => {
+        applyStep(e.target.value);
+      });
+    }
+    if(btnPrev){
+      btnPrev.addEventListener("click", () => {
+        const cur = clamp(Number(state.params.logitStep) || 1, 1, stepMax);
+        applyStep(cur - 1);
+      });
+    }
+    if(btnNext){
+      btnNext.addEventListener("click", () => {
+        const cur = clamp(Number(state.params.logitStep) || 1, 1, stepMax);
+        applyStep(cur + 1);
+      });
+    }
 
     return wrap;
   }
