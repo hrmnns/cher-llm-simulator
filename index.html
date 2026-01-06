@@ -962,7 +962,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = 'v1.4.92';
+  const APP_VERSION = 'v1.4.95';
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1249,7 +1249,14 @@ async function loadScenarios(url){
               {text:"?", id:105}
             ]
           },
-          generation: { outputText: "Ein Hund ist ein Säugetier." },
+          generation: { 
+            outputText: "Ein Hund ist ein Säugetier.",
+            decodingGuide: {
+              targetTokens: ["Ein"," Hund"," ist"," ein"," Säugetier","."],
+              boostLogit: 6.0,
+              note: "Geführtes Decoding: Bei aktivierter Simulation wird pro Schritt das Ziel-Token geboostet, sodass bei Default-Parametern der vorgegebene Satz entsteht."
+            }
+          },
           highlights: {
             explain: [
               { at:"tokenizer", text:"Token sind nicht immer identisch mit Wörtern – häufig werden Subwords bzw. Teilstücke genutzt (z. B. bei Komposita)." },
@@ -5829,13 +5836,18 @@ function buildAttentionMatrix(scenario, tokens){
       let candidates;
 
       if(simulate){
-        candidates = buildCandidateTokensFromContext(generated, i);
+        const guide = scenario?.generation?.decodingGuide;
+        const preferred = guide?.targetTokens?.[i] ?? "";
+        candidates = buildCandidateTokensFromContext(generated, i, preferred);
       } else {
         chosen = exampleToks[i] ?? "";
         candidates = buildCandidateTokens(chosen);
       }
 
-      const logits = toyLogitsForStep(scenario?.id ?? "x", i, candidates);
+      const guide2 = scenario?.generation?.decodingGuide;
+      const preferred2 = simulate ? (guide2?.targetTokens?.[i] ?? "") : "";
+      const boost = simulate ? (Number(guide2?.boostLogit) || 0) : 0;
+      const logits = toyLogitsForStep(scenario?.id ?? "x", i, candidates, preferred2, boost);
       const scaled = logits.map(x => x / t);
       const probs = softmax(scaled);
 
@@ -5899,7 +5911,7 @@ function buildAttentionMatrix(scenario, tokens){
 
   
 
-  function buildCandidateTokensFromContext(prevTokens, stepIndex){
+  function buildCandidateTokensFromContext(prevTokens, stepIndex, preferredToken){
     // A slightly larger toy vocab; we also mix in a bit of context so sequences can drift.
     const base = [
       "Ein","Eine","Der","Die","Das","ist","sind","war","kann","auch","ein","eine",
@@ -5908,6 +5920,7 @@ function buildAttentionMatrix(scenario, tokens){
       "sehr","oft","meist","typisch","kurz","lang","weil","dass","und","aber"
     ];
     const set = new Set(base);
+    if(preferredToken) set.add(preferredToken);
     // add last few tokens (context echo)
     const last = prevTokens.slice(-3);
     for(const t of last){
@@ -5936,7 +5949,7 @@ function buildAttentionMatrix(scenario, tokens){
     return list[list.length-1]?.token ?? "";
   }
 
-  function toyLogitsForStep(scenarioId, stepIndex, candidates){
+  function toyLogitsForStep(scenarioId, stepIndex, candidates, preferredToken, boostLogit){
     // Deterministic pseudo-logits per step
     const seed = stableHash(`${scenarioId}|logits|${stepIndex}|${candidates.length}|seed:${(state.params.decodeSeed ?? state.params.seed)}`);
     let x = seed >>> 0;
@@ -5949,6 +5962,11 @@ function buildAttentionMatrix(scenario, tokens){
     }
     // Give a deterministic boost to the chosen-looking tokens by pattern (not semantic)
     // We don't know chosen here, but the distribution will still be stable and illustrative.
+    // Optional guided decoding: boost the intended next token so default params reproduce scenario output.
+    if(preferredToken && boostLogit){
+      const j = candidates.indexOf(preferredToken);
+      if(j >= 0) logits[j] += boostLogit;
+    }
     return logits;
   }
 
