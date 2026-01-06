@@ -962,7 +962,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.84";
+  const APP_VERSION = 'v1.4.88';
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2940,14 +2940,19 @@ if(!toks.length){
     `;
     controls.appendChild(topPRow);
 
-    // Seed (UI-only, kept for compatibility with previous versions)
+    // Seed (wirkt nur bei Sampling)
     const seedRow = document.createElement("div");
     seedRow.className = "kv";
     seedRow.innerHTML = `
       <div class="k">Seed</div>
-      <div class="v" style="display:flex; gap:8px; align-items:center;">
-        <input data-el="seedI" class="input" type="number" min="1" step="1" style="width:140px; height: 34px;" />
-        <button class="segbtn" data-act="reseed" title="Neuen Seed wählen">↻</button>
+      <div class="v" style="display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input data-el="seedI" class="input" type="number" min="1" step="1" style="width:140px; height: 34px;" />
+          <button class="segbtn" data-act="reseed" title="Neuen Seed wählen">↻</button>
+        </div>
+        <div class="small muted" data-el="seedHint">
+          Wirkt nur bei <b>Sampling</b>. Gleicher Seed + gleiche Parameter → gleiches Ergebnis.
+        </div>
       </div>
     `;
     controls.appendChild(seedRow);
@@ -2984,6 +2989,25 @@ if(!toks.length){
     const seedI = settingsPanel.querySelector('[data-el="seedI"]');
     const reseedB = settingsPanel.querySelector('[data-act="reseed"]');
 
+    const seedHint = settingsPanel.querySelector('[data-el="seedHint"]');
+
+    function normalizeSeed(v){
+      const n = parseInt(String(v), 10);
+      return Number.isFinite(n) && n >= 1 ? n : 1;
+    }
+    function syncSeedFromInput(){
+      if(!seedI) return;
+      const n = normalizeSeed(seedI.value);
+      state.params.decodeSeed = n;
+      seedI.value = String(n);
+    }
+    function applySeedUiState(){
+      const isSampling = (modeSel.value !== "greedy");
+      if(seedI) seedI.disabled = !isSampling;
+      if(reseedB) reseedB.disabled = !isSampling;
+      if(seedHint) seedHint.style.display = isSampling ? "" : "none";
+    }
+
     // defaults (keep existing state if present)
     if(!state.params.decodeMode) state.params.decodeMode = "greedy";
     if(!state.params.decodeSeed) state.params.decodeSeed = 1;
@@ -3000,6 +3024,7 @@ if(!toks.length){
     kR.value = String(clamp(state.params.topK, 1, 20));
     pR.value = String(clamp(state.params.topP, 0.1, 1.0));
     seedI.value = String(Math.max(1, Number(state.params.decodeSeed) || 1));
+    applySeedUiState();
 
     function updateBadge(){
       const mode = modeSel.value === "greedy" ? "Greedy" : "Sampling";
@@ -3034,7 +3059,8 @@ if(!toks.length){
       if(kV) kV.textContent = String(state.params.topK);
       if(pV) pV.textContent = fmt2(state.params.topP);
 
-      const step = steps[k - 1];
+      const stepsNow = getDecodingSteps(scenario);
+      const step = stepsNow[k - 1];
 
       // step label with token reference
       const chosenTok = step?.chosenToken ?? "";
@@ -3077,15 +3103,30 @@ if(!toks.length){
     if(btnPrev) btnPrev.addEventListener("click", () => applyStep((parseInt(stepRange.value,10)||1) - 1));
     if(btnNext) btnNext.addEventListener("click", () => applyStep((parseInt(stepRange.value,10)||1) + 1));
 
-    modeSel.addEventListener("change", () => { render(); });
+    modeSel.addEventListener("change", () => { applySeedUiState(); render(); });
     tR.addEventListener("input", render); tR.addEventListener("change", render);
     kR.addEventListener("input", render); kR.addEventListener("change", render);
     pR.addEventListener("input", render); pR.addEventListener("change", render);
 
+    if(seedI){
+      // Enter / blur übernimmt den Wert zuverlässig
+      seedI.addEventListener("change", () => { syncSeedFromInput(); render(); });
+      // live normalisieren ohne aggressiv zu sein
+      seedI.addEventListener("input", () => { /* no render on every keystroke */ });
+      seedI.addEventListener("keydown", (e) => {
+        if(e.key === "Enter"){
+          syncSeedFromInput();
+          render();
+        }
+      });
+    }
+
     if(reseedB){
       reseedB.addEventListener("click", () => {
+        // wenn der User vorher getippt hat: erst übernehmen, dann inkrementieren
+        syncSeedFromInput();
         state.params.decodeSeed = Math.max(1, (Number(state.params.decodeSeed) || 1) + 1);
-        seedI.value = String(state.params.decodeSeed);
+        if(seedI) seedI.value = String(state.params.decodeSeed);
         render();
       });
     }
@@ -5702,9 +5743,11 @@ function buildAttentionMatrix(scenario, tokens){
     const key = [
       scenario?.id ?? "no-scenario",
       "steps",
+      String(state.params.mode),
       String(state.params.temperature),
       String(state.params.topP),
       String(state.params.topK),
+      String(state.params.seed),
       outToks.join("|")
     ].join("|");
 
@@ -5739,7 +5782,8 @@ function buildAttentionMatrix(scenario, tokens){
         .sort((a,b) => b.p - a.p);
 
       // Apply topP (nucleus)
-      const topP = clamp01(Number(state.params.topP) || 1);
+      const topPNum = Number(state.params.topP);
+      const topP = clamp01(Number.isFinite(topPNum) ? topPNum : 1);
       if(topP < 1){
         let acc = 0;
         const filtered = [];
@@ -5789,7 +5833,7 @@ function buildAttentionMatrix(scenario, tokens){
 
   function toyLogitsForStep(scenarioId, stepIndex, candidates){
     // Deterministic pseudo-logits per step
-    const seed = stableHash(`${scenarioId}|logits|${stepIndex}|${candidates.length}`);
+    const seed = stableHash(`${scenarioId}|logits|${stepIndex}|${candidates.length}|seed:${state.params.seed}`);
     let x = seed >>> 0;
     const logits = new Array(candidates.length);
     for(let i=0;i<candidates.length;i++){
