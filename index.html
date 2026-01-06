@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LLM Simulator by cherware.de</title>
+  <title>LLM Simulator</title>
   <meta name="description" content="Erklärbare Simulation von LLM-Grundprinzipien für IT-affine Nutzer." />
   <style>
     :root{
@@ -743,7 +743,7 @@ select#mlpTokSelect {
         <div style="display:flex; gap:10px; align-items:center;">
           <div class="logo" aria-hidden="true"></div>
           <div>
-            <h1>LLM Simulator by cherware.de</h1>
+            <h1>LLM Simulator</h1>
             <div class="sub">Erklärbare Simulation zentraler LLM-Grundprinzipien</div>
           </div>
         </div>
@@ -954,7 +954,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.73";
+  const APP_VERSION = "v1.4.77";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2988,7 +2988,7 @@ if(!toks.length){
     const layout = document.createElement("div");
     layout.style.display = "grid";
     layout.style.gridTemplateColumns = "1fr";
-    layout.style.gap = "12px";
+    layout.style.gap = "8px";
     layout.style.alignItems = "start";
     wrap.appendChild(layout);
 
@@ -4882,23 +4882,34 @@ function buildAttentionMatrix(scenario, tokens){
     wrap.style.display = "grid";
     wrap.style.gap = "8px";
 
+    const tokEls = [];
+    const valEls = [];
+    const rows = [];
+
     const maxP = Math.max(0.0001, ...list.map(x => x.p));
     for(const it of list){
       const row = document.createElement("div");
       row.style.display = "grid";
-      row.style.gridTemplateColumns = "auto 1fr auto";
+      // Fixe Token-Spalte (wird nach dem Rendern auf die Breite des längsten Tokens gesetzt)
+      row.style.gridTemplateColumns = "var(--tokcol, auto) 1fr var(--valcol, auto)";
       row.style.gap = "10px";
       row.style.alignItems = "center";
 
       const tok = document.createElement("span");
       tok.className = "mono";
       tok.textContent = it.token;
+      // Für sehr lange Tokens: sauber abschneiden, ohne das Layout zu sprengen
+      tok.style.whiteSpace = "nowrap";
+      tok.style.overflow = "hidden";
+      tok.style.textOverflow = "ellipsis";
+      tokEls.push(tok);
+      rows.push(row);
 
       const barOuter = document.createElement("div");
-      barOuter.style.height = "10px";
+      barOuter.style.height = "12px";
       barOuter.style.borderRadius = "999px";
-      barOuter.style.border = "1px solid rgba(34,48,68,.85)";
-      barOuter.style.background = "rgba(15,22,35,.65)";
+      barOuter.style.background = "rgba(217, 232, 247, .10)";
+      barOuter.style.border = "1px solid rgba(217, 232, 247, .12)";
       barOuter.style.overflow = "hidden";
 
       const barInner = document.createElement("div");
@@ -4913,14 +4924,54 @@ function buildAttentionMatrix(scenario, tokens){
       const pct = document.createElement("span");
       pct.className = "mono small";
       pct.textContent = (it.p * 100).toFixed(1) + "%";
+      pct.style.whiteSpace = "nowrap";
+      pct.style.justifySelf = "end";
+      pct.style.textAlign = "right";
+
+      valEls.push(pct);
 
       row.appendChild(tok);
       row.appendChild(barOuter);
       row.appendChild(pct);
       wrap.appendChild(row);
     }
+
+    // Nach dem Einhängen ins DOM: Breite der Token-Spalte auf das längste Token setzen,
+    // damit alle Balken exakt gleich starten und enden.
+    requestAnimationFrame(() => {
+      // Token-Spalte: auf Breite des längsten Tokens setzen (mit sinnvoller Obergrenze)
+      let maxTokW = 0;
+      for(const el of tokEls){
+        maxTokW = Math.max(maxTokW, el.getBoundingClientRect().width || 0);
+      }
+      const tokColW = Math.max(80, Math.min(260, Math.ceil(maxTokW)));
+      wrap.style.setProperty("--tokcol", tokColW + "px");
+      for(const el of tokEls){
+        el.style.maxWidth = tokColW + "px";
+      }
+
+      // Werte-Spalte rechts: einheitliche Breite anhand des längsten Zahlen-Labels,
+      // damit alle Balken exakt gleich enden – unabhängig von der Ziffernanzahl.
+      let maxValW = 0;
+      for(const el of valEls){
+        maxValW = Math.max(maxValW, el.getBoundingClientRect().width || 0);
+      }
+      const valColW = Math.max(44, Math.min(110, Math.ceil(maxValW)));
+      wrap.style.setProperty("--valcol", valColW + "px");
+      for(const el of valEls){
+        el.style.display = "inline-block";
+        el.style.width = valColW + "px";
+      }
+
+      for(const r of rows){
+        r.style.gridTemplateColumns = "var(--tokcol) 1fr var(--valcol)";
+      }
+    });
+
     return wrap;
   }
+
+
 
 function populateScenarioSelect(){
     const doc = state.scenariosDoc;
