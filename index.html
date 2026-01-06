@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.44";
+  const APP_VERSION = "v1.4.45";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1983,10 +1983,14 @@ async function loadScenarios(url){
     grid.style.display = "grid";
     grid.style.gap = "10px";
 
+    // Keep barcode width uniform: size token column based on the longest token (clamped)
+    const maxTokLen = Math.max(0, ...toks.map(tt => String(tt.text || "").length));
+    const tokenColCh = Math.min(26, Math.max(14, maxTokLen + 6)); // +id/padding
+
     toks.forEach((t, i) => {
       const row = document.createElement("div");
       row.style.display = "grid";
-      row.style.gridTemplateColumns = "220px 1fr";
+      row.style.gridTemplateColumns = `${tokenColCh}ch 1fr`;
       row.style.gap = "10px";
       row.style.alignItems = "center";
 
