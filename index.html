@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.46";
+  const APP_VERSION = "v1.4.48";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -3417,18 +3417,6 @@ if(!toks.length){
 
     // Context reminder: compact heatmap
     // --- Bereich 1: Heatmap (Kontextgrundlage) ---
-    const hmHeader = document.createElement("div");
-    hmHeader.style.display = "flex";
-    hmHeader.style.alignItems = "baseline";
-    hmHeader.style.justifyContent = "space-between";
-    hmHeader.style.gap = "10px";
-    const hmTitle = h3("Heatmap");
-    const hmBadge = document.createElement("span");
-    hmBadge.className = "badge small";
-    hmBadge.textContent = `Aktiv: ${state.params.causalMask ? "Mask On" : "Mask Off"} · L${state.params.attnLayer} · H${state.params.attnHead}`;
-    hmHeader.appendChild(hmTitle);
-    hmHeader.appendChild(hmBadge);
-    wrap.appendChild(hmHeader);
 
     
     // Kontextgrundlage: komplett zuklappbar (default: zu)
@@ -3444,7 +3432,7 @@ if(!toks.length){
 
     const hmSummaryBadge = document.createElement("span");
     hmSummaryBadge.className = "badge small";
-    hmSummaryBadge.textContent = "Heatmap";
+    hmSummaryBadge.textContent = `Aktiv: ${state.params.causalMask ? "Mask On" : "Mask Off"} · L${state.params.attnLayer} · H${state.params.attnHead}`;
     hmSummary.appendChild(hmSummaryBadge);
 
     hmSection.appendChild(hmSummary);
@@ -3661,28 +3649,56 @@ if(!toks.length){
 
       outBox.innerHTML = "";
 
-      const grid = document.createElement("div");
-      grid.className = "compare-grid";
+      // 1) Inputs vergleichen (Embedding vs. Kontext)
+      const labelIn = document.createElement("div");
+      labelIn.className = "small muted";
+      labelIn.style.margin = "6px 0";
+      labelIn.textContent = "1) FFN-Input vergleichen (Embedding vs. Kontext nach Attention)";
+      outBox.appendChild(labelIn);
 
-      const left = document.createElement("div");
-      left.className = "compare-card";
-      left.innerHTML = '<div class="compare-title"><strong>A) Ohne Attention</strong><span class="small muted">FFN(Embedding)</span></div>';
-      left.appendChild(renderVectorBars(emb, "Input: Embedding"));
-      left.appendChild(renderVectorBars(outNo, "Output: FFN(Embedding)"));
+      const inputGrid = document.createElement("div");
+      inputGrid.className = "compare-grid";
 
-      const right = document.createElement("div");
-      right.className = "compare-card";
-      right.innerHTML = '<div class="compare-title"><strong>B) Mit Attention</strong><span class="small muted">FFN(Kontext)</span></div>';
-      right.appendChild(renderVectorBars(ctx, "Input: Kontext nach Attention"));
+      const inA = document.createElement("div");
+      inA.className = "compare-card";
+      inA.innerHTML = '<div class="compare-title"><strong>A) Input ohne Attention</strong><span class="small muted">Embedding</span></div>';
+      inA.appendChild(renderVectorBars(emb, "Input: Embedding"));
+
+      const inB = document.createElement("div");
+      inB.className = "compare-card";
+      inB.innerHTML = '<div class="compare-title"><strong>B) Input mit Attention</strong><span class="small muted">Kontext</span></div>';
+      inB.appendChild(renderVectorBars(ctx, "Input: Kontext nach Attention"));
       if(!!state.params.showDelta){
-        right.appendChild(renderDeltaBars(ctx, emb, "Delta: Kontext − Embedding"));
+        inB.appendChild(renderDeltaBars(ctx, emb, "Delta: Kontext − Embedding"));
       }
-      right.appendChild(renderVectorBars(outYes, "Output: FFN(Kontext)"));
 
-      grid.appendChild(left);
-      grid.appendChild(right);
+      inputGrid.appendChild(inA);
+      inputGrid.appendChild(inB);
+      outBox.appendChild(inputGrid);
 
-      outBox.appendChild(grid);
+      // 2) Outputs vergleichen (FFN Output)
+      const labelOut = document.createElement("div");
+      labelOut.className = "small muted";
+      labelOut.style.margin = "10px 0 6px";
+      labelOut.textContent = "2) FFN-Output vergleichen (nach nichtlinearer Transformation)";
+      outBox.appendChild(labelOut);
+
+      const outGrid = document.createElement("div");
+      outGrid.className = "compare-grid";
+
+      const outA = document.createElement("div");
+      outA.className = "compare-card";
+      outA.innerHTML = '<div class="compare-title"><strong>A) Output ohne Attention</strong><span class="small muted">FFN(Embedding)</span></div>';
+      outA.appendChild(renderVectorBars(outNo, "Output: FFN(Embedding)"));
+
+      const outB = document.createElement("div");
+      outB.className = "compare-card";
+      outB.innerHTML = '<div class="compare-title"><strong>B) Output mit Attention</strong><span class="small muted">FFN(Kontext)</span></div>';
+      outB.appendChild(renderVectorBars(outYes, "Output: FFN(Kontext)"));
+
+      outGrid.appendChild(outA);
+      outGrid.appendChild(outB);
+      outBox.appendChild(outGrid);
     }
 
     function render(i){
