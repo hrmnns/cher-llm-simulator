@@ -954,7 +954,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.65";
+  const APP_VERSION = "v1.4.66";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -3000,11 +3000,14 @@ if(!toks.length){
 
     const r = controls.querySelector("#logitStepRange");
     const v = controls.querySelector("#logitStepVal");
-    r.value = String(clamp(Number(state.params.logitStep) || 1, 1, steps.length));    if(selTok) selTok.addEventListener("change", (e) => {
-      state.params.logitStep = Number(e.target.value);      render();
+    r.value = String(clamp(Number(state.params.logitStep) || 1, 1, steps.length));
+    v.textContent = `#${r.value} / ${steps.length}`;
+    r.addEventListener("input", (e) => {
+      state.params.logitStep = Number(e.target.value);
+      v.textContent = `#${e.target.value} / ${steps.length}`;
+      render();
     });
-
-    const idx = clamp((Number(state.params.logitStep) || 1) - 1, 0, steps.length - 1);
+const idx = clamp((Number(state.params.logitStep) || 1) - 1, 0, steps.length - 1);
     const step = steps[idx];
 
     // Chosen token highlight
