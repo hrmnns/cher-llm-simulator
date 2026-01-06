@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.48";
+  const APP_VERSION = "v1.4.49";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -3043,9 +3043,16 @@ if(!toks.length){
     return renderVectorBars(delta, label);
   }
 
-  function renderVectorBars(vec, label){
+  function renderVectorBars(vec, label, opts){
+    opts = opts || {};
+    const vecB = opts.compareVec || null;
+    const labelA = opts.legendA || "A) Embedding";
+    const labelB = opts.legendB || "B) Kontext";
+
     const box = document.createElement("div");
+    // Hinweis: bewusst als "notice" belassen (rahmige Mini-Card), aber Inhalt ruhiger
     box.className = "notice";
+
     const title = document.createElement("div");
     title.className = "small muted";
     title.textContent = label;
@@ -3053,46 +3060,102 @@ if(!toks.length){
 
     let maxAbs = 1e-6;
     for(let i=0;i<vec.length;i++) maxAbs = Math.max(maxAbs, Math.abs(vec[i]));
+    if(vecB){
+      for(let i=0;i<vecB.length;i++) maxAbs = Math.max(maxAbs, Math.abs(vecB[i]));
+    }
 
     const list = document.createElement("div");
     list.style.display = "grid";
     list.style.gap = "6px";
     list.style.marginTop = "8px";
 
-    const shown = Math.min(vec.length, 16);
+    const shown = Math.min(24, vec.length);
+
+    // Optional: kleine Legende (passt gut in Details, aber hier minimal)
+    if(vecB && opts.showInlineLegend){
+      const lg = document.createElement("div");
+      lg.className = "small muted";
+      lg.style.marginTop = "6px";
+      lg.textContent = `${labelA} (solide) · ${labelB} (gestreift)`;
+      box.appendChild(lg);
+    }
+
     for(let i=0;i<shown;i++){
       const row = document.createElement("div");
       row.style.display = "grid";
-      row.style.gridTemplateColumns = "40px 1fr 64px";
       row.style.gap = "10px";
-      row.style.alignItems = "center";
+      row.style.alignItems = (vecB ? "start" : "center");
+
+      if(vecB){
+        // d_i | (A,B bars) | A value | B value
+        row.style.gridTemplateColumns = "40px 1fr 64px 64px";
+      } else {
+        row.style.gridTemplateColumns = "40px 1fr 64px";
+      }
 
       const k = document.createElement("span");
       k.className = "mono small";
       k.textContent = "d" + i;
 
-      const barOuter = document.createElement("div");
-      barOuter.style.height = "10px";
-      barOuter.style.borderRadius = "999px";
-      barOuter.style.border = "1px solid rgba(34,48,68,.85)";
-      barOuter.style.background = "rgba(15,22,35,.65)";
-      barOuter.style.overflow = "hidden";
+      const bars = document.createElement("div");
+      // Bars: im Vergleich (A vs. B) untereinander, sonst single bar
+      bars.style.display = (vecB ? "grid" : "block");
+      bars.style.gap = (vecB ? "4px" : "0");
 
-      const barInner = document.createElement("div");
-      barInner.style.height = "100%";
-      const w = Math.max(2, Math.round((Math.abs(vec[i]) / maxAbs) * 100));
-      barInner.style.width = w + "%";
-      barInner.style.borderRadius = "999px";
-      barInner.style.background = (vec[i] >= 0) ? "rgba(110,231,183,.70)" : "rgba(255,107,107,.55)";
-      barOuter.appendChild(barInner);
+      function makeBar(v, variant){
+        const barOuter = document.createElement("div");
+        barOuter.style.height = "10px";
+        barOuter.style.width = "100%";
+        barOuter.style.flex = "none";
+        barOuter.style.borderRadius = "999px";
+        barOuter.style.border = "1px solid rgba(34,48,68,.85)";
+        barOuter.style.background = "rgba(15,22,35,.65)";
+        barOuter.style.overflow = "hidden";
+        barOuter.style.flex = "1";
 
-      const val = document.createElement("span");
-      val.className = "mono small";
-      val.textContent = (Math.round(vec[i]*1000)/1000).toFixed(3);
+        const barInner = document.createElement("div");
+        barInner.style.height = "100%";
+        const w = Math.max(2, Math.round((Math.abs(v) / maxAbs) * 100));
+        barInner.style.width = w + "%";
+        barInner.style.borderRadius = "999px";
+
+        const basePos = "rgba(110,231,183,.70)";
+        const baseNeg = "rgba(255,107,107,.55)";
+        const base = (v >= 0) ? basePos : baseNeg;
+
+        if(variant === "B"){
+          // Pattern (gestreift) – gleiche Farbwelt, aber erkennbar
+          barInner.style.background = `repeating-linear-gradient(45deg, ${base} 0 6px, rgba(255,255,255,.08) 6px 10px)`;
+        } else {
+          // Solide (A)
+          barInner.style.background = base;
+        }
+
+        barOuter.appendChild(barInner);
+        return barOuter;
+      }
+
+      // Bar(s)
+      bars.appendChild(makeBar(vec[i], "A"));
+      if(vecB){
+        bars.appendChild(makeBar(vecB[i], "B"));
+      }
+
+      const valA = document.createElement("span");
+      valA.className = "mono small";
+      valA.textContent = (Math.round(vec[i]*1000)/1000).toFixed(3);
 
       row.appendChild(k);
-      row.appendChild(barOuter);
-      row.appendChild(val);
+      row.appendChild(bars);
+      row.appendChild(valA);
+
+      if(vecB){
+        const valB = document.createElement("span");
+        valB.className = "mono small";
+        valB.textContent = (Math.round(vecB[i]*1000)/1000).toFixed(3);
+        row.appendChild(valB);
+      }
+
       list.appendChild(row);
     }
 
@@ -3417,6 +3480,18 @@ if(!toks.length){
 
     // Context reminder: compact heatmap
     // --- Bereich 1: Heatmap (Kontextgrundlage) ---
+    const hmHeader = document.createElement("div");
+    hmHeader.style.display = "flex";
+    hmHeader.style.alignItems = "baseline";
+    hmHeader.style.justifyContent = "space-between";
+    hmHeader.style.gap = "10px";
+    const hmTitle = h3("Heatmap");
+    const hmBadge = document.createElement("span");
+    hmBadge.className = "badge small";
+    hmBadge.textContent = `Aktiv: ${state.params.causalMask ? "Mask On" : "Mask Off"} · L${state.params.attnLayer} · H${state.params.attnHead}`;
+    hmHeader.appendChild(hmTitle);
+    hmHeader.appendChild(hmBadge);
+    wrap.appendChild(hmHeader);
 
     
     // Kontextgrundlage: komplett zuklappbar (default: zu)
@@ -3432,7 +3507,7 @@ if(!toks.length){
 
     const hmSummaryBadge = document.createElement("span");
     hmSummaryBadge.className = "badge small";
-    hmSummaryBadge.textContent = `Aktiv: ${state.params.causalMask ? "Mask On" : "Mask Off"} · L${state.params.attnLayer} · H${state.params.attnHead}`;
+    hmSummaryBadge.textContent = "Heatmap";
     hmSummary.appendChild(hmSummaryBadge);
 
     hmSection.appendChild(hmSummary);
@@ -3478,7 +3553,6 @@ if(!toks.length){
       + '</div></div>'
       + '<div class="small muted">Zeige toy-FFN Input/Output für Token i.</div>';
     // Controls: token selector
-    if(typeof state.params.showDelta !== "boolean") state.params.showDelta = true;
     if(typeof state.params.mlpCompare !== "boolean") state.params.mlpCompare = true;
 
     const toggles = document.createElement("div");
@@ -3489,23 +3563,17 @@ if(!toks.length){
       + '  <input id="mlpCompare" type="checkbox" />'
       + '  <span><strong>Vergleich anzeigen</strong> (ohne vs. mit Attention)</span>'
       + '</label>'
-      + '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
-      + '  <input id="mlpShowDelta" type="checkbox" />'
-      + '  <span><strong>Delta anzeigen</strong> (Kontext − Embedding)</span>'
-      + '</label>'
-      + '</div>'
+            + '</div>'
       + '<div class="small muted" style="margin-top:8px;">Tipp: Der Vergleich ist der Aha-Punkt. Ohne Attention bleibt die Repräsentation lokal (Embedding). Mit Attention entsteht ein Kontextvektor, der die FFN-Eingabe sichtbar verschiebt.</div>';
     const r = controls.querySelector("#mlpTokRange");
     const v = controls.querySelector("#mlpTokVal");
     const chkCompare = toggles.querySelector("#mlpCompare");
-    const chkDelta = toggles.querySelector("#mlpShowDelta");
 
     const defaultIdx = Math.max(0, toks.length - 1);
     r.value = String(defaultIdx);
     v.textContent = defaultIdx + ": " + stripLeadingSpace(toks[defaultIdx].text);
 
     chkCompare.checked = !!state.params.mlpCompare;
-    chkDelta.checked = !!state.params.showDelta;
 
     function updateMlpBadge(i){
       // Persist current token index for screenshots / consistency
@@ -3514,7 +3582,6 @@ if(!toks.length){
       bits.push(`i=${i}`);
       bits.push(`d_model ${state.params.dModel}`);
       bits.push(state.params.mlpCompare ? "Vergleich On" : "Vergleich Off");
-      bits.push(state.params.showDelta ? "Delta On" : "Delta Off");
       if(typeof mlpBadge !== "undefined" && mlpBadge){
         mlpBadge.textContent = "Aktiv: " + bits.join(" · ");
       }
@@ -3562,6 +3629,12 @@ if(!toks.length){
     const mlpDetailsText = document.createElement("div");
     mlpDetailsText.className = "small muted";
     mlpDetailsText.textContent = "Dieses toy-FFN ist eine didaktische Vereinfachung: Es zeigt, wie ein Feedforward-Netz (MLP) den Eingabevektor (Embedding oder Kontext) weiterverarbeitet. Die Zahlen dienen nur der Orientierung.";
+    const mlpLegend = document.createElement("div");
+    mlpLegend.className = "small muted";
+    mlpLegend.style.marginTop = "10px";
+    mlpLegend.textContent = "Legende (Vergleich): Pro Dimension werden zwei Balken untereinander gezeigt – A (solide) = ohne Attention, B (gestreift) = mit Attention.";
+    mlpDetailsInner.appendChild(mlpLegend);
+
     mlpDetailsInner.appendChild(mlpDetailsText);
     mlpDetailsPanel.appendChild(mlpDetailsInner);
     wrap.appendChild(mlpDetailsPanel);
@@ -3571,7 +3644,7 @@ if(!toks.length){
     mlpSettingsPanel.style.marginTop = "10px";
     bindDetailsPersistence(mlpSettingsPanel, "mlp-settings", false);
     const mlpSettingsSummary = document.createElement("summary");
-    mlpSettingsSummary.innerHTML = `<span class="heatmap-summary-title">Einstellungen …</span><span class="heatmap-summary-tag">Token i · Vergleich · Delta</span>`;
+    mlpSettingsSummary.innerHTML = `<span class="heatmap-summary-title">Einstellungen …</span><span class="heatmap-summary-tag">Token i · Vergleich</span>`;
     mlpSettingsPanel.appendChild(mlpSettingsSummary);
     const mlpSettingsInner = document.createElement("div");
     mlpSettingsInner.className = "heatmap-panel-body";
@@ -3624,9 +3697,6 @@ if(!toks.length){
       c2.className = "compare-card";
       c2.innerHTML = '<div class="compare-title"><strong>Kontext nach Attention</strong><span class="small muted">Input in FFN</span></div>';
       c2.appendChild(renderVectorBars(ctx, "Kontext nach Attention (Input in FFN)"));
-      if(!!state.params.showDelta){
-        c2.appendChild(renderDeltaBars(ctx, emb, "Delta: Kontext − Embedding"));
-      }
 
       const c3 = document.createElement("div");
       c3.className = "compare-card";
@@ -3649,57 +3719,35 @@ if(!toks.length){
 
       outBox.innerHTML = "";
 
-      // 1) Inputs vergleichen (Embedding vs. Kontext)
-      const labelIn = document.createElement("div");
-      labelIn.className = "small muted";
-      labelIn.style.margin = "6px 0";
-      labelIn.textContent = "1) FFN-Input vergleichen (Embedding vs. Kontext nach Attention)";
-      outBox.appendChild(labelIn);
+      // Ein kompakter, geführter Vergleich: pro Dimension zwei Werte (A vs. B)
+      const stack = document.createElement("div");
+      stack.style.display = "grid";
+      stack.style.gap = "10px";
 
-      const inputGrid = document.createElement("div");
-      inputGrid.className = "compare-grid";
+      const inCard = document.createElement("div");
+      inCard.className = "compare-card";
+      inCard.innerHTML = '<div class="compare-title"><strong>Input (A vs. B)</strong><span class="small muted">Embedding vs. Kontext</span></div>';
+      inCard.appendChild(renderVectorBars(emb, "Input: pro Dimension zwei Werte", {
+        compareVec: ctx,
+        legendA: "A) Embedding (solide)",
+        legendB: "B) Kontext nach Attention (gestreift)"
+      }));
 
-      const inA = document.createElement("div");
-      inA.className = "compare-card";
-      inA.innerHTML = '<div class="compare-title"><strong>A) Input ohne Attention</strong><span class="small muted">Embedding</span></div>';
-      inA.appendChild(renderVectorBars(emb, "Input: Embedding"));
+      const outCard = document.createElement("div");
+      outCard.className = "compare-card";
+      outCard.innerHTML = '<div class="compare-title"><strong>Output (A vs. B)</strong><span class="small muted">FFN(Embedding) vs. FFN(Kontext)</span></div>';
+      outCard.appendChild(renderVectorBars(outNo, "Output: pro Dimension zwei Werte", {
+        compareVec: outYes,
+        legendA: "A) FFN(Embedding) (solide)",
+        legendB: "B) FFN(Kontext) (gestreift)"
+      }));
 
-      const inB = document.createElement("div");
-      inB.className = "compare-card";
-      inB.innerHTML = '<div class="compare-title"><strong>B) Input mit Attention</strong><span class="small muted">Kontext</span></div>';
-      inB.appendChild(renderVectorBars(ctx, "Input: Kontext nach Attention"));
-      if(!!state.params.showDelta){
-        inB.appendChild(renderDeltaBars(ctx, emb, "Delta: Kontext − Embedding"));
-      }
-
-      inputGrid.appendChild(inA);
-      inputGrid.appendChild(inB);
-      outBox.appendChild(inputGrid);
-
-      // 2) Outputs vergleichen (FFN Output)
-      const labelOut = document.createElement("div");
-      labelOut.className = "small muted";
-      labelOut.style.margin = "10px 0 6px";
-      labelOut.textContent = "2) FFN-Output vergleichen (nach nichtlinearer Transformation)";
-      outBox.appendChild(labelOut);
-
-      const outGrid = document.createElement("div");
-      outGrid.className = "compare-grid";
-
-      const outA = document.createElement("div");
-      outA.className = "compare-card";
-      outA.innerHTML = '<div class="compare-title"><strong>A) Output ohne Attention</strong><span class="small muted">FFN(Embedding)</span></div>';
-      outA.appendChild(renderVectorBars(outNo, "Output: FFN(Embedding)"));
-
-      const outB = document.createElement("div");
-      outB.className = "compare-card";
-      outB.innerHTML = '<div class="compare-title"><strong>B) Output mit Attention</strong><span class="small muted">FFN(Kontext)</span></div>';
-      outB.appendChild(renderVectorBars(outYes, "Output: FFN(Kontext)"));
-
-      outGrid.appendChild(outA);
-      outGrid.appendChild(outB);
-      outBox.appendChild(outGrid);
+      stack.appendChild(inCard);
+      stack.appendChild(outCard);
+      outBox.appendChild(stack);
     }
+
+
 
     function render(i){
       v.textContent = i + ": " + stripLeadingSpace(toks[i].text);
@@ -3714,11 +3762,6 @@ if(!toks.length){
 
     chkCompare.addEventListener("change", function(){
       state.params.mlpCompare = !!chkCompare.checked;
-      render(Number(r.value));
-    });
-
-    chkDelta.addEventListener("change", function(){
-      state.params.showDelta = !!chkDelta.checked;
       render(Number(r.value));
     });
 
