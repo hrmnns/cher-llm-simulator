@@ -714,7 +714,11 @@ details.heatmap-panel[open] > summary::before{
 }
 
 </style>
+
+<style>
+</style>
 </head>
+
 <body>
 <div class="app">
   <header>
@@ -916,6 +920,20 @@ details.heatmap-panel[open] > summary::before{
     showFatal("Promise rejection: " + msg);
   });
 })();
+
+// =========================
+// Rendering helpers
+// =========================
+/**
+ * Build a subtitle that makes it explicit that a vector refers to the currently active token i.
+ * If the token starts with a space (common in BPE), we visualize it as ␠.
+ */
+function tokenSubtitle(tokens, idx) {
+  const raw = (tokens && tokens[idx] && typeof tokens[idx].text === "string") ? tokens[idx].text : "";
+  const shown = raw.startsWith(" ") ? ("␠" + raw.slice(1)) : raw;
+  return `für das Token i=${idx} (${shown})`;
+}
+
 </script>
 
 <script>
@@ -3561,7 +3579,7 @@ if(!toks.length){
       '<div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center;">'
       + '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
       + '  <input id="mlpCompare" type="checkbox" />'
-      + '  <span><span style="color:var(--text); font-weight:400;">Vergleich anzeigen</span> <span class="muted">(ohne vs. mit Attention)</span></span>'
+      + '  <span><span class="small"><span style="color:var(--text); font-weight:400;">Vergleich anzeigen</span> <span class="muted">(ohne vs. mit Attention)</span></span></span>'
       + '</label>'
             + '</div>'
       + '<div class="small muted" style="margin-top:8px;">Tipp: Der Vergleich ist der Aha-Punkt. Ohne Attention bleibt die Repräsentation lokal (Embedding). Mit Attention entsteht ein Kontextvektor, der die FFN-Eingabe sichtbar verschiebt.</div>';
@@ -3622,7 +3640,7 @@ if(!toks.length){
     mlpDetailsPanel.style.marginTop = "10px";
     bindDetailsPersistence(mlpDetailsPanel, "mlp-details", false);
     const mlpDetailsSummary = document.createElement("summary");
-    mlpDetailsSummary.innerHTML = `<span class="heatmap-summary-title">Details …</span><span class="heatmap-summary-tag">Toy-FFN · Lesart · Hinweis</span>`;
+    mlpDetailsSummary.innerHTML = `<span class="heatmap-summary-title">Details zur Anzeige</span><span class="heatmap-summary-tag">Toy-FFN · Lesart · Hinweis</span>`;
     mlpDetailsPanel.appendChild(mlpDetailsSummary);
     const mlpDetailsInner = document.createElement("div");
     mlpDetailsInner.className = "heatmap-panel-body";
@@ -3651,7 +3669,7 @@ if(!toks.length){
     mlpSettingsPanel.style.marginTop = "10px";
     bindDetailsPersistence(mlpSettingsPanel, "mlp-settings", false);
     const mlpSettingsSummary = document.createElement("summary");
-    mlpSettingsSummary.innerHTML = `<span class="heatmap-summary-title">Einstellungen …</span><span class="heatmap-summary-tag">Token i · Vergleich</span>`;
+    mlpSettingsSummary.innerHTML = `<span class="heatmap-summary-title">Einstellungen zur Anzeige</span><span class="heatmap-summary-tag">Token i · Vergleich</span>`;
     mlpSettingsPanel.appendChild(mlpSettingsSummary);
     const mlpSettingsInner = document.createElement("div");
     mlpSettingsInner.className = "heatmap-panel-body";
@@ -3698,17 +3716,17 @@ if(!toks.length){
       const c1 = document.createElement("div");
       c1.className = "compare-card";
       c1.innerHTML = '<div class="compare-title"><strong>Embedding (ohne Kontext)</strong></div>';
-      c1.appendChild(renderVectorBars(emb, "Embedding (ohne Kontext)"));
+      c1.appendChild(renderVectorBars(emb, `Embedding (ohne Kontext) ${tokenSubtitle(toks, i)}`));
 
       const c2 = document.createElement("div");
       c2.className = "compare-card";
       c2.innerHTML = '<div class="compare-title"><strong>Kontext nach Attention</strong><span class="small muted">Input in FFN</span></div>';
-      c2.appendChild(renderVectorBars(ctx, "Kontext nach Attention (Input in FFN)"));
+      c2.appendChild(renderVectorBars(ctx, `Kontext nach Attention (Input in FFN) ${tokenSubtitle(toks, i)}`));
 
       const c3 = document.createElement("div");
       c3.className = "compare-card";
       c3.innerHTML = '<div class="compare-title"><strong>FFN-Output</strong><span class="small muted">nach MLP/FFN</span></div>';
-      c3.appendChild(renderVectorBars(out, "FFN-Output (nach MLP/FFN)"));
+      c3.appendChild(renderVectorBars(out, `FFN-Output (nach MLP/FFN) ${tokenSubtitle(toks, i)}`));
 
       stack.appendChild(c1);
       stack.appendChild(c2);
