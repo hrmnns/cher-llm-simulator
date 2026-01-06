@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.49";
+  const APP_VERSION = "v1.4.51";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -3066,7 +3066,7 @@ if(!toks.length){
 
     const list = document.createElement("div");
     list.style.display = "grid";
-    list.style.gap = "6px";
+    list.style.gap = "18px";
     list.style.marginTop = "8px";
 
     const shown = Math.min(24, vec.length);
@@ -3084,34 +3084,28 @@ if(!toks.length){
       const row = document.createElement("div");
       row.style.display = "grid";
       row.style.gap = "10px";
-      row.style.alignItems = (vecB ? "start" : "center");
-
-      if(vecB){
-        // d_i | (A,B bars) | A value | B value
-        row.style.gridTemplateColumns = "40px 1fr 64px 64px";
-      } else {
-        row.style.gridTemplateColumns = "40px 1fr 64px";
-      }
+      row.style.alignItems = "start";
+      // d_i | Bars (mit Werten rechts)
+      row.style.gridTemplateColumns = "40px 1fr";
 
       const k = document.createElement("span");
       k.className = "mono small";
       k.textContent = "d" + i;
 
       const bars = document.createElement("div");
-      // Bars: im Vergleich (A vs. B) untereinander, sonst single bar
-      bars.style.display = (vecB ? "grid" : "block");
-      bars.style.gap = (vecB ? "4px" : "0");
+      // Im Vergleichsmodus: pro Dimension zwei Balken untereinander (A oben, B unten),
+      // jeweils mit Wert rechts daneben.
+      bars.style.display = "grid";
+      bars.style.gap = (vecB ? "2px" : "0");
 
       function makeBar(v, variant){
         const barOuter = document.createElement("div");
         barOuter.style.height = "10px";
         barOuter.style.width = "100%";
-        barOuter.style.flex = "none";
         barOuter.style.borderRadius = "999px";
         barOuter.style.border = "1px solid rgba(34,48,68,.85)";
         barOuter.style.background = "rgba(15,22,35,.65)";
         barOuter.style.overflow = "hidden";
-        barOuter.style.flex = "1";
 
         const barInner = document.createElement("div");
         barInner.style.height = "100%";
@@ -3135,26 +3129,32 @@ if(!toks.length){
         return barOuter;
       }
 
-      // Bar(s)
-      bars.appendChild(makeBar(vec[i], "A"));
-      if(vecB){
-        bars.appendChild(makeBar(vecB[i], "B"));
+      function makeBarRow(v, variant){
+        const row = document.createElement("div");
+        row.style.display = "grid";
+        row.style.gridTemplateColumns = "1fr 68px";
+        row.style.gap = "10px";
+        row.style.alignItems = "center";
+
+        const bar = makeBar(v, variant);
+        const val = document.createElement("span");
+        val.className = "mono small";
+        val.style.textAlign = "right";
+        val.textContent = (Math.round(v*1000)/1000).toFixed(3);
+
+        row.appendChild(bar);
+        row.appendChild(val);
+        return row;
       }
 
-      const valA = document.createElement("span");
-      valA.className = "mono small";
-      valA.textContent = (Math.round(vec[i]*1000)/1000).toFixed(3);
+      // Bar(s) mit Wert neben dem jeweiligen Balken
+      bars.appendChild(makeBarRow(vec[i], "A"));
+      if(vecB){
+        bars.appendChild(makeBarRow(vecB[i], "B"));
+      }
 
       row.appendChild(k);
       row.appendChild(bars);
-      row.appendChild(valA);
-
-      if(vecB){
-        const valB = document.createElement("span");
-        valB.className = "mono small";
-        valB.textContent = (Math.round(vecB[i]*1000)/1000).toFixed(3);
-        row.appendChild(valB);
-      }
 
       list.appendChild(row);
     }
@@ -3632,8 +3632,14 @@ if(!toks.length){
     const mlpLegend = document.createElement("div");
     mlpLegend.className = "small muted";
     mlpLegend.style.marginTop = "10px";
-    mlpLegend.textContent = "Legende (Vergleich): Pro Dimension werden zwei Balken untereinander gezeigt – A (solide) = ohne Attention, B (gestreift) = mit Attention.";
+    mlpLegend.textContent = "Legende (Vergleich): Pro Dimension zwei Balken untereinander – oben A (solide) = ohne Attention, unten B (gestreift) = mit Attention. Die Zahl rechts gehört jeweils zu dem Balken.";
     mlpDetailsInner.appendChild(mlpLegend);
+
+    const mlpBarClarification = document.createElement("div");
+    mlpBarClarification.className = "small muted";
+    mlpBarClarification.style.marginTop = "8px";
+    mlpBarClarification.textContent = "Die Balkenlänge zeigt den Betrag (absoluten Wert) der Aktivierung. Die Farbe kennzeichnet das Vorzeichen (grün = positiv, rot = negativ; keine Qualitätsbewertung).";
+    mlpDetailsInner.appendChild(mlpBarClarification);
 
     mlpDetailsInner.appendChild(mlpDetailsText);
     mlpDetailsPanel.appendChild(mlpDetailsInner);
