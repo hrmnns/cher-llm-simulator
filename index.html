@@ -962,7 +962,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = 'v1.4.89';
+  const APP_VERSION = 'v1.4.90';
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2804,9 +2804,9 @@ if(!toks.length){
     chosenBox.className = "notice";
     chosenBox.style.marginTop = "10px";
     chosenBox.innerHTML = `
-      <div class="small muted">Gewähltes Token (dieser Schritt)</div>
+      <div class="small muted">Token im Beispiel‑Output (dieser Schritt)</div>
       <div class="mono" data-el="chosen" style="margin-top:6px; font-size:16px; color: var(--ok);"></div>
-      <div class="small muted" style="margin-top:6px;">(Greedy oder Sampling)</div>
+      <div class="small muted" style="margin-top:6px;">Hinweis: Die Beispiel‑Ausgabe ist im Szenario fest vorgegeben. Die Kandidatenliste zeigt nur, wie die Auswahl *unter den Parametern* aussehen würde.</div>
     `;
     main.appendChild(chosenBox);
 
@@ -3068,7 +3068,25 @@ if(!toks.length){
       stepVal.textContent = `#${k} / ${stepMax}${tokenLabel}`;
 
       // output so far
-      const outSoFar = steps.slice(0, k).map(s => s.chosenToken ?? "").join("");
+      
+      const joinTokensReadable = (arr) => {
+        const toks = (arr || []).filter(t => typeof t === "string" && t.length);
+        if (!toks.length) return "";
+        const punct = /^[\.,!\?:;\)\]\}]/; // tokens that shouldn't get a leading space
+        let out = "";
+        for (let i = 0; i < toks.length; i++) {
+          const t = toks[i];
+          if (i === 0) { out += t; continue; }
+          if (/^\s/.test(t)) { out += t; continue; }
+          const prev = out[out.length - 1] || "";
+          if (prev === " " || prev === "\n" || prev === "\t") { out += t; continue; }
+          if (punct.test(t)) { out += t; continue; }
+          out += " " + t;
+        }
+        return out;
+      };
+
+      const outSoFar = joinTokensReadable(steps.slice(0, k).map(s => s.chosenToken ?? ""));
       outSoFarEl.textContent = outSoFar || "—";
 
       chosenEl.textContent = chosenTok || "—";
