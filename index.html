@@ -954,7 +954,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.71";
+  const APP_VERSION = "v1.4.72";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -3116,6 +3116,48 @@ if(!toks.length){
     tip.innerHTML = `Tipp: Ändere <span class="mono">temperature</span>, <span class="mono">topK</span> oder <span class="mono">topP</span> unter „Tools“, um die Verteilung zu verändern.`;
     controls.appendChild(tip);
 
+    // Decoding params (duplicate of Tools controls for desktop convenience)
+    const decWrap = document.createElement("div");
+    decWrap.style.display = "grid";
+    decWrap.style.gap = "10px";
+    decWrap.style.marginTop = "6px";
+
+    const rowTemp = document.createElement("div");
+    rowTemp.className = "kv";
+    rowTemp.innerHTML = `
+      <div class="k">Temperature</div>
+      <div class="v" style="display:flex; gap:10px; align-items:center;">
+        <input id="logitsDecTemp" type="range" min="0.2" max="2.0" step="0.1" />
+        <span class="mono" id="logitsDecTempVal"></span>
+      </div>
+    `;
+    decWrap.appendChild(rowTemp);
+
+    const rowTopK = document.createElement("div");
+    rowTopK.className = "kv";
+    rowTopK.innerHTML = `
+      <div class="k">Top-K</div>
+      <div class="v" style="display:flex; gap:10px; align-items:center;">
+        <input id="logitsDecTopK" type="range" min="0" max="20" step="1" />
+        <span class="mono" id="logitsDecTopKVal"></span>
+        <span class="small muted">(0 = aus)</span>
+      </div>
+    `;
+    decWrap.appendChild(rowTopK);
+
+    const rowTopP = document.createElement("div");
+    rowTopP.className = "kv";
+    rowTopP.innerHTML = `
+      <div class="k">Top-P</div>
+      <div class="v" style="display:flex; gap:10px; align-items:center;">
+        <input id="logitsDecTopP" type="range" min="0.1" max="1.0" step="0.05" />
+        <span class="mono" id="logitsDecTopPVal"></span>
+      </div>
+    `;
+    decWrap.appendChild(rowTopP);
+
+    controls.appendChild(decWrap);
+
     settingsInner.appendChild(controls);
     settingsPanel.appendChild(settingsInner);
     layout.appendChild(settingsPanel);
@@ -3139,6 +3181,54 @@ if(!toks.length){
     if(v) v.textContent = `#${currentStep} / ${stepMax}`;
 
 
+
+    // Init decoding sliders from state and bind updates (affects logits distribution)
+    const tR = settingsPanel.querySelector("#logitsDecTemp");
+    const tV = settingsPanel.querySelector("#logitsDecTempVal");
+    const kR = settingsPanel.querySelector("#logitsDecTopK");
+    const kV = settingsPanel.querySelector("#logitsDecTopKVal");
+    const pR = settingsPanel.querySelector("#logitsDecTopP");
+    const pV = settingsPanel.querySelector("#logitsDecTopPVal");
+
+    const fmt1 = (x) => (Math.round(x*10)/10).toFixed(1);
+    const fmt2 = (x) => (Math.round(x*100)/100).toFixed(2);
+
+    function syncTools(){
+      // Keep the Tools panel in sync when present (no-op if not rendered/visible)
+      const toolT = document.querySelector("#decTemp");
+      const toolTV = document.querySelector("#decTempVal");
+      const toolK = document.querySelector("#decTopK");
+      const toolKV = document.querySelector("#decTopKVal");
+      const toolP = document.querySelector("#decTopP");
+      const toolPV = document.querySelector("#decTopPVal");
+      if(toolT){ toolT.value = String(state.params.decodeTemp); if(toolTV) toolTV.textContent = fmt1(state.params.decodeTemp); }
+      if(toolK){ toolK.value = String(state.params.decodeTopK); if(toolKV) toolKV.textContent = String(state.params.decodeTopK); }
+      if(toolP){ toolP.value = String(state.params.decodeTopP); if(toolPV) toolPV.textContent = fmt2(state.params.decodeTopP); }
+    }
+
+    function renderDecVals(){
+      if(tR) tR.value = String(state.params.decodeTemp);
+      if(kR) kR.value = String(state.params.decodeTopK);
+      if(pR) pR.value = String(state.params.decodeTopP);
+      if(tV) tV.textContent = fmt1(state.params.decodeTemp);
+      if(kV) kV.textContent = String(state.params.decodeTopK);
+      if(pV) pV.textContent = fmt2(state.params.decodeTopP);
+    }
+
+    renderDecVals();
+
+    const onDecChange = () => {
+      if(tR) state.params.decodeTemp = parseFloat(tR.value);
+      if(kR) state.params.decodeTopK = parseInt(kR.value, 10);
+      if(pR) state.params.decodeTopP = parseFloat(pR.value);
+      renderDecVals();
+      syncTools();
+      render();
+    };
+
+    if(tR){ tR.addEventListener("input", onDecChange); tR.addEventListener("change", onDecChange); }
+    if(kR){ kR.addEventListener("input", onDecChange); kR.addEventListener("change", onDecChange); }
+    if(pR){ pR.addEventListener("input", onDecChange); pR.addEventListener("change", onDecChange); }
     // Disable arrows at bounds (pure UX, no state)
     if(btnPrev) btnPrev.disabled = currentStep <= 1;
     if(btnNext) btnNext.disabled = currentStep >= stepMax;
