@@ -3752,7 +3752,7 @@ if(!toks.length){
       const inCard = document.createElement("div");
       inCard.className = "compare-card";
       inCard.innerHTML = '<div class="compare-title"><strong>Input (A vs. B)</strong><span class="small muted">Embedding vs. Kontext</span></div>';
-      inCard.appendChild(renderVectorBars(emb, "Input: pro Dimension zwei Werte", {
+      inCard.appendChild(renderVectorBars(emb, `Input: pro Dimension zwei Werte · ${tokenSubtitle(toks, i)}`, {
         compareVec: ctx,
         legendA: "A) Embedding (solide)",
         legendB: "B) Kontext nach Attention (gestreift)"
@@ -3761,7 +3761,7 @@ if(!toks.length){
       const outCard = document.createElement("div");
       outCard.className = "compare-card";
       outCard.innerHTML = '<div class="compare-title"><strong>Output (A vs. B)</strong><span class="small muted">FFN(Embedding) vs. FFN(Kontext)</span></div>';
-      outCard.appendChild(renderVectorBars(outNo, "Output: pro Dimension zwei Werte", {
+      outCard.appendChild(renderVectorBars(outNo, `Output: pro Dimension zwei Werte · ${tokenSubtitle(toks, i)}`, {
         compareVec: outYes,
         legendA: "A) FFN(Embedding) (solide)",
         legendB: "B) FFN(Kontext) (gestreift)"
