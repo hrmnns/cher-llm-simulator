@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.43";
+  const APP_VERSION = "v1.4.44";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1986,13 +1986,32 @@ async function loadScenarios(url){
     toks.forEach((t, i) => {
       const row = document.createElement("div");
       row.style.display = "grid";
-      row.style.gridTemplateColumns = "auto 1fr";
+      row.style.gridTemplateColumns = "220px 1fr";
       row.style.gap = "10px";
       row.style.alignItems = "center";
 
       const chip = document.createElement("span");
       chip.className = "token" + (focus.includes(stripLeadingSpace(t.text)) ? " focus" : "");
       chip.innerHTML = `<span class="mono">${escapeHtml(t.text)}</span><span class="id">${escapeHtml(String(t.id))}</span>`;
+
+      // Make barcode area uniform by fixing token column width and ellipsizing long tokens
+      chip.style.width = "100%";
+      chip.style.boxSizing = "border-box";
+      chip.style.justifyContent = "space-between";
+      chip.style.overflow = "hidden";
+      const monoSpan = chip.querySelector(".mono");
+      const idSpan = chip.querySelector(".id");
+      if(monoSpan){
+        monoSpan.style.flex = "1 1 auto";
+        monoSpan.style.minWidth = "0";
+        monoSpan.style.overflow = "hidden";
+        monoSpan.style.textOverflow = "ellipsis";
+        monoSpan.style.whiteSpace = "nowrap";
+      }
+      if(idSpan){
+        idSpan.style.flex = "0 0 auto";
+        idSpan.style.opacity = "0.8";
+      }
 
       const bars = vectorBars(emb[i] || []);
       row.appendChild(chip);
