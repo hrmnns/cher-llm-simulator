@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.51";
+  const APP_VERSION = "v1.4.52";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -3066,7 +3066,7 @@ if(!toks.length){
 
     const list = document.createElement("div");
     list.style.display = "grid";
-    list.style.gap = "18px";
+    list.style.gap = (vecB ? "18px" : "8px");
     list.style.marginTop = "8px";
 
     const shown = Math.min(24, vec.length);
@@ -3561,7 +3561,7 @@ if(!toks.length){
       '<div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center;">'
       + '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
       + '  <input id="mlpCompare" type="checkbox" />'
-      + '  <span><strong>Vergleich anzeigen</strong> (ohne vs. mit Attention)</span>'
+      + '  <span><span style="color:var(--text); font-weight:400;">Vergleich anzeigen</span> <span class="muted">(ohne vs. mit Attention)</span></span>'
       + '</label>'
             + '</div>'
       + '<div class="small muted" style="margin-top:8px;">Tipp: Der Vergleich ist der Aha-Punkt. Ohne Attention bleibt die Repräsentation lokal (Embedding). Mit Attention entsteht ein Kontextvektor, der die FFN-Eingabe sichtbar verschiebt.</div>';
@@ -3609,6 +3609,7 @@ if(!toks.length){
     const mlpUnderText = document.createElement("div");
     mlpUnderText.className = "small muted";
     mlpUnderText.style.marginTop = "4px";
+    mlpUnderText.style.marginBottom = "12px";
     mlpUnderText.innerHTML = 'Wenn sich <span class="mono">Input</span> (Embedding vs. Kontext) sichtbar unterscheidet, wird auch das FFN-Output anders. So trennt man sauber: <strong>Kontextbildung</strong> (Attention) vs. <strong>nichtlineare Transformation</strong> (MLP).';
     wrap.appendChild(mlpUnderText);
 
