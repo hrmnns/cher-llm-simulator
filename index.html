@@ -920,7 +920,7 @@ details.heatmap-panel[open] > summary::before{
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.45";
+  const APP_VERSION = "v1.4.46";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -1866,7 +1866,32 @@ async function loadScenarios(url){
     const focus = scenario.highlights?.tokenFocus ?? [];
 
     wrap.appendChild(pNotice("Im Guided-Modus ist die Tokenisierung vorgegeben. So werden Subwords/Komposita und Token-IDs sichtbar."));
-    wrap.appendChild(h3("Token"));
+
+    // Divider (Standard: Erklärung → Visualisierung/Details)
+    const divider = document.createElement("div");
+    divider.style.height = "1px";
+    divider.style.background = "rgba(255,255,255,.10)";
+    divider.style.margin = "10px 0";
+    wrap.appendChild(divider);
+
+    // Header: Token + count badge
+    const tokenHeader = document.createElement("div");
+    tokenHeader.style.display = "flex";
+    tokenHeader.style.alignItems = "center";
+    tokenHeader.style.justifyContent = "space-between";
+    tokenHeader.style.gap = "10px";
+
+    const tokenTitle = h3("Token");
+    tokenTitle.style.margin = "0";
+    const tokenBadge = document.createElement("span");
+    tokenBadge.className = "badge";
+    tokenBadge.textContent = `Anzahl: ${toks.length}`;
+
+    tokenHeader.appendChild(tokenTitle);
+    tokenHeader.appendChild(tokenBadge);
+    wrap.appendChild(tokenHeader);
+
+    // Tokens
     wrap.appendChild(tokenRow(toks, focus));
 
     // raw tokens string
@@ -1878,11 +1903,16 @@ async function loadScenarios(url){
     pre.style.borderRadius = "12px";
     pre.style.border = "1px solid rgba(34,48,68,.85)";
     pre.style.background = "rgba(15,22,35,.75)";
+    // allow multiline wrapping for long prompts
+    pre.style.whiteSpace = "pre-wrap";
+    pre.style.wordBreak = "break-word";
+    pre.style.overflowWrap = "anywhere";
     pre.textContent = raw;
     wrap.appendChild(pre);
 
     return wrap;
   }
+
 
 
   function viewEmbedding(scenario){
