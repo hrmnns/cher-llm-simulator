@@ -962,7 +962,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = 'v1.4.90';
+  const APP_VERSION = 'v1.4.91';
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2804,7 +2804,7 @@ if(!toks.length){
     chosenBox.className = "notice";
     chosenBox.style.marginTop = "10px";
     chosenBox.innerHTML = `
-      <div class="small muted">Token im Beispiel‑Output (dieser Schritt)</div>
+      <div class="small muted" data-el="chosenLabel"></div>
       <div class="mono" data-el="chosen" style="margin-top:6px; font-size:16px; color: var(--ok);"></div>
       <div class="small muted" style="margin-top:6px;">Hinweis: Die Beispiel‑Ausgabe ist im Szenario fest vorgegeben. Die Kandidatenliste zeigt nur, wie die Auswahl *unter den Parametern* aussehen würde.</div>
     `;
@@ -2890,7 +2890,26 @@ if(!toks.length){
     controls.style.display = "grid";
     controls.style.gap = "8px";
 
-    // Mode
+    
+    // Simulation toggle (Option B)
+    const simRow = document.createElement("div");
+    simRow.className = "kv";
+    simRow.innerHTML = `
+      <div class="k">Simulation</div>
+      <div class="v" style="display:flex; flex-direction:column; gap:6px;">
+        <label style="display:flex; gap:8px; align-items:center; user-select:none;">
+          <input data-el="simToggle" type="checkbox" />
+          <span>Decoding wirklich simulieren (Output variabel)</span>
+        </label>
+        <div class="small muted">
+          Wenn aktiv, wird der nächste Token tatsächlich nach <b>Greedy</b>/<b>Sampling</b> und den Parametern gewählt.
+          Wenn aus, bleibt die Beispiel-Ausgabe aus dem Szenario fix.
+        </div>
+      </div>
+    `;
+    controls.appendChild(simRow);
+
+// Mode
     const modeRow = document.createElement("div");
     modeRow.className = "kv";
     modeRow.innerHTML = `
@@ -2975,6 +2994,7 @@ if(!toks.length){
     const btnNext = stepRow.querySelector('[data-act="next"]');
 
     const outSoFarEl = outSoFarBox.querySelector('[data-el="outSoFar"]');
+    const chosenLabelEl = chosenBox.querySelector('[data-el="chosenLabel"]');
     const chosenEl = chosenBox.querySelector('[data-el="chosen"]');
     const candCountEl = distHeader.querySelector('[data-el="candCount"]');
 
@@ -2985,6 +3005,8 @@ if(!toks.length){
     const tV = settingsPanel.querySelector('[data-el="tempVal"]');
     const kV = settingsPanel.querySelector('[data-el="topKVal"]');
     const pV = settingsPanel.querySelector('[data-el="topPVal"]');
+
+    const simToggle = settingsPanel.querySelector('[data-el="simToggle"]');
 
     const seedI = settingsPanel.querySelector('[data-el="seedI"]');
     const reseedB = settingsPanel.querySelector('[data-act="reseed"]');
@@ -3000,6 +3022,7 @@ if(!toks.length){
       const n = normalizeSeed(seedI.value);
       state.params.decodeSeed = n;
       seedI.value = String(n);
+    if(simToggle) simToggle.checked = !!state.params.decodeSimulate;
     }
     function applySeedUiState(){
       const isSampling = (modeSel.value !== "greedy");
@@ -3011,6 +3034,8 @@ if(!toks.length){
     // defaults (keep existing state if present)
     if(!state.params.decodeMode) state.params.decodeMode = "greedy";
     if(!state.params.decodeSeed) state.params.decodeSeed = 1;
+
+    if(typeof state.params.decodeSimulate !== "boolean") state.params.decodeSimulate = false;
 
     // ensure underlying params exist (used by getDecodingSteps)
     if(typeof state.params.temperature !== "number") state.params.temperature = 1.0;
@@ -3089,6 +3114,9 @@ if(!toks.length){
       const outSoFar = joinTokensReadable(steps.slice(0, k).map(s => s.chosenToken ?? ""));
       outSoFarEl.textContent = outSoFar || "—";
 
+      if(chosenLabelEl){
+        chosenLabelEl.textContent = state.params.decodeSimulate ? "Gewählter Token (simuliert)" : "Token im Beispiel‑Output (dieser Schritt)";
+      }
       chosenEl.textContent = chosenTok || "—";
 
       // candidates
@@ -3122,6 +3150,7 @@ if(!toks.length){
     if(btnNext) btnNext.addEventListener("click", () => applyStep((parseInt(stepRange.value,10)||1) + 1));
 
     modeSel.addEventListener("change", () => { applySeedUiState(); render(); });
+    if(simToggle) simToggle.addEventListener("change", () => { state.params.decodeSimulate = !!simToggle.checked; state.cache.decodingKey = null; render(); });
     tR.addEventListener("input", render); tR.addEventListener("change", render);
     kR.addEventListener("input", render); kR.addEventListener("change", render);
     pR.addEventListener("input", render); pR.addEventListener("change", render);
@@ -5757,41 +5786,48 @@ function buildAttentionMatrix(scenario, tokens){
 
   function getDecodingSteps(scenario){
     const outputText = scenario?.generation?.outputText ?? "";
-    const outToks = simpleOutputTokens(outputText);
+    const exampleToks = simpleOutputTokens(outputText);
+
+    const simulate = !!state.params.decodeSimulate;
+
     const key = [
       scenario?.id ?? "no-scenario",
       "steps",
+      simulate ? "sim" : "example",
       String(state.params.decodeMode || state.params.mode),
       String(state.params.temperature),
       String(state.params.topP),
       String(state.params.topK),
       String(state.params.decodeSeed || state.params.seed),
-      outToks.join("|")
+      exampleToks.join("|")
     ].join("|");
 
     if(state.cache.decodingKey === key && Array.isArray(state.cache.decodingSteps)){
       return state.cache.decodingSteps;
     }
 
-    // If the scenario provides explicit steps, normalize to expected format.
-    const explicit = scenario?.generation?.steps;
-    if(Array.isArray(explicit) && explicit.length){
-      const norm = explicit.map((s, idx) => ({
-        step: s.step ?? (idx+1),
-        chosenToken: s.chosenToken ?? "",
-        topK: Array.isArray(s.topK) ? s.topK.map(x => ({ token: String(x.token), p: Number(x.p) })) : []
-      }));
-      state.cache.decodingKey = key;
-      state.cache.decodingSteps = norm;
-      return norm;
-    }
+    const maxSteps = Math.max(1, (simulate ? (exampleToks.length || 12) : (exampleToks.length || 1)));
+    const steps = [];
 
-    // Otherwise: build toy topK per output token (output fixed; probabilities simulated)
-    const steps = outToks.map((chosen, i) => {
-      const candidates = buildCandidateTokens(chosen);
+    // Temperature (lower -> sharper)
+    const t = Math.max(0.2, Number(state.params.temperature) || 1);
+    const mode = (state.params.decodeMode || state.params.mode || "greedy");
+    const doGreedy = (mode === "greedy");
+
+    let generated = [];
+
+    for(let i=0;i<maxSteps;i++){
+      let chosen;
+      let candidates;
+
+      if(simulate){
+        candidates = buildCandidateTokensFromContext(generated, i);
+      } else {
+        chosen = exampleToks[i] ?? "";
+        candidates = buildCandidateTokens(chosen);
+      }
+
       const logits = toyLogitsForStep(scenario?.id ?? "x", i, candidates);
-      // Apply temperature (lower -> sharper)
-      const t = Math.max(0.2, Number(state.params.temperature) || 1);
       const scaled = logits.map(x => x / t);
       const probs = softmax(scaled);
 
@@ -5814,21 +5850,25 @@ function buildAttentionMatrix(scenario, tokens){
       }
 
       // Apply topK
-      const topK = Math.max(1, Math.min(50, Number(state.params.topK) || 10));
-      paired = paired.slice(0, topK);
+      const kNum = Number(state.params.topK);
+      const k = clamp(Math.floor(Number.isFinite(kNum) ? kNum : 10), 1, 50);
+      paired = paired.slice(0, k);
 
-      // Ensure chosen token is present (if it got filtered out, append it with tiny p)
-      if(!paired.some(x => x.token === chosen)){
-        paired.push({ token: chosen, p: Math.min(0.01, paired[paired.length-1]?.p ?? 0.01) });
-        paired.sort((a,b) => b.p - a.p);
+      // Renormalize after filters
+      const sum = paired.reduce((s, it) => s + it.p, 0) || 1;
+      paired = paired.map(it => ({ token: it.token, p: it.p / sum }));
+
+      if(simulate){
+        if(doGreedy){
+          chosen = paired[0]?.token ?? "";
+        } else {
+          chosen = sampleFromProbs(paired, scenario?.id ?? "x", i, generated);
+        }
+        generated.push(chosen);
       }
 
-      // Renormalize for display
-      const s = paired.reduce((a,b)=>a+b.p, 0) || 1;
-      paired = paired.map(x => ({ token: x.token, p: x.p / s }));
-
-      return { step: i+1, chosenToken: chosen, topK: paired };
-    });
+      steps.push({ step: i+1, chosenToken: chosen, topK: paired });
+    }
 
     state.cache.decodingKey = key;
     state.cache.decodingSteps = steps;
@@ -5847,6 +5887,45 @@ function buildAttentionMatrix(scenario, tokens){
     const fillers = ["sehr","oft","meist","typisch","kurz","lang","weil","dass","und","aber"];
     const set = new Set([...base, ...fillers, chosen]);
     return [...set];
+  }
+
+  
+
+  function buildCandidateTokensFromContext(prevTokens, stepIndex){
+    // A slightly larger toy vocab; we also mix in a bit of context so sequences can drift.
+    const base = [
+      "Ein","Eine","Der","Die","Das","ist","sind","war","kann","auch","ein","eine",
+      "Hund","Hunde","Säugetier","Tier","Haustier","Leine","Führen","Menschen","domestiziertes",
+      "Finanzinstitut","Sitzgelegenheit","oder","zum","von",".",",","?","!",
+      "sehr","oft","meist","typisch","kurz","lang","weil","dass","und","aber"
+    ];
+    const set = new Set(base);
+    // add last few tokens (context echo)
+    const last = prevTokens.slice(-3);
+    for(const t of last){
+      if(t) set.add(t);
+    }
+    // add a deterministic extra token per step to keep variety
+    const extra = ["heute","viele","manchmal","immer","nie","dabei","damit","zum Beispiel","also","denn"];
+    set.add(extra[stepIndex % extra.length]);
+
+    return [...set];
+  }
+
+  function sampleFromProbs(list, scenarioId, stepIndex, prevTokens){
+    // Deterministic sampling for reproducibility (seed-driven)
+    const seedVal = (state.params.decodeSeed ?? state.params.seed);
+    const ctx = (prevTokens || []).join("|");
+    const seed = stableHash(`${scenarioId}|sample|${stepIndex}|seed:${seedVal}|ctx:${ctx}`);
+    let x = (seed >>> 0);
+    x = xorshift32(x);
+    const r = (x >>> 0) / 4294967296; // [0,1)
+    let acc = 0;
+    for(const it of list){
+      acc += it.p;
+      if(r <= acc) return it.token;
+    }
+    return list[list.length-1]?.token ?? "";
   }
 
   function toyLogitsForStep(scenarioId, stepIndex, candidates){
