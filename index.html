@@ -962,7 +962,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = 'v1.4.88';
+  const APP_VERSION = 'v1.4.89';
   // -----------------------------
   // Constants
   // -----------------------------
@@ -5743,11 +5743,11 @@ function buildAttentionMatrix(scenario, tokens){
     const key = [
       scenario?.id ?? "no-scenario",
       "steps",
-      String(state.params.mode),
+      String(state.params.decodeMode || state.params.mode),
       String(state.params.temperature),
       String(state.params.topP),
       String(state.params.topK),
-      String(state.params.seed),
+      String(state.params.decodeSeed || state.params.seed),
       outToks.join("|")
     ].join("|");
 
@@ -5833,7 +5833,7 @@ function buildAttentionMatrix(scenario, tokens){
 
   function toyLogitsForStep(scenarioId, stepIndex, candidates){
     // Deterministic pseudo-logits per step
-    const seed = stableHash(`${scenarioId}|logits|${stepIndex}|${candidates.length}|seed:${state.params.seed}`);
+    const seed = stableHash(`${scenarioId}|logits|${stepIndex}|${candidates.length}|seed:${(state.params.decodeSeed ?? state.params.seed)}`);
     let x = seed >>> 0;
     const logits = new Array(candidates.length);
     for(let i=0;i<candidates.length;i++){
