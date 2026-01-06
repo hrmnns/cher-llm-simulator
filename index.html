@@ -721,7 +721,19 @@ details.heatmap-panel[open] > summary::before{
 
 <style>
 </style>
+
+<style>
+/* Compact select for token chooser */
+select.select,
+select#mlpTokSelect {
+  height: 28px;
+  padding: 2px 8px;
+  font-size: 13px;
+  line-height: 1.2;
+}
+</style>
 </head>
+
 
 <body>
 <div class="app">
@@ -934,7 +946,7 @@ details.heatmap-panel[open] > summary::before{
  */
 function tokenSubtitle(tokens, idx) {
   const raw = (tokens && tokens[idx] && typeof tokens[idx].text === "string") ? tokens[idx].text : "";
-  const shown = raw.startsWith(" ") ? ("␠" + raw.slice(1)) : raw;
+  const shown = raw;
   return `für das Token i=${idx} (${shown})`;
 }
 
@@ -942,7 +954,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.64";
+  const APP_VERSION = "v1.4.65";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -3590,7 +3602,7 @@ if(!toks.length){
         const opt = document.createElement("option");
         opt.value = String(ti);
         const raw = toks[ti] && typeof toks[ti].text === "string" ? toks[ti].text : "";
-        const shown = raw.startsWith(" ") ? ("␠" + raw.slice(1)) : raw;
+        const shown = raw;
         opt.textContent = `${ti}: ${shown}`;
         selTok.appendChild(opt);
       }
