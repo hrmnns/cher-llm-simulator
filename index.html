@@ -25,6 +25,10 @@
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       --tap: 44px;
     }
+      // Set current selection
+      const curTok = (typeof state.params.mlpTok === "number") ? state.params.mlpTok : 0;
+      selTok.value = String(Math.max(0, Math.min(toks.length-1, curTok)));
+    }
     *{box-sizing:border-box}
     body{
       margin:0;
@@ -938,7 +942,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.52";
+  const APP_VERSION = "v1.4.64";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2984,12 +2988,8 @@ if(!toks.length){
 
     const r = controls.querySelector("#logitStepRange");
     const v = controls.querySelector("#logitStepVal");
-    r.value = String(clamp(Number(state.params.logitStep) || 1, 1, steps.length));
-    v.textContent = `#${r.value} / ${steps.length}`;
-    r.addEventListener("input", (e) => {
-      state.params.logitStep = Number(e.target.value);
-      v.textContent = `#${e.target.value} / ${steps.length}`;
-      render();
+    r.value = String(clamp(Number(state.params.logitStep) || 1, 1, steps.length));    if(selTok) selTok.addEventListener("change", (e) => {
+      state.params.logitStep = Number(e.target.value);      render();
     });
 
     const idx = clamp((Number(state.params.logitStep) || 1) - 1, 0, steps.length - 1);
@@ -3556,8 +3556,6 @@ if(!toks.length){
       wrap.appendChild(pNotice("Keine Tokens – MLP kann nicht visualisiert werden.", true));
       return wrap;
     }
-
-    // Controls: token selector
     const controls = document.createElement("div");
     controls.className = "notice";
     controls.style.display = "grid";
@@ -3566,8 +3564,7 @@ if(!toks.length){
       '<div class="kv">'
       + '<div class="k">Token i</div>'
       + '<div class="v" style="display:flex; gap:10px; align-items:center;">'
-      + '<input id="mlpTokRange" type="range" min="0" max="' + (toks.length-1) + '" step="1" />'
-      + '<span class="mono" id="mlpTokVal"></span>'
+      + '<select id="mlpTokSelect" class="select"></select>'
       + '</div></div>'
       + '<div class="small muted">Zeige toy-FFN Input/Output für Token i.</div>';
     // Controls: token selector
@@ -3583,13 +3580,24 @@ if(!toks.length){
       + '</label>'
             + '</div>'
       + '<div class="small muted" style="margin-top:8px;">Tipp: Der Vergleich ist der Aha-Punkt. Ohne Attention bleibt die Repräsentation lokal (Embedding). Mit Attention entsteht ein Kontextvektor, der die FFN-Eingabe sichtbar verschiebt.</div>';
-    const r = controls.querySelector("#mlpTokRange");
-    const v = controls.querySelector("#mlpTokVal");
+    const selTok = controls.querySelector("#mlpTokSelect");
     const chkCompare = toggles.querySelector("#mlpCompare");
 
-    const defaultIdx = Math.max(0, toks.length - 1);
-    r.value = String(defaultIdx);
-    v.textContent = defaultIdx + ": " + stripLeadingSpace(toks[defaultIdx].text);
+    // Populate token select (combobox)
+    if(selTok){
+      selTok.innerHTML = "";
+      for(let ti=0; ti<toks.length; ti++){
+        const opt = document.createElement("option");
+        opt.value = String(ti);
+        const raw = toks[ti] && typeof toks[ti].text === "string" ? toks[ti].text : "";
+        const shown = raw.startsWith(" ") ? ("␠" + raw.slice(1)) : raw;
+        opt.textContent = `${ti}: ${shown}`;
+        selTok.appendChild(opt);
+      }
+    }
+
+    const defaultIdx = (typeof state.params.mlpTok === "number") ? state.params.mlpTok : Math.max(0, toks.length - 1);
+    if(selTok) selTok.value = String(Math.max(0, Math.min(toks.length - 1, defaultIdx)));
 
     chkCompare.checked = !!state.params.mlpCompare;
 
@@ -3774,20 +3782,18 @@ if(!toks.length){
 
 
 
-    function render(i){
-      v.textContent = i + ": " + stripLeadingSpace(toks[i].text);
-      updateMlpBadge(i);
+    function render(i){      updateMlpBadge(i);
       if(!!state.params.mlpCompare) renderCompare(i);
       else renderSingle(i);
     }
 
-    r.addEventListener("input", function(e){
+    if(selTok) selTok.addEventListener("change", function(e){
       render(Number(e.target.value));
     });
 
     chkCompare.addEventListener("change", function(){
       state.params.mlpCompare = !!chkCompare.checked;
-      render(Number(r.value));
+      render(parseInt(selTok ? selTok.value : (state.params.mlpTok || 0), 10));
     });
 
     render(defaultIdx);
