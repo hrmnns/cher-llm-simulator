@@ -954,7 +954,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.72";
+  const APP_VERSION = "v1.4.73";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -3182,7 +3182,9 @@ if(!toks.length){
 
 
 
-    // Init decoding sliders from state and bind updates (affects logits distribution)
+
+    // Sampling-Parameter (wirken direkt auf die Top‑K‑Verteilung dieser Karte)
+    // Hinweis: Die „Tools“-Controls bleiben unverändert (dort geht es um ein separates Toy‑Beispiel).
     const tR = settingsPanel.querySelector("#logitsDecTemp");
     const tV = settingsPanel.querySelector("#logitsDecTempVal");
     const kR = settingsPanel.querySelector("#logitsDecTopK");
@@ -3193,43 +3195,33 @@ if(!toks.length){
     const fmt1 = (x) => (Math.round(x*10)/10).toFixed(1);
     const fmt2 = (x) => (Math.round(x*100)/100).toFixed(2);
 
-    function syncTools(){
-      // Keep the Tools panel in sync when present (no-op if not rendered/visible)
-      const toolT = document.querySelector("#decTemp");
-      const toolTV = document.querySelector("#decTempVal");
-      const toolK = document.querySelector("#decTopK");
-      const toolKV = document.querySelector("#decTopKVal");
-      const toolP = document.querySelector("#decTopP");
-      const toolPV = document.querySelector("#decTopPVal");
-      if(toolT){ toolT.value = String(state.params.decodeTemp); if(toolTV) toolTV.textContent = fmt1(state.params.decodeTemp); }
-      if(toolK){ toolK.value = String(state.params.decodeTopK); if(toolKV) toolKV.textContent = String(state.params.decodeTopK); }
-      if(toolP){ toolP.value = String(state.params.decodeTopP); if(toolPV) toolPV.textContent = fmt2(state.params.decodeTopP); }
+    function renderSamplingVals(){
+      if(tR) tR.value = String(state.params.temperature);
+      if(kR) kR.value = String(state.params.topK);
+      if(pR) pR.value = String(state.params.topP);
+
+      if(tV) tV.textContent = fmt1(state.params.temperature);
+      if(kV) kV.textContent = String(state.params.topK);
+      if(pV) pV.textContent = fmt2(state.params.topP);
     }
 
-    function renderDecVals(){
-      if(tR) tR.value = String(state.params.decodeTemp);
-      if(kR) kR.value = String(state.params.decodeTopK);
-      if(pR) pR.value = String(state.params.decodeTopP);
-      if(tV) tV.textContent = fmt1(state.params.decodeTemp);
-      if(kV) kV.textContent = String(state.params.decodeTopK);
-      if(pV) pV.textContent = fmt2(state.params.decodeTopP);
-    }
+    function onSamplingChange(){
+      // Update the parameters that are actually used to compute scenario decoding distributions
+      if(tR) state.params.temperature = clamp(parseFloat(tR.value), 0.2, 2.0);
+      if(kR) state.params.topK = clamp(parseInt(kR.value, 10) || 0, 0, 20);
+      if(pR) state.params.topP = clamp(parseFloat(pR.value), 0.1, 1.0);
 
-    renderDecVals();
-
-    const onDecChange = () => {
-      if(tR) state.params.decodeTemp = parseFloat(tR.value);
-      if(kR) state.params.decodeTopK = parseInt(kR.value, 10);
-      if(pR) state.params.decodeTopP = parseFloat(pR.value);
-      renderDecVals();
-      syncTools();
+      // reset cached decoding steps so the next render uses the new distribution
+      state.cache.decodingKey = null;
+      renderSamplingVals();
       render();
-    };
+    }
 
-    if(tR){ tR.addEventListener("input", onDecChange); tR.addEventListener("change", onDecChange); }
-    if(kR){ kR.addEventListener("input", onDecChange); kR.addEventListener("change", onDecChange); }
-    if(pR){ pR.addEventListener("input", onDecChange); pR.addEventListener("change", onDecChange); }
-    // Disable arrows at bounds (pure UX, no state)
+    renderSamplingVals();
+    if(tR){ tR.addEventListener("input", onSamplingChange); tR.addEventListener("change", onSamplingChange); }
+    if(kR){ kR.addEventListener("input", onSamplingChange); kR.addEventListener("change", onSamplingChange); }
+    if(pR){ pR.addEventListener("input", onSamplingChange); pR.addEventListener("change", onSamplingChange); }
+// Disable arrows at bounds (pure UX, no state)
     if(btnPrev) btnPrev.disabled = currentStep <= 1;
     if(btnNext) btnNext.disabled = currentStep >= stepMax;
 
