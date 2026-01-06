@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v1.4.18-didactic-freeze",
+    "version": "v1.4.19-decoding-guide",
     "project": "cher-llm-simulator",
     "description": "LLM Simulator – Didaktisch konsolidierte Referenzszenarien",
     "defaultScenarioId": "posenc-hund-hund-hund"
@@ -43,7 +43,20 @@
         ]
       },
       "generation": {
-        "outputText": "Ein Hund ist ein Säugetier."
+        "outputText": "Ein Hund ist ein Säugetier.",
+        "decodingGuide": {
+          "targetTokens": [
+            "Ein",
+            " Hund",
+            " ist",
+            " ein",
+            " Säugetier",
+            "."
+          ],
+          "boostLogit": 6.0,
+          "note": "Wenn die App 'Simuliertes Decoding' unterstützt, wird pro Schritt das Ziel-Token (aus outputText) als wahrscheinlichster Kandidat geboostet, sodass bei Default-Parametern der vorgegebene Satz entsteht.",
+          "targetTokenCount": 6
+        }
       },
       "highlights": {
         "explain": [
@@ -598,7 +611,20 @@
         ]
       },
       "generation": {
-        "outputText": "Der Hund ist ein Säugetier."
+        "outputText": "Der Hund ist ein Säugetier.",
+        "decodingGuide": {
+          "targetTokens": [
+            "Der",
+            " Hund",
+            " ist",
+            " ein",
+            " Säugetier",
+            "."
+          ],
+          "boostLogit": 6.0,
+          "note": "Wenn die App 'Simuliertes Decoding' unterstützt, wird pro Schritt das Ziel-Token (aus outputText) als wahrscheinlichster Kandidat geboostet, sodass bei Default-Parametern der vorgegebene Satz entsteht.",
+          "targetTokenCount": 6
+        }
       },
       "highlights": {
         "explain": [
