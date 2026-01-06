@@ -962,7 +962,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = 'v1.4.91';
+  const APP_VERSION = 'v1.4.92';
   // -----------------------------
   // Constants
   // -----------------------------
@@ -2722,13 +2722,13 @@ if(!toks.length){
     divider0.style.margin = "10px 0";
     wrap.appendChild(divider0);
 
-    const steps = getDecodingSteps(scenario);
+    let steps = getDecodingSteps(scenario);
     if(!steps.length){
       wrap.appendChild(pNotice("Keine Generationsdaten vorhanden.", true));
       return wrap;
     }
 
-    const stepMax = steps.length;
+    let stepMax = steps.length;
     const currentStep = clamp(Number(state.params.logitStep) || 1, 1, stepMax);
     if(state.params.logitStep !== currentStep) state.params.logitStep = currentStep;
 
@@ -3068,8 +3068,7 @@ if(!toks.length){
     }
 
     function render(){
-      const k = clamp(parseInt(stepRange.value, 10) || 1, 1, stepMax);
-      state.params.logitStep = k;
+      let k = 1;
 
       // reflect params
       state.params.decodeMode = modeSel.value;
@@ -3079,6 +3078,15 @@ if(!toks.length){
       state.params.temperature = clamp(parseFloat(tR.value) || 1, 0.2, 2.0);
       state.params.topK = clamp(parseInt(kR.value, 10) || 1, 1, 20);
       state.params.topP = clamp(parseFloat(pR.value) || 1, 0.1, 1.0);
+
+      // Recompute steps (may change with mode/temp/top-k/top-p/seed/simulation)
+      steps = getDecodingSteps(scenario);
+      stepMax = steps.length || 1;
+      stepRange.max = String(stepMax);
+
+      k = clamp(parseInt(stepRange.value, 10) || 1, 1, stepMax);
+      stepRange.value = String(k);
+      state.params.logitStep = k;
 
       if(tV) tV.textContent = fmt1(state.params.temperature);
       if(kV) kV.textContent = String(state.params.topK);
