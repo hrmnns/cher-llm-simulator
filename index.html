@@ -493,7 +493,15 @@
     .compare-title{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px;}
     .compare-title strong{font-size:14px;}
     
-    .dist{display:grid; gap:8px;}
+    
+    /* Decoding – probability list with fixed token/value columns (align like Logits) */
+    .prob-dist{display:grid; gap:8px;}
+    .prob-row{display:grid; grid-template-columns: var(--probTokCol, 14ch) 1fr var(--probValCol, 8ch); gap:10px; align-items:center;}
+    .prob-row .prob-meta{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:4px;}
+    .prob-bar{height: 10px; border-radius: 999px; border:1px solid rgba(52,65,84,.85); background: rgba(15,22,35,.65); overflow:hidden;}
+    .prob-bar > div{height:100%; border-radius:999px; background: rgba(102,153,255,.75);}
+
+.dist{display:grid; gap:8px;}
     .dist-row{display:grid; grid-template-columns: 1fr 68px; gap:10px; align-items:center;}
     .dist-bar{height: 10px; border-radius: 999px; border:1px solid rgba(34,48,68,.85); background: rgba(15,22,35,.65); overflow:hidden;}
     .dist-bar > div{height:100%; border-radius:999px; background: rgba(102,217,239,.70); width:0%;}
@@ -954,7 +962,7 @@ function tokenSubtitle(tokens, idx) {
 
 <script>
 (() => {
-  const APP_VERSION = "v1.4.77";
+  const APP_VERSION = "v1.4.84";
   // -----------------------------
   // Constants
   // -----------------------------
@@ -997,10 +1005,11 @@ const state = {
       explainOpen: false, // remember open/closed state of the Explanation panel (default: collapsed)
       
       decodeTopP: 1.0,
-decodeTopK: 0,
+      decodeTopK: 10,
 decodeTemp: 1.0,
 decodeSeed: 1337,
 decodeMode: "greedy",
+      decodeStep: 1,
 temperature: 0.8, topP: 0.9, topK: 10, dModel: 16, posEnc: true, attnLayer: 1, attnHead: 1, causalMask: true, logitStep: 1 },
     cache: { embeddings: null, embeddingKey: null, decodingSteps: null, decodingKey: null },
   };
@@ -1173,6 +1182,17 @@ async function loadScenarios(url){
   // Optional explanations loading (vNext)
   // -----------------------------
   async function loadExplanationsOptional(url){
+    // Optional file: loads are blocked by browsers (CORS). This is NOT a bug.
+    // We skip silently to avoid noisy console errors for local file usage.
+    if(location.protocol === "file:"){
+      state.explanationsDoc = null;
+      state.explanationsStatus = {
+        kind: "info",
+        text: "Explanations: übersprungen (file://)",
+        details: "Lokale Datei-Ausführung blockiert fetch() auf JSON (CORS). Starte einen kleinen HTTP-Server (z. B. python -m http.server) oder nutze GitHub Pages."
+      };
+      return false;
+    }
     try{
       const res = await fetch(url, { cache: "no-store" });
       if(!res.ok) throw new Error("HTTP " + res.status);
@@ -2687,279 +2707,1185 @@ if(!toks.length){
     return wrap;
   }
 
-
   function viewOutput(scenario){
     const wrap = document.createElement("div");
-    wrap.appendChild(pNotice("Im Guided-Modus ist die Ausgabe vorgegeben. In v2 können zusätzlich Sampling-Schritte (Top‑k/Top‑p) visualisiert werden."));
-    wrap.appendChild(h3("Output"));
-    const pre = document.createElement("pre");
-    pre.style.margin = "0";
-    pre.style.padding = "10px 12px";
-    pre.style.borderRadius = "12px";
-    pre.style.border = "1px solid rgba(34,48,68,.85)";
-    pre.style.background = "rgba(15,22,35,.75)";
-    pre.textContent = scenario.generation?.outputText ?? "—";
-    wrap.appendChild(pre);
+
+    // Intro (dezent, konsistent)
+    const intro = document.createElement("div");
+    intro.className = "small muted";
+    intro.textContent = "Decoding wählt aus den Wahrscheinlichkeiten (aus Logits → Softmax) Schritt für Schritt das nächste Token – bis am Ende Text entsteht.";
+    wrap.appendChild(intro);
+
+    const divider0 = document.createElement("div");
+    divider0.style.height = "1px";
+    divider0.style.background = "rgba(255,255,255,.10)";
+    divider0.style.margin = "10px 0";
+    wrap.appendChild(divider0);
 
     const steps = getDecodingSteps(scenario);
-    if(Array.isArray(steps) && steps.length){
-      wrap.appendChild(h3("Decoding (Top-K pro Schritt)"));
-      const note = document.createElement("div");
-      note.className = "notice";
-      note.textContent = "In der Logits-Ansicht kannst du jeden Schritt einzeln ansehen. Hier siehst du eine kompakte Übersicht.";
-      wrap.appendChild(note);
+    if(!steps.length){
+      wrap.appendChild(pNotice("Keine Generationsdaten vorhanden.", true));
+      return wrap;
+    }
 
-      // Show first 3 steps as preview (keeps view compact)
-      const previewCount = Math.min(3, steps.length);
-      for(let i=0;i<previewCount;i++){
-        const s = steps[i];
-        const box = document.createElement("div");
-        box.className = "notice";
-        box.innerHTML = `<div class="small muted">Step ${s.step} · chosen: <span class="mono" style="color: var(--ok);">${escapeHtml(s.chosenToken)}</span></div>`;
-        box.appendChild(barsTopK(s.topK.slice(0, Math.min(5, s.topK.length)), s.chosenToken));
-        wrap.appendChild(box);
-      }
-      if(steps.length > previewCount){
-        wrap.appendChild(pNotice(`Weitere Schritte findest du unter „Logits“ (insgesamt ${steps.length}).`));
+    const stepMax = steps.length;
+    const currentStep = clamp(Number(state.params.logitStep) || 1, 1, stepMax);
+    if(state.params.logitStep !== currentStep) state.params.logitStep = currentStep;
+
+    // --- Single-column layout (wie Logits/MLP/Attention) ---
+    const layout = document.createElement("div");
+    layout.style.display = "grid";
+    layout.style.gridTemplateColumns = "1fr";
+    layout.style.gap = "8px";
+    layout.style.alignItems = "start";
+    wrap.appendChild(layout);
+
+    // --- Main panel (Hauptpanel) ---
+    const main = document.createElement("div");
+    main.className = "heatmap-panel";
+    layout.appendChild(main);
+
+    const header = document.createElement("div");
+    header.style.display = "flex";
+    header.style.justifyContent = "space-between";
+    header.style.alignItems = "baseline";
+    header.style.gap = "10px";
+    main.appendChild(header);
+
+    const title = document.createElement("div");
+    title.className = "mono";
+    title.style.fontWeight = "800";
+    title.style.fontSize = "16px";
+    title.textContent = "Decoding";
+    header.appendChild(title);
+
+    const badge = document.createElement("span");
+    badge.className = "heatmap-summary-tag";
+    header.appendChild(badge);
+
+    // Step controls (prominent)
+    const stepRow = document.createElement("div");
+    stepRow.className = "kv";
+    stepRow.style.marginTop = "10px";
+    stepRow.innerHTML = `
+      <div class="k">Schritt</div>
+      <div class="v" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <button class="segbtn" data-act="prev" title="Vorheriger Schritt">←</button>
+        <input data-el="stepRange" type="range" min="1" max="${stepMax}" step="1" />
+        <button class="segbtn" data-act="next" title="Nächster Schritt">→</button>
+        <span class="mono small" data-el="stepVal"></span>
+      </div>
+    `;
+    main.appendChild(stepRow);
+
+    const stepHint = document.createElement("div");
+    stepHint.className = "small muted";
+    stepHint.style.marginTop = "6px";
+    stepHint.textContent = "Tipp: Ein „Schritt“ entspricht der Auswahl genau eines Tokens. Im nächsten Schritt wird erneut gewählt.";
+    main.appendChild(stepHint);
+
+    const divider1 = document.createElement("div");
+    divider1.style.height = "1px";
+    divider1.style.background = "rgba(255,255,255,.10)";
+    divider1.style.margin = "10px 0";
+    main.appendChild(divider1);
+
+    // Output so far (stacked, not 2-col)
+    const outSoFarBox = document.createElement("div");
+    outSoFarBox.className = "notice";
+    outSoFarBox.innerHTML = `
+      <div class="small muted">Ausgabe bis inkl. aktuellem Schritt</div>
+      <div class="mono" data-el="outSoFar" style="margin-top:6px; font-size:14px; white-space:pre-wrap;"></div>
+    `;
+    main.appendChild(outSoFarBox);
+
+    // chosen token
+    const chosenBox = document.createElement("div");
+    chosenBox.className = "notice";
+    chosenBox.style.marginTop = "10px";
+    chosenBox.innerHTML = `
+      <div class="small muted">Gewähltes Token (dieser Schritt)</div>
+      <div class="mono" data-el="chosen" style="margin-top:6px; font-size:16px; color: var(--ok);"></div>
+      <div class="small muted" style="margin-top:6px;">(Greedy oder Sampling)</div>
+    `;
+    main.appendChild(chosenBox);
+
+    // Candidate distribution
+    const distHeader = document.createElement("div");
+    distHeader.className = "small muted";
+    distHeader.style.display = "flex";
+    distHeader.style.justifyContent = "space-between";
+    distHeader.style.gap = "10px";
+    distHeader.style.alignItems = "baseline";
+    distHeader.style.marginTop = "12px";
+    distHeader.innerHTML = `
+      <span>Kandidaten (nach Temperature/Top‑K/Top‑P)</span>
+      <span class="mono small muted" data-el="candCount"></span>
+    `;
+    main.appendChild(distHeader);
+
+    const distWrap = document.createElement("div");
+    distWrap.style.marginTop = "8px";
+    main.appendChild(distWrap);
+
+    const hint = document.createElement("div");
+    hint.className = "small muted";
+    hint.style.marginTop = "10px";
+    hint.textContent = "Hinweis: Die Werte in dieser Simulation sind vereinfacht. Im echten Modell entstehen sie aus Logits → Softmax → (Greedy/Sampling) Auswahl.";
+    main.appendChild(hint);
+
+    // --- Details panel ---
+    const detailsPanel = document.createElement("details");
+    detailsPanel.className = "heatmap-panel";
+    bindDetailsPersistence(detailsPanel, "decoding-details", true);
+
+    const detailsSummary = document.createElement("summary");
+    detailsSummary.innerHTML = `<span class="mono" style="font-weight:800;">Details zur Anzeige</span> <span class="heatmap-summary-tag">Greedy · Sampling · Temperature · Top‑K/Top‑P</span>`;
+    detailsPanel.appendChild(detailsSummary);
+
+    const detailsInner = document.createElement("div");
+    detailsInner.className = "heatmap-panel-body";
+    detailsInner.style.marginTop = "8px";
+
+    const detailsText = document.createElement("div");
+    detailsText.className = "small muted";
+    detailsText.innerHTML = `
+      <div style="margin-bottom:8px;">
+        <strong>Greedy</strong> wählt immer das Token mit der höchsten Wahrscheinlichkeit.
+        <br><strong>Sampling</strong> zieht zufällig – aber nicht gleichverteilt: Tokens mit höherer Wahrscheinlichkeit werden häufiger gezogen.
+      </div>
+      <div style="margin-bottom:8px;">
+        <strong>Temperature</strong> steuert, wie „spitz“ oder „flach“ die Verteilung ist:
+        <br>• nahe <span class="mono">0</span> → fast deterministisch (ähnlich Greedy)
+        <br>• größer → mehr Vielfalt, aber auch mehr Risiko für „seltsame“ Tokens
+      </div>
+      <div style="margin-bottom:8px;">
+        <strong>Top‑K</strong> begrenzt die Auswahl auf die <span class="mono">K</span> wahrscheinlichsten Tokens.
+        <br><strong>Top‑P</strong> (Nucleus) nimmt so viele Tokens, bis die kumulierte Wahrscheinlichkeit ≥ <span class="mono">P</span> ist.
+      </div>
+      <div>
+        <strong>Edge‑Cases</strong>:
+        <br>• <span class="mono">Top‑K=1</span> oder <span class="mono">Top‑P</span> sehr klein → kaum Auswahl (fast Greedy)
+        <br>• nur 1 Schritt → Navigation bleibt stabil (Buttons deaktiviert)
+      </div>
+    `;
+    detailsInner.appendChild(detailsText);
+    detailsPanel.appendChild(detailsInner);
+    layout.appendChild(detailsPanel);
+
+    // --- Settings panel ---
+    const settingsPanel = document.createElement("details");
+    settingsPanel.className = "heatmap-panel";
+    bindDetailsPersistence(settingsPanel, "decoding-settings", false);
+
+    const settingsSummary = document.createElement("summary");
+    settingsSummary.innerHTML = `<span class="mono" style="font-weight:800;">Einstellungen zur Anzeige</span> <span class="heatmap-summary-tag">Modus · Regler</span>`;
+    settingsPanel.appendChild(settingsSummary);
+
+    const settingsInner = document.createElement("div");
+    settingsInner.className = "heatmap-panel-body";
+    settingsInner.style.marginTop = "8px";
+
+    const controls = document.createElement("div");
+    controls.style.display = "grid";
+    controls.style.gap = "8px";
+
+    // Mode
+    const modeRow = document.createElement("div");
+    modeRow.className = "kv";
+    modeRow.innerHTML = `
+      <div class="k">Modus</div>
+      <div class="v">
+        <select data-el="modeSel" class="input" style="width: 220px; height: 34px;">
+          <option value="greedy">Greedy (max p)</option>
+          <option value="sample">Sampling (zufällig)</option>
+        </select>
+      </div>
+    `;
+    controls.appendChild(modeRow);
+
+    // Temperature (used by getDecodingSteps)
+    const tempRow = document.createElement("div");
+    tempRow.className = "kv";
+    tempRow.innerHTML = `
+      <div class="k">Temperature</div>
+      <div class="v" style="display:flex; gap:10px; align-items:center;">
+        <input data-el="tempR" type="range" min="0.2" max="2.0" step="0.1" />
+        <span class="mono small" data-el="tempVal"></span>
+      </div>
+    `;
+    controls.appendChild(tempRow);
+
+    // Top-K
+    const topKRow = document.createElement("div");
+    topKRow.className = "kv";
+    topKRow.innerHTML = `
+      <div class="k">Top‑K</div>
+      <div class="v" style="display:flex; gap:10px; align-items:center;">
+        <input data-el="topKR" type="range" min="1" max="20" step="1" />
+        <span class="mono small" data-el="topKVal"></span>
+      </div>
+    `;
+    controls.appendChild(topKRow);
+
+    // Top-P
+    const topPRow = document.createElement("div");
+    topPRow.className = "kv";
+    topPRow.innerHTML = `
+      <div class="k">Top‑P</div>
+      <div class="v" style="display:flex; gap:10px; align-items:center;">
+        <input data-el="topPR" type="range" min="0.10" max="1.00" step="0.05" />
+        <span class="mono small" data-el="topPVal"></span>
+      </div>
+    `;
+    controls.appendChild(topPRow);
+
+    // Seed (UI-only, kept for compatibility with previous versions)
+    const seedRow = document.createElement("div");
+    seedRow.className = "kv";
+    seedRow.innerHTML = `
+      <div class="k">Seed</div>
+      <div class="v" style="display:flex; gap:8px; align-items:center;">
+        <input data-el="seedI" class="input" type="number" min="1" step="1" style="width:140px; height: 34px;" />
+        <button class="segbtn" data-act="reseed" title="Neuen Seed wählen">↻</button>
+      </div>
+    `;
+    controls.appendChild(seedRow);
+
+    settingsInner.appendChild(controls);
+
+    const settingsTip = document.createElement("div");
+    settingsTip.className = "small muted";
+    settingsTip.style.marginTop = "10px";
+    settingsTip.textContent = "Edge‑Cases: Temperature → 0 macht die Verteilung sehr spitz (fast Greedy). Top‑K=1 oder Top‑P sehr klein reduziert die Auswahl stark.";
+    settingsInner.appendChild(settingsTip);
+
+    settingsPanel.appendChild(settingsInner);
+    layout.appendChild(settingsPanel);
+
+    // --- Wiring ---
+    const stepRange = stepRow.querySelector('[data-el="stepRange"]');
+    const stepVal = stepRow.querySelector('[data-el="stepVal"]');
+    const btnPrev = stepRow.querySelector('[data-act="prev"]');
+    const btnNext = stepRow.querySelector('[data-act="next"]');
+
+    const outSoFarEl = outSoFarBox.querySelector('[data-el="outSoFar"]');
+    const chosenEl = chosenBox.querySelector('[data-el="chosen"]');
+    const candCountEl = distHeader.querySelector('[data-el="candCount"]');
+
+    const modeSel = settingsPanel.querySelector('[data-el="modeSel"]');
+    const tR = settingsPanel.querySelector('[data-el="tempR"]');
+    const kR = settingsPanel.querySelector('[data-el="topKR"]');
+    const pR = settingsPanel.querySelector('[data-el="topPR"]');
+    const tV = settingsPanel.querySelector('[data-el="tempVal"]');
+    const kV = settingsPanel.querySelector('[data-el="topKVal"]');
+    const pV = settingsPanel.querySelector('[data-el="topPVal"]');
+
+    const seedI = settingsPanel.querySelector('[data-el="seedI"]');
+    const reseedB = settingsPanel.querySelector('[data-act="reseed"]');
+
+    // defaults (keep existing state if present)
+    if(!state.params.decodeMode) state.params.decodeMode = "greedy";
+    if(!state.params.decodeSeed) state.params.decodeSeed = 1;
+
+    // ensure underlying params exist (used by getDecodingSteps)
+    if(typeof state.params.temperature !== "number") state.params.temperature = 1.0;
+    if(typeof state.params.topK !== "number") state.params.topK = 10;
+    if(typeof state.params.topP !== "number") state.params.topP = 1.0;
+
+    // init controls
+    stepRange.value = String(currentStep);
+    modeSel.value = state.params.decodeMode || "greedy";
+    tR.value = String(clamp(state.params.temperature, 0.2, 2.0));
+    kR.value = String(clamp(state.params.topK, 1, 20));
+    pR.value = String(clamp(state.params.topP, 0.1, 1.0));
+    seedI.value = String(Math.max(1, Number(state.params.decodeSeed) || 1));
+
+    function updateBadge(){
+      const mode = modeSel.value === "greedy" ? "Greedy" : "Sampling";
+      if(modeSel.value === "greedy"){
+        badge.textContent = "Greedy";
+      }else{
+        badge.textContent = `Sampling · T=${fmt1(state.params.temperature)} · top‑p=${fmt2(state.params.topP)} · top‑k=${String(state.params.topK)}`;
       }
     }
+
+    function applyStep(k){
+      const kk = clamp(Number(k) || 1, 1, stepMax);
+      state.params.logitStep = kk;
+      stepRange.value = String(kk);
+      render();
+    }
+
+    function render(){
+      const k = clamp(parseInt(stepRange.value, 10) || 1, 1, stepMax);
+      state.params.logitStep = k;
+
+      // reflect params
+      state.params.decodeMode = modeSel.value;
+      state.params.decodeSeed = Math.max(1, parseInt(seedI.value, 10) || 1);
+
+      // these params are used by getDecodingSteps (toy distribution)
+      state.params.temperature = clamp(parseFloat(tR.value) || 1, 0.2, 2.0);
+      state.params.topK = clamp(parseInt(kR.value, 10) || 1, 1, 20);
+      state.params.topP = clamp(parseFloat(pR.value) || 1, 0.1, 1.0);
+
+      if(tV) tV.textContent = fmt1(state.params.temperature);
+      if(kV) kV.textContent = String(state.params.topK);
+      if(pV) pV.textContent = fmt2(state.params.topP);
+
+      const step = steps[k - 1];
+
+      // step label with token reference
+      const chosenTok = step?.chosenToken ?? "";
+      const tokenLabel = chosenTok ? ` · Token: „${chosenTok}“` : "";
+      stepVal.textContent = `#${k} / ${stepMax}${tokenLabel}`;
+
+      // output so far
+      const outSoFar = steps.slice(0, k).map(s => s.chosenToken ?? "").join("");
+      outSoFarEl.textContent = outSoFar || "—";
+
+      chosenEl.textContent = chosenTok || "—";
+
+      // candidates
+      distWrap.innerHTML = "";
+      const list = Array.isArray(step?.topK) ? step.topK : [];
+      candCountEl.textContent = list.length ? `${list.length} Kandidaten` : "—";
+      if(list.length){
+        // scroll if many
+        const sc = document.createElement("div");
+        if(list.length > 10){
+          sc.style.maxHeight = "340px";
+          sc.style.overflow = "auto";
+          sc.style.paddingRight = "6px";
+        }
+        sc.appendChild(barsTopK(list, chosenTok));
+        distWrap.appendChild(sc);
+      }else{
+        distWrap.appendChild(pNotice("Keine Kandidatenliste vorhanden.", true));
+      }
+
+      updateBadge();
+
+      // Disable arrows at bounds (pure UX)
+      if(btnPrev) btnPrev.disabled = k <= 1;
+      if(btnNext) btnNext.disabled = k >= stepMax;
+    }
+
+    // listeners
+    stepRange.addEventListener("input", render);
+    if(btnPrev) btnPrev.addEventListener("click", () => applyStep((parseInt(stepRange.value,10)||1) - 1));
+    if(btnNext) btnNext.addEventListener("click", () => applyStep((parseInt(stepRange.value,10)||1) + 1));
+
+    modeSel.addEventListener("change", () => { render(); });
+    tR.addEventListener("input", render); tR.addEventListener("change", render);
+    kR.addEventListener("input", render); kR.addEventListener("change", render);
+    pR.addEventListener("input", render); pR.addEventListener("change", render);
+
+    if(reseedB){
+      reseedB.addEventListener("click", () => {
+        state.params.decodeSeed = Math.max(1, (Number(state.params.decodeSeed) || 1) + 1);
+        seedI.value = String(state.params.decodeSeed);
+        render();
+      });
+    }
+
+    render();
+    return wrap;
+  }
+
+
+  // -----------------------------
+  // MLP / FFN view (v1.3.15)
+  // -----------------------------
+  function relu(x){ return Math.max(0, x); }
+
+  function matVec(W, v, b){
+    const out = new Array(W.length);
+    for(let i=0;i<W.length;i++){
+      let s = b ? (b[i] || 0) : 0;
+      const row = W[i];
+      for(let j=0;j<row.length;j++) s += row[j] * v[j];
+      out[i] = s;
+    }
+    return out;
+  }
+
+  function buildToyFFN(seed, dModel){
+    const dHidden = dModel * 2;
+    let x = stableHash("ffn|" + seed + "|d" + dModel) >>> 0;
+    const rand = function(){
+      x = xorshift32(x);
+      return ((x >>> 0) / 4294967296) * 2 - 1;
+    };
+
+    const W1 = [], b1 = [], W2 = [], b2 = [];
+    for(let i=0;i<dHidden;i++){
+      const row = [];
+      for(let j=0;j<dModel;j++) row.push(rand() * 0.35);
+      W1.push(row);
+      b1.push(rand() * 0.05);
+    }
+    for(let i=0;i<dModel;i++){
+      const row = [];
+      for(let j=0;j<dHidden;j++) row.push(rand() * 0.35);
+      W2.push(row);
+      b2.push(rand() * 0.05);
+    }
+    return { W1: W1, b1: b1, W2: W2, b2: b2 };
+  }
+
+  function renderDeltaBars(aVec, bVec, label){
+    const dModel = Math.min(aVec.length, bVec.length);
+    const delta = new Array(dModel);
+    for(let i=0;i<dModel;i++) delta[i] = aVec[i] - bVec[i];
+    return renderVectorBars(delta, label);
+  }
+
+  function renderVectorBars(vec, label, opts){
+    opts = opts || {};
+    const vecB = opts.compareVec || null;
+    const labelA = opts.legendA || "A) Embedding";
+    const labelB = opts.legendB || "B) Kontext";
+
+    const box = document.createElement("div");
+    // Hinweis: bewusst als "notice" belassen (rahmige Mini-Card), aber Inhalt ruhiger
+    box.className = "notice";
+
+    const title = document.createElement("div");
+    title.className = "small muted";
+    title.textContent = label;
+    box.appendChild(title);
+
+    let maxAbs = 1e-6;
+    for(let i=0;i<vec.length;i++) maxAbs = Math.max(maxAbs, Math.abs(vec[i]));
+    if(vecB){
+      for(let i=0;i<vecB.length;i++) maxAbs = Math.max(maxAbs, Math.abs(vecB[i]));
+    }
+
+    const list = document.createElement("div");
+    list.style.display = "grid";
+    list.style.gap = (vecB ? "18px" : "8px");
+    list.style.marginTop = "8px";
+
+    const shown = Math.min(24, vec.length);
+
+    // Optional: kleine Legende (passt gut in Details, aber hier minimal)
+    if(vecB && opts.showInlineLegend){
+      const lg = document.createElement("div");
+      lg.className = "small muted";
+      lg.style.marginTop = "6px";
+      lg.textContent = `${labelA} (solide) · ${labelB} (gestreift)`;
+      box.appendChild(lg);
+    }
+
+    for(let i=0;i<shown;i++){
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gap = "10px";
+      row.style.alignItems = "start";
+      // d_i | Bars (mit Werten rechts)
+      row.style.gridTemplateColumns = "40px 1fr";
+
+      const k = document.createElement("span");
+      k.className = "mono small";
+      k.textContent = "d" + i;
+
+      const bars = document.createElement("div");
+      // Im Vergleichsmodus: pro Dimension zwei Balken untereinander (A oben, B unten),
+      // jeweils mit Wert rechts daneben.
+      bars.style.display = "grid";
+      bars.style.gap = (vecB ? "2px" : "0");
+
+      function makeBar(v, variant){
+        const barOuter = document.createElement("div");
+        barOuter.style.height = "10px";
+        barOuter.style.width = "100%";
+        barOuter.style.borderRadius = "999px";
+        barOuter.style.border = "1px solid rgba(34,48,68,.85)";
+        barOuter.style.background = "rgba(15,22,35,.65)";
+        barOuter.style.overflow = "hidden";
+
+        const barInner = document.createElement("div");
+        barInner.style.height = "100%";
+        const w = Math.max(2, Math.round((Math.abs(v) / maxAbs) * 100));
+        barInner.style.width = w + "%";
+        barInner.style.borderRadius = "999px";
+
+        const basePos = "rgba(110,231,183,.70)";
+        const baseNeg = "rgba(255,107,107,.55)";
+        const base = (v >= 0) ? basePos : baseNeg;
+
+        if(variant === "B"){
+          // Pattern (gestreift) – gleiche Farbwelt, aber erkennbar
+          barInner.style.background = `repeating-linear-gradient(45deg, ${base} 0 6px, rgba(255,255,255,.08) 6px 10px)`;
+        } else {
+          // Solide (A)
+          barInner.style.background = base;
+        }
+
+        barOuter.appendChild(barInner);
+        return barOuter;
+      }
+
+      function makeBarRow(v, variant){
+        const row = document.createElement("div");
+        row.style.display = "grid";
+        row.style.gridTemplateColumns = "1fr 68px";
+        row.style.gap = "10px";
+        row.style.alignItems = "center";
+
+        const bar = makeBar(v, variant);
+        const val = document.createElement("span");
+        val.className = "mono small";
+        val.style.textAlign = "right";
+        val.textContent = (Math.round(v*1000)/1000).toFixed(3);
+
+        row.appendChild(bar);
+        row.appendChild(val);
+        return row;
+      }
+
+      // Bar(s) mit Wert neben dem jeweiligen Balken
+      bars.appendChild(makeBarRow(vec[i], "A"));
+      if(vecB){
+        bars.appendChild(makeBarRow(vecB[i], "B"));
+      }
+
+      row.appendChild(k);
+      row.appendChild(bars);
+
+      list.appendChild(row);
+    }
+
+    const hint = document.createElement("div");
+    hint.className = "small muted";
+    hint.style.marginTop = "8px";
+    hint.textContent = "Anzeige: erste " + shown + " Dimensionen (didaktisch).";
+    box.appendChild(list);
+    box.appendChild(hint);
+    return box;
+  }
+
+  function attentionHeatmapCompact(scenario, opts){
+    opts = opts || {};
+    const showBadge = (opts.showBadge !== false);
+
+    const toks = (scenario && scenario.tokenization && scenario.tokenization.tokens) ? scenario.tokenization.tokens : [];
+    if(!toks.length) return pNotice("Keine Tokens – keine Heatmap.", true);
+
+    const focus = scenario?.highlights?.tokenFocus ?? [];
+
+    const M = buildAttentionMatrix(scenario, toks);
+    const T = toks.length;
+
+    const wrap = document.createElement("div");
+
+    // Status badge (matches Attention card; useful for screenshots)
+    if(showBadge){
+    const hmBadge = document.createElement("span");
+        hmBadge.className = "badge small";
+        hmBadge.style.marginBottom = "8px";
+        hmBadge.style.display = "inline-flex";
+        hmBadge.textContent = `Aktiv: ${state.params.causalMask ? "Mask On" : "Mask Off"} · L${state.params.attnLayer} · H${state.params.attnHead}`;
+        wrap.appendChild(hmBadge);
+    }
+
+
+
+    // --- Live info + pinned cell (not tooltip-only) ---
+    const info = document.createElement("div");
+    info.className = "notice";
+    info.style.display = "grid";
+    info.style.gap = "6px";
+    info.style.marginBottom = "10px";
+    info.innerHTML = `
+      <div class="small muted">Auswahl</div>
+      <div class="small" id="attnCellInfoCompact">
+        Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.
+      </div>
+      <div class="small muted">
+        Interpretation: Zeile <span class="mono">i</span> (Token „fragt Kontext“) schaut auf Spalte <span class="mono">j</span> (Token „liefert Kontext“).
+      </div>
     
-    // --- Decoding (Greedy / Sampling) — local toy simulation ---
-    // NOTE: This block is self-contained to avoid side effects in other steps.
-    wrap.appendChild(h3("Decoding (Greedy / Sampling)"));
+      <details id="attnTopNCompact" style="margin-top:6px;">
+        <summary class="small">Top-5 für i=?</summary>
+        <div class="small mono" id="attnTopNBodyCompact" style="margin-top:6px; line-height:1.35;">Keine Zeile ausgewählt.</div>
+      </details>
+`;
+    wrap.appendChild(info);
+    const infoLine = info.querySelector("#attnCellInfoCompact");
 
-    const dec = document.createElement("div");
-    dec.className = "notice";
-    dec.style.display = "grid";
-    dec.style.gap = "10px";
-    dec.innerHTML =
-      '<div class="small muted">Was passiert hier?</div>'
-      + '<div class="small">Aus den Kandidaten (Top-K-Liste) wird genau <strong>ein</strong> Token gewählt. Greedy nimmt das Token mit der höchsten Wahrscheinlichkeit. Sampling zieht zufällig gemäß Verteilung.</div>'
-      + '<div class="kv"><div class="k">Modus</div><div class="v">'
-      + '  <select id="decModeSel" class="input" style="width:220px;">'
-      + '    <option value="greedy">Greedy (max p)</option>'
-      + '    <option value="sample">Sampling (zufällig)</option>'
-      + '  </select>'
-      + '</div></div>'
-      + '<div class="kv"><div class="k">Temperature</div><div class="v" style="display:flex; gap:10px; align-items:center;">'
-      + '  <input id="decTemp" type="range" min="0.2" max="2.0" step="0.1" />'
-      + '  <span class="mono" id="decTempVal"></span>'
-      + '</div></div>'
-      + '<div class="kv"><div class="k">Top-K</div><div class="v" style="display:flex; gap:10px; align-items:center;">'
-      + '  <input id="decTopK" type="range" min="0" max="20" step="1" />'
-      + '  <span class="mono" id="decTopKVal"></span>'
-      + '  <span class="small muted">(0 = aus)</span>'
-      + '</div></div>'
-      + '<div class="kv"><div class="k">Top-P</div><div class="v" style="display:flex; gap:10px; align-items:center;">'
-      + '  <input id="decTopP" type="range" min="0.1" max="1.0" step="0.05" />'
-      + '  <span class="mono" id="decTopPVal"></span>'
-      + '</div></div>'
-      + '<div class="kv"><div class="k">Seed</div><div class="v" style="display:flex; gap:10px; align-items:center;">'
-      + '  <input id="decSeed" class="input" style="width:140px;" inputmode="numeric" />'
-      + '  <button id="decReseed" class="secondary" type="button">+1</button>'
-      + '</div></div>'
-      + '<div class="small muted">Ablauf: (optional Temperature) → Softmax → (Top-K/Top-P) → Renormalisierung → Auswahl.</div>';
-    wrap.appendChild(dec);
+    const DEFAULT_MSG = "Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.";
+    const isHoverFine = (window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches);
 
-    const out = document.createElement("div");
-    out.className = "notice";
-    out.innerHTML =
-      '<div class="small muted">Ergebnis</div>'
-      + '<div class="pill"><span class="small muted">chosen token</span><span class="mono" id="decChosen">—</span></div>'
-      + '<div class="small muted" style="margin-top:10px;">Verteilung (nach Filter, renormalisiert)</div>'
-      + '<div id="decDist" class="dist"></div>';
-    wrap.appendChild(out);
+    const topNDetails = info.querySelector("#attnTopNCompact");
+    const topNSummary = topNDetails ? topNDetails.querySelector("summary") : null;
+    const topNBody = info.querySelector("#attnTopNBodyCompact");
+    const TOP_N = 5;
 
-    // ---- Local helpers (no dependencies on global decoding helpers) ----
-    function _softmax(logits){
-      let maxL = -1e9;
-      for(let i=0;i<logits.length;i++){ if(logits[i] > maxL) maxL = logits[i]; }
-      const exps = new Array(logits.length);
-      let sum = 0;
-      for(let i=0;i<logits.length;i++){
-        const e = Math.exp(logits[i] - maxL);
-        exps[i] = e;
-        sum += e;
-      }
-      if(sum < 1e-12) sum = 1e-12;
-      const probs = new Array(logits.length);
-      for(let i=0;i<logits.length;i++){ probs[i] = exps[i] / sum; }
-      return probs;
-    }
-    function _applyTemperature(logits, temp){
-      const t = (temp && temp > 1e-6) ? temp : 1e-6;
-      const out = new Array(logits.length);
-      for(let i=0;i<logits.length;i++){ out[i] = logits[i] / t; }
-      return out;
-    }
-    function _sort(cands){
-      cands.sort(function(a,b){ return (b.p - a.p); });
-      return cands;
-    }
-    function _filterTopK(cands, k){
-      if(!k || k <= 0) return cands;
-      return cands.slice(0, Math.min(k, cands.length));
-    }
-    function _filterTopP(cands, p){
-      if(p == null) return cands;
-      let pp = p;
-      if(pp <= 0) return cands.slice(0,1);
-      if(pp >= 1) return cands;
-      let acc = 0;
-      const out = [];
-      for(let i=0;i<cands.length;i++){
-        out.push(cands[i]);
-        acc += cands[i].p;
-        if(acc >= pp) break;
-      }
-      return out;
-    }
-    function _normalize(cands){
-      let s = 0;
-      for(let i=0;i<cands.length;i++){ s += cands[i].p; }
-      if(s < 1e-12) s = 1e-12;
-      for(let i=0;i<cands.length;i++){ cands[i].p = cands[i].p / s; }
-      return cands;
-    }
-    function _lcg(seed){
-      let x = (seed >>> 0) || 1;
-      return function(){
-        x = (1664525 * x + 1013904223) >>> 0;
-        return (x >>> 0) / 4294967296;
-      };
-    }
-    function _sample(cands, seed){
-      const rnd = _lcg(seed);
-      const r = rnd();
-      let acc = 0;
-      for(let i=0;i<cands.length;i++){
-        acc += cands[i].p;
-        if(r <= acc) return cands[i].token;
-      }
-      return cands.length ? cands[cands.length-1].token : "—";
-    }
-    function _greedy(cands){
-      return cands.length ? cands[0].token : "—";
-    }
-    function _build(tokens, logits){
-      const probs = _softmax(logits);
-      const cands = [];
-      for(let i=0;i<tokens.length;i++){
-        cands.push({ token: tokens[i], logit: logits[i], p: probs[i] });
-      }
-      return _sort(cands);
+    function resetTopN(){
+      if(!topNDetails || !topNBody) return;
+      if(topNSummary) topNSummary.textContent = `Top-${TOP_N} für i=?`;
+      topNBody.textContent = "Keine Zeile ausgewählt.";
     }
 
-    function getCandidatesFromScenario(){
-      // Prefer decoding steps topK list (token + p or logit)
-      const steps = getDecodingSteps(scenario);
-      if(Array.isArray(steps) && steps.length){
-        const st = steps[0];
-        if(st && Array.isArray(st.topK) && st.topK.length){
-          const tokens = [];
-          const logits = [];
-          for(let i=0;i<st.topK.length;i++){
-            const it = st.topK[i] || {};
-            tokens.push(it.token != null ? it.token : "—");
-            if(typeof it.logit === "number") logits.push(it.logit);
-            else if(typeof it.p === "number" && it.p > 0) logits.push(Math.log(it.p));
-            else logits.push(-10);
-          }
-          return { tokens: tokens, logits: logits };
+    function updateTopN(i){
+      if(!topNDetails || !topNBody) return;
+      const fromTok = tokenName(i);
+      if(topNSummary) topNSummary.textContent = `Top-${TOP_N} für i=${i} (${fromTok})`;
+      const entries = [];
+      for(let j=0;j<T;j++){
+        const masked = (state.params.causalMask && j > i);
+        if(masked) continue;
+        const v = (M[i][j] || 0);
+        entries.push({ j, v });
+      }
+      entries.sort((a,b)=>b.v-a.v);
+      const top = entries.slice(0, TOP_N);
+      if(!top.length){
+        topNBody.textContent = "Keine Werte verfügbar.";
+        return;
+      }
+      topNBody.innerHTML = top.map(e => {
+        const toTok = tokenName(e.j);
+        return `j=${e.j} (${escapeHtml(toTok)}): ${(e.v*100).toFixed(1)}%`;
+      }).join("<br>");
+    }
+
+    const hmWrap = document.createElement("div");
+    hmWrap.className = "heatmap-wrap";
+    hmWrap.style.padding = "8px";
+
+    const grid = document.createElement("div");
+    grid.className = "heatmap-grid";
+    grid.style.gridTemplateColumns = `repeat(${T}, 18px)`;
+
+    // scaling
+    let maxVal = 0;
+    for(let i=0;i<T;i++) for(let j=0;j<T;j++) maxVal = Math.max(maxVal, M[i][j] || 0);
+    maxVal = Math.max(1e-9, maxVal);
+
+    // state
+    let pinned = { i: null, j: null };
+    let lastHover = null;
+
+    function tokenName(idx){
+      const t = toks[idx];
+      return (t && typeof t.text === "string") ? t.text : String(idx);
+    }
+
+    function describe(i, j){
+      const fromTok = tokenName(i);
+      const toTok = tokenName(j);
+      const v = (M[i]?.[j] ?? 0) * 100;
+      return `i=${i} („${fromTok}“) → j=${j} („${toTok}“): ${v.toFixed(1)}%`;
+    }
+
+    function clearHoverClasses(){
+      if(!grid._cells) return;
+      for(const c of grid._cells){
+        c.classList.remove("hovered","rowcol");
+      }
+    }
+
+    function applyRowColHighlight(i, j){
+      if(!grid._cellMap) return;
+      // Row i
+      if(grid._cellMap[i]){
+        for(const c of grid._cellMap[i]){
+          if(c) c.classList.add("rowcol");
         }
       }
-      // Fallback: fixed tiny example
-      return { tokens:[" ein"," der"," Hund"," Katze","."," ist"], logits:[1.2,0.9,1.8,0.7,0.6,1.1] };
-    }
-
-    const modeSel = dec.querySelector("#decModeSel");
-    const tempR = dec.querySelector("#decTemp");
-    const tempVal = dec.querySelector("#decTempVal");
-    const topKR = dec.querySelector("#decTopK");
-    const topKVal = dec.querySelector("#decTopKVal");
-    const topPR = dec.querySelector("#decTopP");
-    const topPVal = dec.querySelector("#decTopPVal");
-    const seedI = dec.querySelector("#decSeed");
-    const reseedB = dec.querySelector("#decReseed");
-
-    const chosenEl = out.querySelector("#decChosen");
-    const distEl = out.querySelector("#decDist");
-
-    // init from state (local params, do not affect other views)
-    modeSel.value = state.params.decodeMode;
-    tempR.value = String(state.params.decodeTemp);
-    topKR.value = String(state.params.decodeTopK);
-    topPR.value = String(state.params.decodeTopP);
-    seedI.value = String(state.params.decodeSeed);
-
-    function fmt1(x){ return (Math.round(x*10)/10).toFixed(1); }
-    function fmt2(x){ return (Math.round(x*100)/100).toFixed(2); }
-
-    function renderDecodingToy(){
-      state.params.decodeMode = modeSel.value;
-      state.params.decodeTemp = parseFloat(tempR.value);
-      state.params.decodeTopK = parseInt(topKR.value, 10);
-      state.params.decodeTopP = parseFloat(topPR.value);
-      state.params.decodeSeed = parseInt(seedI.value, 10) || 1;
-
-      tempVal.textContent = fmt1(state.params.decodeTemp);
-      topKVal.textContent = String(state.params.decodeTopK);
-      topPVal.textContent = fmt2(state.params.decodeTopP);
-
-      const step = getCandidatesFromScenario();
-      const scaled = _applyTemperature(step.logits, state.params.decodeTemp);
-      let cands = _build(step.tokens, scaled);
-      cands = _filterTopK(cands, state.params.decodeTopK);
-      cands = _filterTopP(cands, state.params.decodeTopP);
-      cands = _normalize(cands);
-
-      const chosen = (state.params.decodeMode === "sample")
-        ? _sample(cands, state.params.decodeSeed)
-        : _greedy(cands);
-
-      chosenEl.textContent = stripLeadingSpace(String(chosen));
-
-      distEl.innerHTML = "";
-      const shown = Math.min(12, cands.length);
-      for(let i=0;i<shown;i++){
-        const row = document.createElement("div");
-        row.className = "dist-row";
-
-        const left = document.createElement("div");
-        const tok = stripLeadingSpace(String(cands[i].token));
-        const pct = (cands[i].p * 100);
-        left.innerHTML =
-          '<div class="small"><span class="mono">' + escapeHtml(tok) + '</span> <span class="muted small">p=' + pct.toFixed(1) + '%</span></div>'
-          + '<div class="dist-bar"><div style="width:' + Math.max(1, Math.round(pct)) + '%;"></div></div>';
-
-        const right = document.createElement("div");
-        right.className = "mono small";
-        right.style.textAlign = "right";
-        right.textContent = (cands[i].logit >= 0 ? "+" : "") + (Math.round(cands[i].logit*100)/100).toFixed(2);
-
-        row.appendChild(left);
-        row.appendChild(right);
-        distEl.appendChild(row);
+      // Col j
+      for(let r=0;r<T;r++){
+        const c = grid._cellMap[r]?.[j];
+        if(c) c.classList.add("rowcol");
       }
     }
 
-    modeSel.addEventListener("change", renderDecodingToy);
-    tempR.addEventListener("input", renderDecodingToy);
-    topKR.addEventListener("input", renderDecodingToy);
-    topPR.addEventListener("input", renderDecodingToy);
-    seedI.addEventListener("input", renderDecodingToy);
-    reseedB.addEventListener("click", function(){
-      seedI.value = String((parseInt(seedI.value, 10) || 1) + 1);
-      renderDecodingToy();
-    });
+    function setHover(i, j){
+      clearHoverClasses();
+      if(grid._cellMap?.[i]?.[j]) grid._cellMap[i][j].classList.add("hovered");
+      applyRowColHighlight(i, j);
+      if(infoLine) infoLine.textContent = describe(i, j);
+      updateTopN(i);
+      lastHover = { i, j };
+    }
 
-    renderDecodingToy();
+    function setPinned(i, j){
+      if(grid._cells){
+        for(const c of grid._cells) c.classList.remove("pinned");
+      }
+      pinned = { i, j };
+      if(grid._cellMap?.[i]?.[j]) grid._cellMap[i][j].classList.add("pinned");
+      if(infoLine) infoLine.textContent = describe(i, j) + "  ·  (gepinnt)";
+      updateTopN(i);
+    }
+
+    // build cells
+    grid._cells = [];
+    grid._cellMap = Array.from({length:T}, () => Array(T).fill(null));
+
+    for(let i=0;i<T;i++){
+      for(let j=0;j<T;j++){
+        const cell = document.createElement("div");
+        cell.className = "heatmap-cell";
+        const v = M[i][j] || 0;
+        const a = clamp01(v / maxVal);
+        cell.style.background = `rgba(102,217,239, ${0.08 + a*0.72})`;
+        cell.title = describe(i, j);
+
+        const fromTok = tokenName(i);
+        const toTok   = tokenName(j);
+        if(focus.includes(fromTok) || focus.includes(toTok)){
+          cell.style.borderColor = "rgba(110,231,183,.45)";
+        }
+
+        cell.addEventListener("mouseenter", () => {
+          setHover(i, j);
+          if(pinned.i != null && pinned.j != null){
+            grid._cellMap[pinned.i]?.[pinned.j]?.classList.add("pinned");
+          }
+        });
+
+        cell.addEventListener("pointermove", () => {
+          setHover(i, j);
+          if(pinned.i != null && pinned.j != null){
+            grid._cellMap[pinned.i]?.[pinned.j]?.classList.add("pinned");
+          }
+        });
+
+        cell.addEventListener("click", () => {
+          if(pinned.i === i && pinned.j === j){
+            // unpin
+            if(grid._cells){
+              for(const c of grid._cells) c.classList.remove("pinned");
+            }
+            pinned = { i: null, j: null };
+            if(lastHover) updateTopN(lastHover.i); else resetTopN();
+            if(infoLine){
+              infoLine.textContent = lastHover ? describe(lastHover.i, lastHover.j) : "Bewege den Mauszeiger über eine Zelle (oder tippe), um Werte zu sehen. Klick pinnt die Zelle.";
+            }
+          }else{
+            setPinned(i, j);
+          }
+        });
+
+        grid.appendChild(cell);
+        grid._cells.push(cell);
+        grid._cellMap[i][j] = cell;
+      }
+    }
+
+    // show first cell by default
+    if(T > 0 && infoLine) infoLine.textContent = describe(0, 0);
+    if(T > 0) updateTopN(0);
+
+    const container = document.createElement("div");
+    container.style.display = "inline-block";
+    container.appendChild(grid);
+    hmWrap.appendChild(container);
+
+
+
+    // Desktop-only: when leaving heatmap, clear hover highlights; keep pinned cell (if any)
+
+    if(isHoverFine){
+
+      hmWrap.addEventListener("mouseleave", () => {
+
+        clearHoverClasses();
+
+        // keep pinned visible
+
+        if(pinned.i != null && pinned.j != null && grid._cellMap?.[pinned.i]?.[pinned.j]) {
+
+          grid._cellMap[pinned.i][pinned.j].classList.add("pinned");
+
+        }
+
+        // restore info line to pinned or default
+
+        if(pinned.i == null || pinned.j == null) {
+
+          if(infoLine) infoLine.textContent = DEFAULT_MSG;
+          resetTopN();
+
+        } else {
+
+          if(infoLine) infoLine.textContent = describe(pinned.i, pinned.j) + "  ·  (gepinnt)";
+          updateTopN(pinned.i);
+
+        }
+
+      });
+
+    }
+
+
+    wrap.appendChild(hmWrap);
+
+    // Axis hint (same as Attention card, but compact)
+    const axes = document.createElement("div");
+    axes.className = "heatmap-axes";
+    axes.innerHTML = `
+      <div class="heatmap-legend">
+        <span class="legend-swatch"></span>
+        <span><strong>Heller</strong> = höhere Gewichtung. Zeile <span class="mono">i</span> = „fragt Kontext“, Spalte <span class="mono">j</span> = „liefert Kontext“.</span>
+      </div>
+      <div class="small muted">Tipp: Klick pinnt die Zelle (für Vergleich beim Umschalten von Layer/Head/Causal Mask).</div>
+    `;
+    if(opts.detailsInfoText){
+      const infoHint = document.createElement("div");
+      infoHint.className = "small muted";
+      infoHint.textContent = "Info: " + String(opts.detailsInfoText);
+      axes.appendChild(infoHint);
+    }
+    // Details panel (Auswahl + Legende + Tipp) under heatmap
+    const detailsPanel = document.createElement("details");
+    detailsPanel.classList.add("heatmap-panel","heatmap-details");
+    detailsPanel.className = "heatmap-panel heatmap-details";
+    detailsPanel.style.marginTop = "10px";
+    bindDetailsPersistence(detailsPanel, "mlp-heatmap-details", false);
+    const detailsSummary = document.createElement("summary");
+    detailsSummary.innerHTML = `<span class="heatmap-summary-title">Details zur Heatmap</span> <span class="heatmap-summary-tag">Auswahl · Legende · Tipp</span>`;
+    detailsPanel.appendChild(detailsSummary);
+    const detailsInner = document.createElement("div");
+    detailsInner.className = "heatmap-panel-body";
+    detailsInner.style.marginTop = "8px";
+    // Avoid nested notice styling
+    info.className = "";
+    detailsInner.appendChild(info);
+    detailsInner.appendChild(axes);
+    detailsPanel.appendChild(detailsInner);
+    wrap.appendChild(detailsPanel);
 
     return wrap;
   }
 
+  function viewMLP(scenario){
+    const wrap = document.createElement("div");
+    // Intro (dezent, ohne Notice-Rahmen)
+    const intro = document.createElement("div");
+    intro.className = "small muted";
+    intro.textContent = "MLP/FFN ergänzt die Attention: Attention mischt Information über Tokens (Kontext), MLP transformiert pro Token nichtlinear. In diesem Schritt kannst du direkt vergleichen: (A) FFN ohne Kontext (nur Embedding) vs. (B) FFN mit Kontext (nach Attention).";
+    wrap.appendChild(intro);
+
+    const divider0 = document.createElement("div");
+    divider0.style.height = "1px";
+    divider0.style.background = "rgba(255,255,255,.10)";
+    divider0.style.margin = "10px 0";
+    wrap.appendChild(divider0);
+
+
+    // Context reminder: compact heatmap
+    // --- Bereich 1: Heatmap (Kontextgrundlage) ---
+    const hmHeader = document.createElement("div");
+    hmHeader.style.display = "flex";
+    hmHeader.style.alignItems = "baseline";
+    hmHeader.style.justifyContent = "space-between";
+    hmHeader.style.gap = "10px";
+    const hmTitle = h3("Heatmap");
+    const hmBadge = document.createElement("span");
+    hmBadge.className = "badge small";
+    hmBadge.textContent = `Aktiv: ${state.params.causalMask ? "Mask On" : "Mask Off"} · L${state.params.attnLayer} · H${state.params.attnHead}`;
+    hmHeader.appendChild(hmTitle);
+    hmHeader.appendChild(hmBadge);
+    wrap.appendChild(hmHeader);
+
+    
+    // Kontextgrundlage: komplett zuklappbar (default: zu)
+    const hmSection = document.createElement("details");
+    hmSection.className = "heatmap-panel heatmap-details";
+    const hmSummary = document.createElement("summary");
+    hmSummary.className = "heatmap-panel-summary";
+
+    const hmPanelTitle = document.createElement("span");
+    hmPanelTitle.className = "heatmap-panel-title";
+    hmPanelTitle.textContent = "Kontextgrundlage: Attention-Heatmap";
+    hmSummary.appendChild(hmPanelTitle);
+
+    const hmSummaryBadge = document.createElement("span");
+    hmSummaryBadge.className = "badge small";
+    hmSummaryBadge.textContent = "Heatmap";
+    hmSummary.appendChild(hmSummaryBadge);
+
+    hmSection.appendChild(hmSummary);
+
+    const hmBody = document.createElement("div");
+    hmBody.className = "heatmap-panel-body";
+
+    hmBody.appendChild(attentionHeatmapCompact(scenario, { showBadge: false, showHeatmapDetailsPanel: false, detailsInfoText: "Die Heatmap zeigt, welche Token (Spalte j) beim Berechnen des Kontextvektors für Token i (Zeile i) stärker gewichtet werden. Das ist die Kontextgrundlage für den MLP-Vergleich darunter." }));
+
+    hmSection.appendChild(hmBody);
+
+    bindDetailsPersistence(hmSection, "mlp-heatmap", false);
+
+    wrap.appendChild(hmSection);
+
+
+
+    // Divider zwischen Bereich 1 (Heatmap) und Bereich 2 (MLP)
+    const divider2 = document.createElement("div");
+    divider2.style.height = "1px";
+    divider2.style.background = "rgba(255,255,255,.10)";
+    divider2.style.margin = "14px 0 10px";
+    wrap.appendChild(divider2);
+
+
+    const toks = (scenario && scenario.tokenization && scenario.tokenization.tokens) ? scenario.tokenization.tokens : [];
+    if(!toks.length){
+      wrap.appendChild(pNotice("Keine Tokens – MLP kann nicht visualisiert werden.", true));
+      return wrap;
+    }
+    const controls = document.createElement("div");
+    controls.className = "notice";
+    controls.style.display = "grid";
+    controls.style.gap = "10px";
+    controls.innerHTML =
+      '<div class="kv">'
+      + '<div class="k">Token i</div>'
+      + '<div class="v" style="display:flex; gap:10px; align-items:center;">'
+      + '<select id="mlpTokSelect" class="select"></select>'
+      + '</div></div>'
+      + '<div class="small muted">Zeige toy-FFN Input/Output für Token i.</div>';
+    // Controls: token selector
+    if(typeof state.params.mlpCompare !== "boolean") state.params.mlpCompare = true;
+
+    const toggles = document.createElement("div");
+    toggles.className = "notice";
+    toggles.innerHTML =
+      '<div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center;">'
+      + '<label style="display:flex; gap:10px; align-items:center; cursor:pointer;">'
+      + '  <input id="mlpCompare" type="checkbox" />'
+      + '  <span><span class="small"><span style="color:var(--text); font-weight:400;">Vergleich anzeigen</span> <span class="muted">(ohne vs. mit Attention)</span></span></span>'
+      + '</label>'
+            + '</div>'
+      + '<div class="small muted" style="margin-top:8px;">Tipp: Der Vergleich ist der Aha-Punkt. Ohne Attention bleibt die Repräsentation lokal (Embedding). Mit Attention entsteht ein Kontextvektor, der die FFN-Eingabe sichtbar verschiebt.</div>';
+    const selTok = controls.querySelector("#mlpTokSelect");
+    const chkCompare = toggles.querySelector("#mlpCompare");
+
+    // Populate token select (combobox)
+    if(selTok){
+      selTok.innerHTML = "";
+      for(let ti=0; ti<toks.length; ti++){
+        const opt = document.createElement("option");
+        opt.value = String(ti);
+        const raw = toks[ti] && typeof toks[ti].text === "string" ? toks[ti].text : "";
+        const shown = raw;
+        opt.textContent = `${ti}: ${shown}`;
+        selTok.appendChild(opt);
+      }
+    }
+
+    const defaultIdx = (typeof state.params.mlpTok === "number") ? state.params.mlpTok : Math.max(0, toks.length - 1);
+    if(selTok) selTok.value = String(Math.max(0, Math.min(toks.length - 1, defaultIdx)));
+
+    chkCompare.checked = !!state.params.mlpCompare;
+
+    function updateMlpBadge(i){
+      // Persist current token index for screenshots / consistency
+      state.params.mlpTok = i;
+      const bits = [];
+      bits.push(`i=${i}`);
+      bits.push(`d_model ${state.params.dModel}`);
+      bits.push(state.params.mlpCompare ? "Vergleich On" : "Vergleich Off");
+      if(typeof mlpBadge !== "undefined" && mlpBadge){
+        mlpBadge.textContent = "Aktiv: " + bits.join(" · ");
+      }
+    }
+
+    // Build representations
+    const E = getEmbeddingsForScenario(scenario, toks); // [T][d]
+    const A = buildAttentionMatrix(scenario, toks);     // [T][T]
+    const dModel = state.params.dModel;
+    const ffn = buildToyFFN((scenario && scenario.id) ? scenario.id : "x", dModel);
+
+    const outBox = document.createElement("div");
+    // --- Bereich 2: MLP Vorher/Nachher ---
+    const mlpHeader = document.createElement("div");
+    mlpHeader.style.display = "flex";
+    mlpHeader.style.alignItems = "baseline";
+    mlpHeader.style.justifyContent = "space-between";
+    mlpHeader.style.gap = "10px";
+    const mlpTitle = h3("MLP Vorher/Nachher (toy-FFN)");
+    const mlpBadge = document.createElement("span");
+    mlpBadge.className = "badge small";
+    mlpHeader.appendChild(mlpTitle);
+    mlpHeader.appendChild(mlpBadge);
+    wrap.appendChild(mlpHeader);
+    const mlpUnderText = document.createElement("div");
+    mlpUnderText.className = "small muted";
+    mlpUnderText.style.marginTop = "4px";
+    mlpUnderText.style.marginBottom = "12px";
+    mlpUnderText.innerHTML = 'Wenn sich <span class="mono">Input</span> (Embedding vs. Kontext) sichtbar unterscheidet, wird auch das FFN-Output anders. So trennt man sauber: <strong>Kontextbildung</strong> (Attention) vs. <strong>nichtlineare Transformation</strong> (MLP).';
+    wrap.appendChild(mlpUnderText);
+
+
+    wrap.appendChild(outBox);
+
+    // Panels (Standard): Details + Einstellungen unter der Visualisierung
+    const mlpDetailsPanel = document.createElement("details");
+    mlpDetailsPanel.className = "heatmap-panel heatmap-details";
+    mlpDetailsPanel.style.marginTop = "10px";
+    bindDetailsPersistence(mlpDetailsPanel, "mlp-details", false);
+    const mlpDetailsSummary = document.createElement("summary");
+    mlpDetailsSummary.innerHTML = `<span class="heatmap-summary-title">Details zur Anzeige</span><span class="heatmap-summary-tag">Toy-FFN · Lesart · Hinweis</span>`;
+    mlpDetailsPanel.appendChild(mlpDetailsSummary);
+    const mlpDetailsInner = document.createElement("div");
+    mlpDetailsInner.className = "heatmap-panel-body";
+    mlpDetailsInner.style.marginTop = "8px";
+    const mlpDetailsText = document.createElement("div");
+    mlpDetailsText.className = "small muted";
+    mlpDetailsText.textContent = "Dieses toy-FFN ist eine didaktische Vereinfachung: Es zeigt, wie ein Feedforward-Netz (MLP) den Eingabevektor (Embedding oder Kontext) weiterverarbeitet. Die Zahlen dienen nur der Orientierung.";
+    const mlpLegend = document.createElement("div");
+    mlpLegend.className = "small muted";
+    mlpLegend.style.marginTop = "10px";
+    mlpLegend.textContent = "Legende (Vergleich): Pro Dimension zwei Balken untereinander – oben A (solide) = ohne Attention, unten B (gestreift) = mit Attention. Die Zahl rechts gehört jeweils zu dem Balken.";
+    mlpDetailsInner.appendChild(mlpLegend);
+
+    const mlpBarClarification = document.createElement("div");
+    mlpBarClarification.className = "small muted";
+    mlpBarClarification.style.marginTop = "8px";
+    mlpBarClarification.textContent = "Die Balkenlänge zeigt den Betrag (absoluten Wert) der Aktivierung. Die Farbe kennzeichnet das Vorzeichen (grün = positiv, rot = negativ; keine Qualitätsbewertung).";
+    mlpDetailsInner.appendChild(mlpBarClarification);
+
+    mlpDetailsInner.appendChild(mlpDetailsText);
+    mlpDetailsPanel.appendChild(mlpDetailsInner);
+    wrap.appendChild(mlpDetailsPanel);
+
+    const mlpSettingsPanel = document.createElement("details");
+    mlpSettingsPanel.className = "heatmap-panel heatmap-settings";
+    mlpSettingsPanel.style.marginTop = "10px";
+    bindDetailsPersistence(mlpSettingsPanel, "mlp-settings", false);
+    const mlpSettingsSummary = document.createElement("summary");
+    mlpSettingsSummary.innerHTML = `<span class="heatmap-summary-title">Einstellungen zur Anzeige</span><span class="heatmap-summary-tag">Token i · Vergleich</span>`;
+    mlpSettingsPanel.appendChild(mlpSettingsSummary);
+    const mlpSettingsInner = document.createElement("div");
+    mlpSettingsInner.className = "heatmap-panel-body";
+    mlpSettingsInner.style.marginTop = "8px";
+    // Avoid nested notice styling
+    controls.className = "";
+    toggles.className = "";
+    mlpSettingsInner.appendChild(controls);
+    mlpSettingsInner.appendChild(toggles);
+    mlpSettingsPanel.appendChild(mlpSettingsInner);
+    wrap.appendChild(mlpSettingsPanel);
+
+
+    function ctxWithAttention(i){
+      const ctx = new Array(dModel);
+      for(let k=0;k<dModel;k++) ctx[k] = 0;
+
+      for(let j=0;j<toks.length;j++){
+        const a = (A[i] && typeof A[i][j] === "number") ? A[i][j] : 0;
+        for(let k=0;k<dModel;k++){
+          ctx[k] += a * E[j][k];
+        }
+      }
+      return ctx;
+    }
+
+    function ffnForward(vec){
+      const h1 = matVec(ffn.W1, vec, ffn.b1);
+      for(let t=0;t<h1.length;t++) h1[t] = relu(h1[t]);
+      return matVec(ffn.W2, h1, ffn.b2);
+    }
+
+    function renderSingle(i){
+
+      const emb = E[i];
+      const ctx = ctxWithAttention(i);
+      const out = ffnForward(ctx);
+
+      outBox.innerHTML = "";
+      const stack = document.createElement("div");
+      stack.style.display = "grid";
+      stack.style.gap = "10px";
+
+      const c1 = document.createElement("div");
+      c1.className = "compare-card";
+      c1.innerHTML = '<div class="compare-title"><strong>Embedding (ohne Kontext)</strong></div>';
+      c1.appendChild(renderVectorBars(emb, `Embedding (ohne Kontext) ${tokenSubtitle(toks, i)}`));
+
+      const c2 = document.createElement("div");
+      c2.className = "compare-card";
+      c2.innerHTML = '<div class="compare-title"><strong>Kontext nach Attention</strong><span class="small muted">Input in FFN</span></div>';
+      c2.appendChild(renderVectorBars(ctx, `Kontext nach Attention (Input in FFN) ${tokenSubtitle(toks, i)}`));
+
+      const c3 = document.createElement("div");
+      c3.className = "compare-card";
+      c3.innerHTML = '<div class="compare-title"><strong>FFN-Output</strong><span class="small muted">nach MLP/FFN</span></div>';
+      c3.appendChild(renderVectorBars(out, `FFN-Output (nach MLP/FFN) ${tokenSubtitle(toks, i)}`));
+
+      stack.appendChild(c1);
+      stack.appendChild(c2);
+      stack.appendChild(c3);
+      outBox.appendChild(stack);
+    }
+
+
+    function renderCompare(i){
+      const emb = E[i];
+      const ctx = ctxWithAttention(i);
+
+      const outNo = ffnForward(emb); // "ohne Attention" = FFN direkt auf Embedding
+      const outYes = ffnForward(ctx);
+
+      outBox.innerHTML = "";
+
+      // Ein kompakter, geführter Vergleich: pro Dimension zwei Werte (A vs. B)
+      const stack = document.createElement("div");
+      stack.style.display = "grid";
+      stack.style.gap = "10px";
+
+      const inCard = document.createElement("div");
+      inCard.className = "compare-card";
+      inCard.innerHTML = '<div class="compare-title"><strong>Input (A vs. B)</strong><span class="small muted">Embedding vs. Kontext</span></div>';
+      inCard.appendChild(renderVectorBars(emb, `Input: pro Dimension zwei Werte · ${tokenSubtitle(toks, i)}`, {
+        compareVec: ctx,
+        legendA: "A) Embedding (solide)",
+        legendB: "B) Kontext nach Attention (gestreift)"
+      }));
+
+      const outCard = document.createElement("div");
+      outCard.className = "compare-card";
+      outCard.innerHTML = '<div class="compare-title"><strong>Output (A vs. B)</strong><span class="small muted">FFN(Embedding) vs. FFN(Kontext)</span></div>';
+      outCard.appendChild(renderVectorBars(outNo, `Output: pro Dimension zwei Werte · ${tokenSubtitle(toks, i)}`, {
+        compareVec: outYes,
+        legendA: "A) FFN(Embedding) (solide)",
+        legendB: "B) FFN(Kontext) (gestreift)"
+      }));
+
+      stack.appendChild(inCard);
+      stack.appendChild(outCard);
+      outBox.appendChild(stack);
+    }
+
+
+
+    function render(i){      updateMlpBadge(i);
+      if(!!state.params.mlpCompare) renderCompare(i);
+      else renderSingle(i);
+    }
+
+    if(selTok) selTok.addEventListener("change", function(e){
+      render(Number(e.target.value));
+    });
+
+    chkCompare.addEventListener("change", function(){
+      state.params.mlpCompare = !!chkCompare.checked;
+      render(parseInt(selTok ? selTok.value : (state.params.mlpTok || 0), 10));
+    });
+
+    render(defaultIdx);
+    return wrap;
+  }
+
+
   
-  function viewLogits(scenario){
+function viewLogits(scenario){
     const wrap = document.createElement("div");
     const steps = getDecodingSteps(scenario);
 
@@ -5081,6 +6007,20 @@ function populateScenarioSelect(){
 // 4) Math helpers (pure)
 // -----------------------------
 function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+
+  // number formatting helpers (tiny, UI-only)
+  // fmt1: one decimal (e.g. temperature), fmt2: two decimals (e.g. top-p)
+  function fmt1(x){
+    const n = Number(x);
+    if(!Number.isFinite(n)) return "–";
+    return n.toFixed(1).replace(/\.0$/, "");
+  }
+  function fmt2(x){
+    const n = Number(x);
+    if(!Number.isFinite(n)) return "–";
+    // keep two decimals but trim trailing zeros for compact badges
+    return n.toFixed(2).replace(/0$/, "").replace(/\.0$/, "");
+  }
   // NOTE: When inserting scenario text into innerHTML, always escape.
   function escapeHtml(str){
     return String(str)
